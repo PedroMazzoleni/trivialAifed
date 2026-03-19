@@ -7,10 +7,67 @@
 <link rel="icon" type="image/png" href="images/logo-trivial.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/shared.css">
+<link rel="stylesheet" href="css/navbar.css">
 <link rel="stylesheet" href="css/pages/login.css">
-
 </head>
 <body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+
+    <a class="navbar-logo" href="trivial-intro.html">
+      <img class="logo-main" src="images/logo.png" alt="Trivial Travel">
+      <img class="logo-eu"   src="images/eu-logo.png" alt="Co-funded by EU">
+    </a>
+
+    <ul class="navbar-links">
+      <li><a href="trivial-modos.html">Jugar</a></li>
+      <li><a href="trivial-ranking.html">Ranking</a></li>
+
+      <li id="dd-modos">
+        <button onclick="toggleDropdown('dd-modos')">
+          Modos
+          <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <ul class="navbar-dropdown">
+          <li><a href="trivial-lobby.html">🌐 Jugar Online</a></li>
+          <li><a href="trivial-ia-nivel.html">🤖 Jugar vs IA</a></li>
+        </ul>
+      </li>
+
+      <li id="dd-admin" style="display:none">
+        <button onclick="toggleDropdown('dd-admin')">
+          Admin
+          <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <ul class="navbar-dropdown">
+          <li><a href="trivial-admin.html">📊 Panel Admin</a></li>
+        </ul>
+      </li>
+    </ul>
+
+    <div class="navbar-right" id="navbar-right"></div>
+
+    <button class="navbar-burger" onclick="toggleMobile()">
+      <svg viewBox="0 0 24 24">
+        <line x1="3" y1="6"  x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+
+  </div>
+</nav>
+
+<div class="navbar-mobile" id="navbar-mobile">
+  <a href="trivial-modos.html">Jugar</a>
+  <a href="trivial-ranking.html">Ranking</a>
+  <a href="trivial-lobby.html" class="mobile-sub">🌐 Online</a>
+  <a href="trivial-ia-nivel.html" class="mobile-sub">🤖 vs IA</a>
+  <div class="mobile-divider"></div>
+  <a href="trivial-login.html" id="mobile-login">Iniciar sesión</a>
+  <a href="trivial-admin.html" id="mobile-admin" style="display:none">Panel Admin</a>
+</div>
 
 <div class="page">
   <div class="card">
@@ -49,14 +106,14 @@
           <a class="forgot" href="#">¿Olvidaste la contraseña?</a>
         </div>
 
-        <button class="btn btn-primary" id="btn-login" onclick="handleLogin()">
+        <button class="btn btn-primary btn-full" id="btn-login" onclick="handleLogin()">
           <span class="btn-label">Entrar</span>
           <div class="spinner"></div>
         </button>
 
         <div class="divider"><hr><span>o</span><hr></div>
 
-        <button class="btn btn-secondary" onclick="handleGuest()">
+        <button class="btn btn-secondary btn-full" onclick="handleGuest()">
           Entrar como invitado
         </button>
       </div>
@@ -79,7 +136,7 @@
           </div>
         </div>
 
-        <button class="btn btn-primary" id="btn-register" onclick="handleRegister()">
+        <button class="btn btn-primary btn-full" id="btn-register" onclick="handleRegister()">
           <span class="btn-label">Crear cuenta</span>
           <div class="spinner"></div>
         </button>
@@ -99,6 +156,7 @@
 </div>
 
 <script src="js/utils.js"></script>
+<script src="js/navbar.js"></script>
 <script src="js/pages/login.js"></script>
 </body>
 </html>

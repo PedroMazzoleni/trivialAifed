@@ -1,0 +1,237 @@
+/* ── navbar.css ──────────────────────────────────────────────────────────────
+   Navbar estilo metaversing.site — fiel a imagen 1
+─────────────────────────────────────────────────────────────────────────────*/
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+.navbar * { box-sizing: border-box; margin: 0; padding: 0; }
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: #ffffff;
+  border-bottom: 1px solid #e8eaed;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+  font-family: 'Poppins', sans-serif;
+}
+
+.navbar-inner {
+  /* Sin max-width limitante — se extiende como en metaversing */
+  width: 100%;
+  padding: 0 32px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+}
+
+/* ── LOGO ── */
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+  margin-right: 28px;
+}
+
+.navbar-logo img.logo-main {
+  height: 30px;
+  width: auto;
+  object-fit: contain;
+}
+
+.navbar-logo img.logo-eu {
+  height: 30px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* ── LINKS ── */
+.navbar-links {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  list-style: none;
+  height: 54px;
+  /* NO flex:1 — los links no se estiran, van compactos juntos */
+}
+
+.navbar-links > li {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-links > li > a,
+.navbar-links > li > button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 11px;
+  height: 100%;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: #333;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  position: relative;
+  transition: color .2s;
+}
+
+/* Línea expansiva animada — crece desde el centro al hacer hover */
+.navbar-links > li > a::after,
+.navbar-links > li > button::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 2px;
+  background: #3d5af1;
+  border-radius: 2px;
+  opacity: 0;
+  transition: width .28s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              opacity .2s ease;
+}
+
+.navbar-links > li > a:hover::after,
+.navbar-links > li > button:hover::after {
+  width: 100%;
+  opacity: 1;
+}
+
+.navbar-links > li > a.active::after {
+  width: 100%;
+  opacity: 1;
+}
+
+.navbar-links > li > a:hover,
+.navbar-links > li > button:hover { color: #3d5af1; }
+.navbar-links > li > a.active     { color: #3d5af1; font-weight: 600; }
+
+/* Chevron */
+.navbar-links .chevron {
+  width: 10px; height: 10px;
+  stroke: currentColor; fill: none;
+  stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+  transition: transform .2s; flex-shrink: 0;
+}
+.navbar-links li.open > button .chevron { transform: rotate(180deg); }
+.navbar-links li.open > button { color: #3d5af1; }
+
+/* ── DROPDOWN ── */
+.navbar-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 2px); left: 0;
+  background: #ffffff;
+  border: 1px solid #e8eaed;
+  border-radius: 8px;
+  padding: 6px 0;
+  min-width: 200px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  list-style: none;
+  z-index: 200;
+  animation: navDropIn .16s ease both;
+}
+
+.navbar-links li.open > .navbar-dropdown { display: block; }
+
+@keyframes navDropIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.navbar-dropdown li a {
+  display: block;
+  padding: 9px 18px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: #333;
+  text-decoration: none;
+  transition: all .15s;
+}
+.navbar-dropdown li a:hover {
+  color: #3d5af1;
+  background: rgba(61,90,241,0.05);
+  padding-left: 22px;
+}
+
+/* ── RIGHT — solo se usa si hay usuario logueado (navbar.js lo rellena) ── */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.navbar-user-info {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: #555;
+  font-family: 'Poppins', sans-serif;
+}
+
+.navbar-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #3d5af1;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 12px; color: #fff; flex-shrink: 0;
+}
+
+.navbar-btn {
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500; font-size: 13px;
+  cursor: pointer; transition: all .18s;
+  text-decoration: none; border: none;
+  display: inline-flex; align-items: center;
+}
+
+.navbar-btn-primary       { background: #3d5af1; color: #fff; }
+.navbar-btn-primary:hover { background: #2a45d4; }
+.navbar-btn-ghost         { background: transparent; color: #3d5af1; border: 1.5px solid #3d5af1; }
+.navbar-btn-ghost:hover   { background: rgba(61,90,241,0.05); }
+
+/* ── BURGER ── */
+.navbar-burger {
+  display: none; background: none; border: none;
+  cursor: pointer; padding: 6px; color: #333; margin-left: auto;
+}
+.navbar-burger svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+/* ── MOBILE MENU ── */
+.navbar-mobile {
+  display: none;
+  background: #fff; border-top: 1px solid #f0f0f0;
+  padding: 10px 16px 16px;
+  flex-direction: column; gap: 2px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+.navbar-mobile.open { display: flex; }
+
+.navbar-mobile a,
+.navbar-mobile button {
+  display: block; width: 100%; padding: 10px 12px; border-radius: 6px;
+  font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 400;
+  color: #333; text-decoration: none; background: none; border: none;
+  cursor: pointer; text-align: left; transition: all .15s;
+}
+.navbar-mobile a:hover,
+.navbar-mobile button:hover   { color: #3d5af1; background: rgba(61,90,241,0.05); }
+.navbar-mobile .mobile-divider { height: 1px; background: #f0f0f0; margin: 6px 0; }
+
+@media (max-width: 900px) {
+  .navbar-links, .navbar-right { display: none; }
+  .navbar-burger               { display: block; }
+  .navbar-logo                 { margin-right: auto; }
+  .navbar-inner                { padding: 0 16px; }
+}
