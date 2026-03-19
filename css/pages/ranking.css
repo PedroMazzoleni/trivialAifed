@@ -1,0 +1,72 @@
+/* pages/ranking.css */
+
+.page { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 80px 24px 48px; }
+
+/* ── HEADER ── */
+.header { text-align: center; margin-bottom: 40px; }
+.header-label { font-family: var(--font-cond); font-weight: 700; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--blue); margin-bottom: 10px; display: block; }
+.header h1    { font-family: var(--font-cond); font-weight: 900; font-size: clamp(36px,8vw,64px); text-transform: uppercase; letter-spacing: -1px; line-height: 1; color: #fff; margin-bottom: 8px; }
+.header p     { font-size: 14px; color: rgba(255,255,255,0.4); }
+
+/* ── PODIO ── */
+.podium { display: flex; align-items: flex-end; justify-content: center; gap: 12px; margin-bottom: 40px; width: 100%; max-width: 480px; }
+.podium-slot { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; }
+.podium-avatar {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-cond); font-weight: 900; font-size: 22px;
+  color: #0a0e1a; border: 3px solid; position: relative;
+}
+.podium-crown { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 18px; }
+.podium-name  { font-family: var(--font-cond); font-weight: 800; font-size: 13px; text-transform: uppercase; color: #fff; text-align: center; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.podium-wins  { font-size: 11px; color: rgba(255,255,255,0.4); }
+.podium-block {
+  width: 100%; border-radius: 4px 4px 0 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-cond); font-weight: 900; font-size: 26px;
+  color: rgba(0,0,0,0.25);
+}
+.podium-block.gold   { background: var(--gold); }
+.podium-block.silver { background: var(--silver); }
+.podium-block.bronze { background: var(--bronze); }
+
+/* ── TABLA ── */
+.ranking-wrap { width: 100%; max-width: 620px; }
+.table-header { display: grid; grid-template-columns: 48px 1fr 80px 80px 70px; padding: 8px 16px 12px; gap: 8px; font-family: var(--font-cond); font-weight: 700; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.25); }
+.ranking-row {
+  display: grid; grid-template-columns: 48px 1fr 80px 80px 70px;
+  align-items: center; gap: 8px; padding: 14px 16px;
+  border-radius: 4px; margin-bottom: 5px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+  transition: background .15s;
+  animation: rowIn .35s cubic-bezier(0.16,1,0.3,1) both;
+}
+.ranking-row:hover  { background: rgba(255,255,255,0.07); }
+.ranking-row.is-me  { background: rgba(45,125,210,0.1); border-color: rgba(45,125,210,0.3); }
+
+.rank-pos    { font-family: var(--font-cond); font-weight: 900; font-size: 17px; color: rgba(255,255,255,0.2); text-align: center; }
+.rank-pos.top{ color: var(--gold); }
+.rank-player { display: flex; align-items: center; gap: 10px; overflow: hidden; }
+.rank-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-cond); font-weight: 800; font-size: 14px; color: #0a0e1a; flex-shrink: 0; }
+.rank-name   { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank-me     { font-family: var(--font-cond); font-weight: 700; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--blue); background: rgba(45,125,210,0.15); padding: 2px 7px; border-radius: 2px; margin-left: 4px; flex-shrink: 0; }
+.rank-stat   { font-family: var(--font-cond); font-weight: 800; font-size: 16px; text-align: center; }
+.rank-wins   { color: var(--gold); }
+.rank-pts    { color: var(--blue); }
+.rank-games  { color: rgba(255,255,255,0.3); font-size: 13px; }
+
+/* ── BANNER POSICIÓN ── */
+.my-banner { width: 100%; max-width: 620px; background: rgba(45,125,210,0.1); border: 1px solid rgba(45,125,210,0.3); border-radius: 4px; padding: 14px 20px; margin-bottom: 16px; display: none; align-items: center; gap: 10px; font-size: 14px; color: rgba(255,255,255,0.5); }
+.my-banner.show { display: flex; }
+.my-banner strong { color: var(--blue); font-family: var(--font-cond); font-weight: 800; font-size: 20px; }
+
+/* ── ESTADOS ── */
+.empty { text-align: center; padding: 48px 24px; color: rgba(255,255,255,0.3); font-size: 15px; line-height: 1.6; }
+
+@keyframes rowIn { from { opacity:0; transform:translateX(-12px); } to { opacity:1; transform:translateX(0); } }
+
+@media (max-width: 480px) {
+  .table-header, .ranking-row { grid-template-columns: 36px 1fr 60px 60px 50px; }
+  .rank-stat { font-size: 13px; }
+  .podium-avatar { width: 42px; height: 42px; font-size: 17px; }
+}

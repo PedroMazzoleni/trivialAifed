@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trivial — Lobby</title>
+<link rel="icon" type="image/png" href="images/logo-trivial.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/shared.css">
+<link rel="stylesheet" href="css/pages/lobby.css">
+
+</head>
+<body>
+
+<a class="btn-back" href="trivial-modos.html">
+  <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+  Volver
+</a>
+
+<div class="page">
+
+  <!-- ══════════ SCREEN: JOIN / CREATE ══════════ -->
+  <div class="screen active" id="screen-join">
+
+    <div class="header">
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px">
+        <img src="images/logo-trivial.png" alt="Logo" style="width:36px;height:36px;border-radius:50%;object-fit:cover">
+        <span class="brand" style="margin-bottom:0">Trivial Travel</span>
+      </div>
+      <h1>Sala de juego</h1>
+      <p>Crea una sala o únete con el código de un amigo</p>
+      <div id="wins-badge" style="display:none">
+        🏆 <span id="wins-count">0</span> partidas ganadas
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" id="tab-create" onclick="switchTab('create')">Crear sala</button>
+        <button class="tab"        id="tab-join"   onclick="switchTab('join')">Unirse</button>
+      </div>
+
+      <div class="card-body">
+        <div class="msg" id="msg"></div>
+
+        <!-- CREATE -->
+        <div class="tab-panel active" id="panel-create">
+          <div class="field">
+            <label>Tu nombre</label>
+            <input type="text" id="create-name" placeholder="¿Cómo te llaman?" maxlength="20">
+          </div>
+          <button class="btn btn-primary" id="btn-create" onclick="createRoom()">
+            <span class="btn-label">Crear sala</span>
+            <div class="spinner"></div>
+          </button>
+        </div>
+
+        <!-- JOIN -->
+        <div class="tab-panel" id="panel-join">
+          <div class="field">
+            <label>Tu nombre</label>
+            <input type="text" id="join-name" placeholder="¿Cómo te llaman?" maxlength="20">
+          </div>
+          <div class="field">
+            <label>Código de sala</label>
+            <input type="text" id="join-code" class="code-input" placeholder="XXXXXX" maxlength="6">
+          </div>
+          <button class="btn btn-primary" id="btn-join" onclick="joinRoom()">
+            <span class="btn-label">Unirse a la sala</span>
+            <div class="spinner"></div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════ SCREEN: WAITING ROOM ══════════ -->
+  <div class="screen" id="screen-room">
+
+    <div class="room-header">
+      <span class="room-code-label">Código de sala</span>
+      <div class="room-code" id="room-code-display">——</div>
+      <button class="copy-btn" onclick="copyCode()">
+        <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copiar código
+      </button>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-dot"></div>
+      <span class="status-text" id="status-text">Conectado al servidor</span>
+      <span class="status-connected" id="status-conn">EN LÍNEA</span>
+    </div>
+
+    <div class="players-section">
+      <div class="players-header">
+        <span class="players-title">Jugadores en la sala</span>
+        <span class="players-count" id="players-count">1 / 6</span>
+      </div>
+      <div class="players-list" id="players-list">
+        <div class="waiting-row">
+          <div class="dots"><span></span><span></span><span></span></div>
+          Esperando jugadores...
+        </div>
+      </div>
+    </div>
+
+    <!-- Host controls -->
+    <div class="host-controls" id="host-controls">
+      <div class="round-selector">
+        <span class="round-label">Número de rondas</span>
+        <div class="round-btns">
+          <button class="round-btn" onclick="selectRounds(4)">4</button>
+          <button class="round-btn selected" onclick="selectRounds(6)">6</button>
+          <button class="round-btn" onclick="selectRounds(8)">8</button>
+          <button class="round-btn" onclick="selectRounds(10)">10</button>
+        </div>
+      </div>
+      <p class="min-players-note" id="min-note"></p>
+      <button class="btn-start ready" id="btn-start" onclick="startGame()">
+        Empezar partida
+      </button>
+    </div>
+
+    <!-- Guest waiting -->
+    <div class="waiting-host" id="waiting-host">
+      <div class="dots" style="margin-bottom:8px"><span></span><span></span><span></span></div>
+      Esperando a que el anfitrión empiece la partida...
+    </div>
+
+    <button class="btn-leave" onclick="leaveRoom()">Abandonar sala</button>
+
+  </div>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/pages/lobby.js"></script>
+</body>
+</html>

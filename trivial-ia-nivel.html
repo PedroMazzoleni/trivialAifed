@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trivial — Nivel</title>
+<link rel="icon" type="image/png" href="images/logo-trivial.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/shared.css">
+<link rel="stylesheet" href="css/pages/ia-nivel.css">
+
+</head>
+<body>
+
+<a class="btn-back" href="trivial-modos.html">
+  <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+  Volver
+</a>
+
+<div class="page">
+
+  <div class="header">
+    <span class="brand-green">Trivial — vs IA</span>
+    <h1>Elige tu nivel</h1>
+    <p>Selecciona la dificultad con la que quieres jugar</p>
+  </div>
+
+  <div class="levels">
+
+    <div class="level-card" id="level-facil"
+      style="--level-color:#18c25a; --level-bg:#edfaf3;"
+      onclick="selectLevel('facil')">
+      <div class="level-dot"></div>
+      <div class="level-info">
+        <div class="level-name">Fácil</div>
+        <div class="level-desc">Preguntas básicas. Ideal para empezar o calentar motores.</div>
+      </div>
+      <div class="level-pips">
+        <div class="pip filled" style="--level-color:#18c25a"></div>
+        <div class="pip"></div>
+        <div class="pip"></div>
+      </div>
+    </div>
+
+    <div class="level-card" id="level-medio"
+      style="--level-color:#f5a623; --level-bg:#fffbf0;"
+      onclick="selectLevel('medio')">
+      <div class="level-dot"></div>
+      <div class="level-info">
+        <div class="level-name">Medio</div>
+        <div class="level-desc">Preguntas con algo más de dificultad. Para jugadores con soltura.</div>
+      </div>
+      <div class="level-pips">
+        <div class="pip filled" style="--level-color:#f5a623"></div>
+        <div class="pip filled" style="--level-color:#f5a623"></div>
+        <div class="pip"></div>
+      </div>
+    </div>
+
+    <div class="level-card" id="level-dificil"
+      style="--level-color:#e84545; --level-bg:#fff5f5;"
+      onclick="selectLevel('dificil')">
+      <div class="level-dot"></div>
+      <div class="level-info">
+        <div class="level-name">Difícil</div>
+        <div class="level-desc">Preguntas exigentes. Solo para los que de verdad saben.</div>
+      </div>
+      <div class="level-pips">
+        <div class="pip filled" style="--level-color:#e84545"></div>
+        <div class="pip filled" style="--level-color:#e84545"></div>
+        <div class="pip filled" style="--level-color:#e84545"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="btn-start-wrap">
+    <button class="btn-start" id="btn-start" onclick="startGame()">
+      Empezar partida
+    </button>
+  </div>
+
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/pages/ia-nivel.js"></script>
+</body>
+</html>

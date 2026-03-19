@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trivial — Ranking Global</title>
+<link rel="icon" type="image/png" href="images/logo-trivial.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/shared.css">
+<link rel="stylesheet" href="css/pages/ranking.css">
+
+</head>
+<body>
+
+<a class="btn-back" onclick="goBack()">
+  <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+  Volver
+</a>
+
+<div class="page">
+
+  <div class="header">
+    <span class="header-label">Trivial Travel</span>
+    <h1>🏆 Ranking<br>Global</h1>
+    <p>Los mejores jugadores de todas las salas</p>
+  </div>
+
+  <div class="podium" id="podium" style="display:none"></div>
+
+  <div class="my-banner" id="my-banner">
+    Tu posición en el ranking: <strong id="my-pos">—</strong>
+  </div>
+
+  <div class="ranking-wrap">
+    <div class="table-header">
+      <span style="text-align:center">#</span>
+      <span>Jugador</span>
+      <span style="text-align:center">🏆 Wins</span>
+      <span style="text-align:center">⚡ Pts</span>
+      <span style="text-align:center">🎮</span>
+    </div>
+    <div id="ranking-list">
+      <div class="loading">
+        <div class="dots"><span></span><span></span><span></span></div>
+        Cargando ranking...
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/pages/ranking.js"></script>
+</body>
+</html>

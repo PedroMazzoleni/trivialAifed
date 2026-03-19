@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trivial — Acceder</title>
+<link rel="icon" type="image/png" href="images/logo-trivial.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/shared.css">
+<link rel="stylesheet" href="css/pages/login.css">
+
+</head>
+<body>
+
+<div class="page">
+  <div class="card">
+
+    <div class="card-header">
+      <div class="brand">Trivial</div>
+      <h1 id="form-title">Acceder</h1>
+      <p id="form-subtitle">Introduce tus datos para continuar</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" id="tab-login"    onclick="switchTab('login')">Iniciar sesión</button>
+      <button class="tab"        id="tab-register" onclick="switchTab('register')">Registrarse</button>
+    </div>
+
+    <div class="card-body">
+
+      <div class="msg" id="msg"></div>
+
+      <!-- LOGIN -->
+      <div id="form-login">
+        <div class="field">
+          <label>Correo electrónico</label>
+          <input type="text" id="login-email" placeholder="tu@correo.com o usuario" autocomplete="email">
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input type="password" id="login-pass" placeholder="Contraseña" autocomplete="current-password">
+        </div>
+
+        <div class="form-extras">
+          <label class="remember">
+            <input type="checkbox" id="remember-me">
+            <span>Recordarme</span>
+          </label>
+          <a class="forgot" href="#">¿Olvidaste la contraseña?</a>
+        </div>
+
+        <button class="btn btn-primary" id="btn-login" onclick="handleLogin()">
+          <span class="btn-label">Entrar</span>
+          <div class="spinner"></div>
+        </button>
+
+        <div class="divider"><hr><span>o</span><hr></div>
+
+        <button class="btn btn-secondary" onclick="handleGuest()">
+          Entrar como invitado
+        </button>
+      </div>
+
+      <!-- REGISTER -->
+      <div id="form-register" style="display:none">
+        <div class="field">
+          <label>Nombre de usuario</label>
+          <input type="text" id="reg-name" placeholder="Tu nombre en el juego" maxlength="20">
+        </div>
+        <div class="field">
+          <label>Correo electrónico</label>
+          <input type="email" id="reg-email" placeholder="tu@correo.com">
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input type="password" id="reg-pass" placeholder="Mínimo 6 caracteres" oninput="checkStrength(this.value)">
+          <div class="strength-bar" id="strength-bar">
+            <div class="strength-fill" id="strength-fill" style="width:0%"></div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="btn-register" onclick="handleRegister()">
+          <span class="btn-label">Crear cuenta</span>
+          <div class="spinner"></div>
+        </button>
+      </div>
+
+    </div>
+
+    <div class="card-footer" id="form-footer">
+      ¿No tienes cuenta? <a onclick="switchTab('register')">Regístrate</a>
+    </div>
+
+    <div class="ranking-link-bar">
+      <a href="trivial-ranking.html">🏆 Ver Ranking Global</a>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/pages/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+/* pages/login.css */
+
+.page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+  }
+  
+  /* ── CARD ── */
+  .card {
+    width: 100%;
+    max-width: 420px;
+    background: #0d1530;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 40px rgba(45,125,210,0.08);
+    animation: rise .38s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  
+  .card-header {
+    padding: 36px 40px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .card-header h1 {
+    font-family: var(--font-cond);
+    font-weight: 800;
+    font-size: 32px;
+    letter-spacing: -0.5px;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  
+  .card-header p { font-size: 13px; color: var(--muted); }
+  
+  .card-body   { padding: 32px 40px 36px; }
+  
+  .card-footer {
+    padding: 16px 40px 20px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .card-footer a {
+    color: var(--blue);
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 11px;
+  }
+  .card-footer a:hover { text-decoration: underline; }
+  
+  /* ── TABS (override bottom border for card context) ── */
+  .tabs { border-bottom: 1px solid var(--border); }
+  
+  /* ── STRENGTH BAR ── */
+  .strength-bar {
+    height: 2px;
+    background: var(--border);
+    border-radius: 1px;
+    margin-top: 8px;
+    overflow: hidden;
+    display: none;
+  }
+  .strength-bar.show { display: block; }
+  .strength-fill { height: 100%; transition: width .3s, background .3s; }
+  
+  /* ── EXTRAS ── */
+  .form-extras {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: -6px 0 22px;
+  }
+  
+  .remember { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .remember input[type=checkbox] {
+    appearance: none;
+    width: 15px; height: 15px;
+    border: 1.5px solid var(--border);
+    border-radius: 2px;
+    background: var(--bg);
+    cursor: pointer;
+    position: relative;
+    transition: all .15s;
+    flex-shrink: 0;
+  }
+  .remember input[type=checkbox]:checked { background: var(--blue); border-color: var(--blue); }
+  .remember input[type=checkbox]:checked::after {
+    content: '';
+    position: absolute;
+    left: 3px; top: 1px;
+    width: 5px; height: 8px;
+    border: 1.5px solid #fff;
+    border-top: none; border-left: none;
+    transform: rotate(45deg);
+  }
+  .remember span { font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  
+  .forgot { font-size: 12px; font-weight: 600; color: var(--blue); text-decoration: none; letter-spacing: 0.3px; text-transform: uppercase; }
+  .forgot:hover { text-decoration: underline; }
+  
+  /* ── DIVIDER ── */
+  .divider { display: flex; align-items: center; gap: 12px; margin: 4px 0 12px; }
+  .divider hr   { flex: 1; border: none; border-top: 1px solid var(--border); }
+  .divider span { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  
+  /* ── RANKING LINK ── */
+  .ranking-link-bar {
+    text-align: center;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+  }
+  .ranking-link-bar a {
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    font-family: var(--font-cond);
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }

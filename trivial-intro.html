@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trivial</title>
+<link rel="stylesheet" href="css/shared.css">
+<link rel="stylesheet" href="css/pages/intro.css">
+</head>
+<body>
+<div class="splash" id="splash">
+  <div class="glow"></div>
+  <div class="logo-wrap"><img src="images/logo-trivial.png" alt="Logo"></div>
+</div>
+<script>
+  setTimeout(() => {
+    document.getElementById('splash').classList.add('out');
+    setTimeout(() => { window.location.href = 'trivial-login.html'; }, 500);
+  }, 3000);
+</script>
+</body>
+</html>

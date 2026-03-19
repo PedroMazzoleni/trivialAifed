@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trivial — Juego vs IA</title>
+<link rel="icon" type="image/png" href="images/logo-trivial.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/shared.css">
+<link rel="stylesheet" href="css/pages/ia-juego.css">
+</head>
+<body>
+
+<!-- GAME SCREEN -->
+<div class="screen active" id="screen-game">
+
+  <div class="topbar" id="topbar" style="display:none">
+    <div class="topbar-left">
+      <button class="btn-exit" onclick="exitGame()">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        Salir
+      </button>
+      <span class="topbar-level" id="topbar-level">Fácil</span>
+    </div>
+    <div class="topbar-right">
+      <div class="score-display">
+        <span class="score-label">Puntos</span>
+        <span class="score-val" id="score-display">0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="progress-bar" id="progress-bar" style="display:none">
+    <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+
+  <div class="game-inner">
+    <div class="q-meta">
+      <span class="q-counter" id="q-counter">Pregunta 1 / 10</span>
+      <span class="q-category" id="q-category">Geografía</span>
+    </div>
+
+    <div class="timer-wrap">
+      <div class="timer-bar">
+        <div class="timer-fill" id="timer-fill"></div>
+      </div>
+      <span class="timer-num" id="timer-num">20</span>
+    </div>
+
+    <div class="question-text" id="question-text">Cargando pregunta...</div>
+
+    <div class="options" id="options"></div>
+
+    <div class="feedback" id="feedback">
+      <div>
+        <span class="feedback-title" id="feedback-title">Correcto</span>
+        <span id="feedback-detail"></span>
+      </div>
+      <button class="btn-next" id="btn-next" onclick="nextQuestion()">
+        Siguiente →
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- RESULTS SCREEN -->
+<div class="screen" id="screen-results">
+  <div class="results-inner">
+
+    <div class="result-header">
+      <span class="result-title">Partida terminada</span>
+      <div class="result-score-big">
+        <span id="res-score">0</span><span>/10</span>
+      </div>
+      <div class="result-msg" id="res-msg">Buen intento</div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box">
+        <span class="stat-box-num" id="res-correct">0</span>
+        <span class="stat-box-label">Correctas</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-box-num" id="res-wrong">0</span>
+        <span class="stat-box-label">Erróneas</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-box-num" id="res-time">0s</span>
+        <span class="stat-box-label">Tiempo medio</span>
+      </div>
+    </div>
+
+    <div class="ia-row">
+      <span class="ia-label">Puntuación IA</span>
+      <span class="ia-score" id="ia-score-display">—</span>
+      <span class="ia-verdict" id="ia-verdict">—</span>
+    </div>
+
+    <div class="result-btns">
+      <button class="btn btn-primary" onclick="restartGame()">Jugar de nuevo</button>
+      <button class="btn btn-ghost"   onclick="goToLevels()">Cambiar nivel</button>
+      <button class="btn btn-ghost"   onclick="goHome()">Volver al inicio</button>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/pages/ia-juego.js"></script>
+</body>
+</html>

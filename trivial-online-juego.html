@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trivial — Online</title>
+<link rel="icon" type="image/png" href="images/logo-trivial.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/shared.css">
+<link rel="stylesheet" href="css/pages/online-juego.css">
+</head>
+<body>
+
+<!-- Mute button -->
+<button class="mute-btn" id="mute-btn" onclick="toggleMute()" title="Silenciar">
+  <svg id="mute-icon-on" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+  </svg>
+  <svg id="mute-icon-off" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+    <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
+  </svg>
+</button>
+
+<!-- ══════════ WAITING ══════════ -->
+<div class="screen active" id="screen-waiting">
+  <div class="wait-inner">
+    <span class="wait-brand">Trivial — Online</span>
+    <div class="wait-title" id="wait-title">Sala de espera</div>
+    <div class="wait-sub" id="wait-sub">Esperando a que todos estén listos...</div>
+    <div class="wait-players" id="wait-players"></div>
+    <div class="dots"><span></span><span></span><span></span></div>
+  </div>
+</div>
+
+<!-- ══════════ SPIN ══════════ -->
+<div class="screen" id="screen-spin">
+
+  <div class="spin-top">
+    <div class="turn-banner">Turno de <strong id="turn-name">—</strong></div>
+    <div class="round-badge" id="spin-round-badge">Ronda 1 / 6</div>
+  </div>
+
+  <div class="wheel-wrap">
+    <canvas id="wheel-canvas" width="340" height="340"></canvas>
+    <div class="wheel-pointer"></div>
+  </div>
+
+  <div class="cat-reveal" id="cat-reveal">
+    <span class="cat-reveal-label">Categoría</span>
+    <span class="cat-reveal-name" id="cat-reveal-name">—</span>
+  </div>
+
+  <div class="spin-controls" id="spin-controls">
+    <button class="btn-main" id="btn-spin" onclick="spinWheel()">Girar ruleta</button>
+  </div>
+
+  <div class="spin-waiting" id="spin-wait">
+    <div class="dots"><span></span><span></span><span></span></div>
+    <span id="spin-wait-text">Esperando...</span>
+  </div>
+
+  <div class="mini-scores" id="mini-scores"></div>
+</div>
+
+<!-- ══════════ QUESTION ══════════ -->
+<div class="screen" id="screen-question">
+
+  <div class="q-hud">
+    <div class="q-hud-left">
+      <span class="q-hud-counter" id="q-counter">Ronda 1/10</span>
+      <span class="q-hud-cat" id="q-cat">—</span>
+    </div>
+    <div class="q-hud-right">
+      <div class="q-timer-wrap">
+        <div class="q-timer-bar"><div class="q-timer-fill" id="timer-fill"></div></div>
+        <span class="q-timer-num" id="timer-num">15</span>
+      </div>
+      <span class="q-score-chip" id="my-score-hud">0 pts</span>
+    </div>
+  </div>
+
+  <div class="question-panel">
+    <div class="q-text" id="q-text">—</div>
+    <div class="q-options" id="q-options"></div>
+    <div class="q-feedback" id="q-feedback">
+      <div>
+        <span class="fb-title" id="fb-title">Correcto</span>
+        <span id="fb-detail"></span>
+      </div>
+      <button class="btn-next" id="btn-next" onclick="proceedNextTurn()">Siguiente →</button>
+    </div>
+    <div class="q-waiting" id="q-waiting">
+      <div class="dots"><span></span><span></span><span></span></div>
+      <span id="q-waiting-text">Esperando respuesta...</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SCOREBOARD ══════════ -->
+<div class="screen" id="screen-scoreboard">
+  <div class="sb-wrap">
+
+    <div class="sb-header">
+      <span class="sb-label">Marcador</span>
+      <div class="sb-round" id="sb-round">Ronda 1</div>
+      <div class="sb-sub" id="sb-sub">Quedan 9 preguntas</div>
+    </div>
+
+    <div class="sb-answer-banner" id="sb-banner">
+      <div class="sb-banner-icon" id="sb-icon">+</div>
+      <div class="sb-banner-text">
+        <span class="sb-banner-title" id="sb-banner-title">Correcto</span>
+        <span class="sb-banner-detail" id="sb-banner-detail">—</span>
+      </div>
+      <span class="sb-banner-pts" id="sb-banner-pts"></span>
+    </div>
+
+    <div class="sb-title-row">
+      <span class="sb-col-label">Jugador</span>
+      <span class="sb-col-label">Puntos</span>
+    </div>
+
+    <div class="sb-list" id="sb-list"></div>
+
+    <div class="sb-countdown">
+      <div class="sb-countdown-bar">
+        <div class="sb-countdown-fill" id="sb-fill" style="width:100%"></div>
+      </div>
+      <div class="sb-countdown-text" id="sb-countdown-text">Siguiente en 5s...</div>
+      <button class="sb-btn-next" id="sb-btn-next" onclick="proceedNextTurn()">
+        Continuar →
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════ RESULTS ══════════ -->
+<div class="screen" id="screen-results">
+  <div class="results-inner">
+    <div class="res-header">
+      <span class="res-brand">Partida terminada</span>
+      <div class="res-title" id="res-title">Fin</div>
+      <div class="res-msg" id="res-msg">—</div>
+    </div>
+    <div class="podium" id="podium"></div>
+    <div class="res-btns">
+      <button class="btn btn-primary" onclick="playAgain()">Jugar de nuevo</button>
+      <button class="btn btn-ghost"   onclick="goHome()">Volver al inicio</button>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/pages/online-juego.js"></script>
+</body>
+</html>

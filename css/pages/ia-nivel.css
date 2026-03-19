@@ -1,0 +1,60 @@
+/* pages/ia-nivel.css */
+
+.page { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; }
+
+.header { text-align: center; margin-bottom: 48px; animation: rise .38s cubic-bezier(0.16,1,0.3,1) both; }
+.header h1 { font-family: var(--font-cond); font-weight: 800; font-size: clamp(30px,5vw,42px); text-transform: uppercase; letter-spacing: -0.5px; color: var(--text); line-height: 1; margin-bottom: 10px; }
+.header p  { font-size: 14px; color: var(--muted); }
+
+.brand-green { font-family: var(--font-cond); font-weight: 800; font-size: 12px; letter-spacing: 4px; text-transform: uppercase; color: var(--green); margin-bottom: 14px; display: block; }
+
+/* ── LEVEL CARDS ── */
+.levels { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 480px; animation: rise .42s .06s cubic-bezier(0.16,1,0.3,1) both; }
+
+.level-card {
+  background: #0d1235;
+  border: 1.5px solid var(--border);
+  border-radius: 4px; padding: 24px 28px;
+  cursor: pointer; transition: all .18s;
+  display: flex; align-items: center; gap: 20px;
+  position: relative; overflow: hidden;
+}
+.level-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--level-color, var(--green)); transform: scaleY(0); transition: transform .2s; transform-origin: bottom; }
+.level-card:hover            { border-color: var(--level-color, var(--green)); box-shadow: 0 8px 32px rgba(0,0,0,0.06); transform: translateX(4px); }
+.level-card:hover::before    { transform: scaleY(1); }
+.level-card:active           { transform: translateX(2px); }
+.level-card.selected         { border-color: var(--level-color, var(--green)); background: var(--level-bg, #edfaf3); }
+.level-card.selected::before { transform: scaleY(1); }
+
+/* ── DOT ── */
+.level-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; transition: all .18s; position: relative; }
+.level-card.selected .level-dot,
+.level-card:hover    .level-dot { border-color: var(--level-color, var(--green)); background: var(--level-color, var(--green)); }
+.level-card.selected .level-dot::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: #fff; }
+
+/* ── TEXTO ── */
+.level-info { flex: 1; }
+.level-name { font-family: var(--font-cond); font-weight: 800; font-size: 20px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text); margin-bottom: 4px; }
+.level-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+/* ── PIPS ── */
+.level-pips { display: flex; gap: 5px; flex-shrink: 0; }
+.pip        { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+.pip.filled { background: var(--level-color, var(--green)); }
+
+/* ── BOTÓN START ── */
+.btn-start-wrap { width: 100%; max-width: 480px; margin-top: 20px; animation: rise .42s .12s cubic-bezier(0.16,1,0.3,1) both; }
+.btn-start {
+  width: 100%; padding: 15px;
+  background: var(--green); color: #fff;
+  border: none; border-radius: 4px;
+  font-family: var(--font-cond); font-weight: 800; font-size: 16px;
+  letter-spacing: 2px; text-transform: uppercase;
+  cursor: pointer; transition: all .18s;
+  opacity: 0.4; pointer-events: none;
+}
+.btn-start.ready             { opacity: 1; pointer-events: all; }
+.btn-start.ready:hover       { background: var(--green-d); }
+.btn-start.ready:active      { transform: scale(0.99); }
+
+@media (max-width: 560px) { .btn-back { top: 16px; left: 16px; } .level-card { padding: 20px; } }
