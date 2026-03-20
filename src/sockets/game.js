@@ -1,8 +1,8 @@
 // ─── game.js ─────────────────────────────────────────────────────────────────
 // Todos los eventos Socket.IO del juego: lobby, ruleta, preguntas, puntuación.
 
-const { rooms, defaultCategories, getTenantData, getUniqueQuestion, createRoom } = require('./store');
-const { updateUserStats } = require('./db');
+const { rooms, defaultCategories, getTenantData, getUniqueQuestion, createRoom } = require('../store');
+const { updateUserStats } = require('../db');
 
 // ─── Broadcast helper ────────────────────────────────────────────────────────
 function broadcastRoom(io, code) {
@@ -226,7 +226,7 @@ function registerGameHandlers(io, socket) {
       const currentPlayer = room.players[room.currentPlayerIdx];
       if (!currentPlayer || currentPlayer.id !== socket.id) return;
 
-      const correct = answer.trim() === room.currentQuestion.a.trim();
+      const correct = answer.trim().toLowerCase() === room.currentQuestion.a.trim().toLowerCase();
       console.log('📝 Answer:', answer, '| Correct:', room.currentQuestion.a, '| Match:', correct);
 
       if (correct) {
@@ -262,7 +262,6 @@ function registerGameHandlers(io, socket) {
       room.lastAnswer = { playerId: socket.id, playerName: currentPlayer.name, answer, correct };
       room.allAnswers = [{ playerId: socket.id, playerName: currentPlayer.name, answer, correct }];
       room.state      = 'answer';
-      room.answers    = {};
       broadcastRoom(io, code);
     } catch(e) { console.error('game:answer error:', e.message); }
   });
@@ -297,7 +296,6 @@ function registerGameHandlers(io, socket) {
     room.currentQuestion= null;
     room.currentCategory= null;
     room.lastAnswer     = null;
-    room.answers        = {};
     room.allAnswers     = [];
     room.specialEffect  = null;
     broadcastRoom(io, code);

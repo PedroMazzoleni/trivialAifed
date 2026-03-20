@@ -5,8 +5,8 @@
 //   - Points awarded per correct answer
 //   - Podium shown at end
 
-const { getTenantData, getUniqueQuestion, defaultCategories } = require('./store');
-const { updateUserStats } = require('./db');
+const { getTenantData, getUniqueQuestion, defaultCategories } = require('../store');
+const { updateUserStats } = require('../db');
 
 // In-memory event rooms: eventId -> eventRoom
 const eventRooms = {};
@@ -166,7 +166,7 @@ function registerEventGameHandlers(io, socket) {
     // Don't allow double answers
     if (room.allAnswers.find(a => a.playerId === socket.id)) return;
 
-    const correct = answer.trim() === room.currentQuestion.a.trim();
+    const correct = answer.trim().toLowerCase() === room.currentQuestion.a.trim().toLowerCase();
 
     if (correct) {
       const diffPts = { easy: 3, medium: 6, hard: 12 };

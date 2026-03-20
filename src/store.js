@@ -255,7 +255,7 @@ const defaultCategories = [
     if (!room.usedQuestions[categoryId])  room.usedQuestions[categoryId] = [];
   
     const used      = room.usedQuestions[categoryId];
-    let available   = pool.filter((_, i) => !used.includes(pool.indexOf(pool[i])));
+    let available   = pool.filter(q => !used.includes(allForCat.indexOf(q)));
     if (!available.length) { room.usedQuestions[categoryId] = []; available = pool; }
   
     const picked    = available[Math.floor(Math.random() * available.length)];

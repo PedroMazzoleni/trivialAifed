@@ -1,7 +1,7 @@
 // ─── tenant.js ────────────────────────────────────────────────────────────────
 // Rutas REST para gestión de tenants: categorías y preguntas desde el panel admin.
 
-const { getTenantData } = require('./store');
+const { getTenantData } = require('../store');
 
 function registerTenantRoutes(app) {
 
