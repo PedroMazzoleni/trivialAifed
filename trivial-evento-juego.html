@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trivial — Event Game</title>
+<link rel="icon" type="image/png" href="images/logo-trivial.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/shared.css">
+<link rel="stylesheet" href="css/pages/online-juego.css">
+<style>
+/* ── EVENT-SPECIFIC OVERRIDES ── */
+
+/* Waiting lobby */
+.ev-lobby {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ev-event-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(45,125,210,0.12);
+  border: 1px solid rgba(45,125,210,0.3);
+  border-radius: 50px;
+  padding: 6px 18px;
+  font-family: var(--font-cond);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 4px;
+}
+
+.ev-title-display {
+  font-family: var(--font-cond);
+  font-weight: 800;
+  font-size: clamp(26px, 5vw, 38px);
+  text-transform: uppercase;
+  letter-spacing: -0.5px;
+  color: #fff;
+  line-height: 1.1;
+}
+
+.ev-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ev-meta-chip {
+  font-family: var(--font-cond);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5);
+}
+
+/* Players list in lobby */
+.ev-players-wrap {
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ev-players-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.ev-players-label {
+  font-family: var(--font-cond);
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ev-players-count {
+  font-family: var(--font-cond);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--blue);
+}
+
+.ev-player-list {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.ev-player-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.04);
+  animation: rise .2s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+.ev-player-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ev-player-name { flex: 1; font-size: 13px; font-weight: 500; }
+
+/* Question screen - ALL players answer */
+.ev-progress-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  z-index: 50;
+}
+.ev-progress-fill {
+  height: 100%;
+  background: var(--blue);
+  transition: width .4s ease;
+}
+
+.ev-answered-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(6px);
+  border-radius: 4px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 4px;
+}
+
+.ev-answered-dots {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.ev-answered-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  transition: all .3s;
+}
+.ev-answered-dot.done {
+  border-color: var(--green);
+  background: var(--green);
+}
+.ev-answered-dot.me-done {
+  border-color: var(--blue);
+  background: var(--blue);
+  box-shadow: 0 0 6px var(--blue);
+}
+
+/* Answer scoreboard - live results */
+.ev-answer-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 5px;
+  animation: rise .25s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* Podium / results */
+.ev-podium-wrap {
+  width: 100%;
+  max-width: 540px;
+}
+
+.ev-podium-title {
+  font-family: var(--font-cond);
+  font-weight: 900;
+  font-size: clamp(32px, 7vw, 52px);
+  text-transform: uppercase;
+  letter-spacing: -1px;
+  color: #fff;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.ev-podium-sub {
+  font-size: 13px;
+  color: rgba(255,255,255,0.4);
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.ev-podium-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 6px;
+  animation: rise .3s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+.ev-podium-rank {
+  font-family: var(--font-cond);
+  font-weight: 900;
+  font-size: 22px;
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+  color: rgba(255,255,255,0.2);
+}
+.ev-podium-rank.gold { color: #f5c842; }
+.ev-podium-rank.silver { color: #b0bec5; }
+.ev-podium-rank.bronze { color: #cd7f32; }
+
+.ev-podium-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.ev-podium-name { flex: 1; font-size: 15px; font-weight: 600; }
+.ev-podium-you {
+  font-family: var(--font-cond);
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--blue);
+  background: rgba(45,125,210,0.15);
+  padding: 3px 8px;
+  border-radius: 2px;
+}
+.ev-podium-score {
+  font-family: var(--font-cond);
+  font-weight: 800;
+  font-size: 22px;
+}
+
+/* Host start button */
+.btn-ev-start {
+  width: 100%;
+  padding: 16px;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-family: var(--font-cond);
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .15s;
+  box-shadow: 0 0 30px rgba(45,125,210,0.3);
+}
+.btn-ev-start:hover { background: var(--blue-l); transform: translateY(-2px); }
+.btn-ev-start:active { transform: translateY(0); }
+
+.ev-guest-wait {
+  text-align: center;
+  padding: 14px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Round badge in spin screen */
+.ev-round-badge {
+  font-family: var(--font-cond);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--blue);
+  background: rgba(45,125,210,0.12);
+  border: 1px solid rgba(45,125,210,0.3);
+  padding: 6px 18px;
+  border-radius: 50px;
+}
+</style>
+</head>
+<body>
+
+<!-- Progress bar (rounds) -->
+<div class="ev-progress-bar" id="ev-progress-bar" style="display:none">
+  <div class="ev-progress-fill" id="ev-progress-fill" style="width:0%"></div>
+</div>
+
+<!-- ══════════ SCREEN: LOBBY ══════════ -->
+<div class="screen active" id="screen-lobby" style="background:#0a0e1a">
+  <div class="ev-lobby">
+    <div>
+      <div class="ev-event-badge">🎡 Event Mode</div>
+      <div class="ev-title-display" id="ev-title-display">Loading event...</div>
+      <div class="ev-meta" id="ev-meta" style="margin-top:10px"></div>
+    </div>
+
+    <div class="ev-players-wrap">
+      <div class="ev-players-header">
+        <span class="ev-players-label">Players in lobby</span>
+        <span class="ev-players-count" id="ev-players-count">0</span>
+      </div>
+      <div class="ev-player-list" id="ev-player-list">
+        <div style="padding:16px;color:var(--muted);font-size:13px;text-align:center">Waiting for players...</div>
+      </div>
+    </div>
+
+    <div id="ev-host-actions">
+      <button class="btn-ev-start" id="btn-ev-start" onclick="startEventGame()" style="display:none">
+        Start Game
+      </button>
+      <div class="ev-guest-wait" id="ev-guest-wait" style="display:none">
+        <div class="dots"><span></span><span></span><span></span></div>
+        Waiting for the host to start the game...
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SCREEN: SPIN ══════════ -->
+<div class="screen" id="screen-spin">
+  <div class="spin-top">
+    <div class="ev-round-badge" id="ev-spin-round">Round 1 / 6</div>
+    <div class="turn-banner" style="margin-top:8px">🎡 Spinning the wheel...</div>
+  </div>
+
+  <div class="wheel-wrap">
+    <canvas id="wheel-canvas" width="340" height="340"></canvas>
+    <div class="wheel-pointer"></div>
+  </div>
+
+  <div class="cat-reveal" id="cat-reveal">
+    <span class="cat-reveal-label">Category</span>
+    <span class="cat-reveal-name" id="cat-reveal-name">—</span>
+  </div>
+
+  <div class="mini-scores" id="mini-scores-spin"></div>
+</div>
+
+<!-- ══════════ SCREEN: QUESTION ══════════ -->
+<div class="screen" id="screen-question">
+
+  <div class="q-hud">
+    <div class="q-hud-left">
+      <span class="q-hud-counter" id="q-counter">Round 1/6</span>
+      <span class="q-hud-cat" id="q-cat">—</span>
+    </div>
+    <div class="q-hud-right">
+      <div class="q-timer-wrap">
+        <div class="q-timer-bar"><div class="q-timer-fill" id="timer-fill"></div></div>
+        <span class="q-timer-num" id="timer-num">20</span>
+      </div>
+      <span class="q-score-chip" id="my-score-hud">0 pts</span>
+    </div>
+  </div>
+
+  <div class="question-panel">
+    <!-- Live answer progress -->
+    <div class="ev-answered-strip" id="ev-answered-strip">
+      <span id="ev-answered-text">0 answered</span>
+      <div class="ev-answered-dots" id="ev-answered-dots"></div>
+    </div>
+
+    <div class="q-text" id="q-text">—</div>
+    <div class="q-options" id="q-options"></div>
+
+    <div class="q-feedback" id="q-feedback">
+      <div>
+        <span class="fb-title" id="fb-title">Correct!</span>
+        <span id="fb-detail"></span>
+      </div>
+    </div>
+
+    <div class="q-waiting" id="q-waiting">
+      <div class="dots"><span></span><span></span><span></span></div>
+      <span id="q-waiting-text">Waiting for other players...</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SCREEN: ANSWER / SCOREBOARD ══════════ -->
+<div class="screen" id="screen-scoreboard">
+  <div class="sb-wrap">
+    <div class="sb-header">
+      <span class="sb-label">Round Results</span>
+      <div class="sb-round" id="sb-round">Round 1</div>
+      <div class="sb-sub" id="sb-sub">—</div>
+    </div>
+
+    <div class="sb-answer-banner" id="sb-banner">
+      <div class="sb-banner-icon" id="sb-icon">—</div>
+      <div class="sb-banner-text">
+        <span class="sb-banner-title" id="sb-banner-title">—</span>
+        <span class="sb-banner-detail" id="sb-banner-detail">—</span>
+      </div>
+    </div>
+
+    <div class="sb-title-row">
+      <span class="sb-col-label">Player</span>
+      <span class="sb-col-label">Points</span>
+    </div>
+
+    <div class="sb-list" id="sb-list"></div>
+
+    <div class="sb-countdown">
+      <div class="sb-countdown-bar">
+        <div class="sb-countdown-fill" id="sb-fill" style="width:100%"></div>
+      </div>
+      <div class="sb-countdown-text" id="sb-countdown-text">Next round in 5s...</div>
+      <button class="sb-btn-next" id="sb-btn-next" onclick="hostNextRound()" style="display:none">
+        Next round →
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SCREEN: RESULTS / PODIUM ══════════ -->
+<div class="screen" id="screen-results" style="background:#0a0e1a;overflow-y:auto;justify-content:flex-start;padding-top:48px">
+  <div class="ev-podium-wrap">
+    <div class="ev-podium-title">Final Podium</div>
+    <div class="ev-podium-sub" id="ev-podium-sub">—</div>
+    <div id="ev-podium-list"></div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:24px;padding-bottom:48px">
+      <button class="btn btn-primary" onclick="goToEvents()">Back to Events</button>
+      <button class="btn btn-ghost" onclick="goHome()">Home</button>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/pages/evento-juego.js"></script>
+</body>
+</html>

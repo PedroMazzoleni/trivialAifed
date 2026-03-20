@@ -8,6 +8,7 @@ const { initDB, registerAuthRoutes, getDB } = require('./db');
 const { registerTenantRoutes }              = require('./tenant');
 const { registerGameHandlers }              = require('./game');
 const { registerEventRoutes }              = require('./events');
+const { registerEventGameHandlers }        = require('./event-game');
 
 process.on('uncaughtException',  (err)    => console.error('❌ Uncaught Exception:', err.message));
 process.on('unhandledRejection', (reason) => console.error('❌ Unhandled Rejection:', reason));
@@ -39,14 +40,14 @@ registerAuthRoutes(app);
 registerTenantRoutes(app);
 
 io.on('connection', (socket) => {
-  console.log('🔌 Conectado:', socket.id);
+  console.log('🔌 Connected:', socket.id);
   registerGameHandlers(io, socket);
+  registerEventGameHandlers(io, socket);
 });
 
 const PORT = process.env.PORT || 3000;
 
 initDB().then(() => {
-  // Registrar rutas de eventos DESPUÉS de que la DB esté lista
   registerEventRoutes(app, getDB());
-  server.listen(PORT, () => console.log(`🚀 Servidor en http://localhost:${PORT}`));
+  server.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));
 });
