@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,10 +9,8 @@
 <link rel="stylesheet" href="css/shared.css">
 <link rel="stylesheet" href="css/navbar.css">
 <link rel="stylesheet" href="css/pages/admin.css">
-
 </head>
 <body>
-
 
 <nav class="navbar">
   <div class="navbar-inner">
@@ -21,17 +19,17 @@
       <img class="logo-eu"   src="images/eu-logo.png"     alt="Co-funded by EU">
     </a>
     <ul class="navbar-links">
-      <li><a href="trivial-modos.html">Jugar</a></li>
+      <li><a href="trivial-modos.html">Play</a></li>
       <li><a href="trivial-ranking.html">Ranking</a></li>
-      <li><a href="trivial-eventos.html">Eventos</a></li>
+      <li><a href="trivial-eventos.html">Events</a></li>
       <li id="dd-modos">
         <button onclick="toggleDropdown('dd-modos')">
-          Modos
+          Modes
           <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <ul class="navbar-dropdown">
-          <li><a href="trivial-lobby.html">🌐 Jugar Online</a></li>
-          <li><a href="trivial-ia-nivel.html">🤖 Jugar vs IA</a></li>
+          <li><a href="trivial-lobby.html">🌐 Play Online</a></li>
+          <li><a href="trivial-ia-nivel.html">🤖 Play vs AI</a></li>
         </ul>
       </li>
       <li id="dd-admin" style="display:none">
@@ -40,7 +38,7 @@
           <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <ul class="navbar-dropdown">
-          <li><a href="trivial-admin.html">📊 Panel Admin</a></li>
+          <li><a href="trivial-admin.html">📊 Admin Panel</a></li>
         </ul>
       </li>
     </ul>
@@ -51,17 +49,15 @@
   </div>
 </nav>
 <div class="navbar-mobile" id="navbar-mobile">
-  <a href="trivial-modos.html">Jugar</a>
+  <a href="trivial-modos.html">Play</a>
   <a href="trivial-ranking.html">Ranking</a>
-  <a href="trivial-eventos.html">Eventos</a>
+  <a href="trivial-eventos.html">Events</a>
   <a href="trivial-lobby.html" class="mobile-sub">🌐 Online</a>
-  <a href="trivial-ia-nivel.html" class="mobile-sub">🤖 vs IA</a>
+  <a href="trivial-ia-nivel.html" class="mobile-sub">🤖 vs AI</a>
   <div class="mobile-divider"></div>
-  <a href="trivial-login.html" id="mobile-login">Iniciar sesión</a>
-  <a href="trivial-admin.html" id="mobile-admin" style="display:none">Panel Admin</a>
+  <a href="trivial-login.html" id="mobile-login">Sign in</a>
+  <a href="trivial-admin.html" id="mobile-admin" style="display:none">Admin Panel</a>
 </div>
-
-
 
 <!-- TOPBAR -->
 <div class="topbar">
@@ -71,15 +67,15 @@
   </div>
   <a class="btn-back-top" href="trivial-modos.html">
     <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-    Salir
+    Exit
   </a>
 </div>
 
-<!-- MODAL -->
+<!-- GENERIC MODAL (for question editing) -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <div class="modal-header">
-      <span class="modal-title" id="modal-title">Nueva pregunta</span>
+      <span class="modal-title" id="modal-title">New question</span>
       <button class="modal-close" onclick="closeModal()">
         <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
@@ -89,22 +85,40 @@
   </div>
 </div>
 
+<!-- EVENT MODAL -->
+<div class="modal-overlay" id="modal-event" style="z-index:600">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-event-title">New event</span>
+      <button class="modal-close" onclick="closeEventModal()">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="modal-event-body"></div>
+    <div class="modal-footer" id="modal-event-footer"></div>
+  </div>
+</div>
+
 <div class="layout">
 
   <!-- SIDEBAR -->
   <div class="sidebar">
-    <span class="sidebar-title">Categorías</span>
+    <span class="sidebar-title">Categories</span>
     <div id="sidebar-cats"></div>
 
     <div class="sidebar-section">
       <span class="sidebar-title">Panel</span>
       <div class="nav-item" onclick="showPage('dashboard')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        Resumen
+        Overview
       </div>
       <div class="nav-item" onclick="showPage('users')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Jugadores
+        Players
+      </div>
+      <div class="nav-item" onclick="showPage('events')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Events
       </div>
     </div>
   </div>
@@ -116,18 +130,18 @@
     <div class="page" id="page-users">
       <div class="page-header">
         <div>
-          <div class="page-title">Jugadores</div>
-          <div class="page-sub">Usuarios registrados en el sistema</div>
+          <div class="page-title">Players</div>
+          <div class="page-sub">Registered users in the system</div>
         </div>
         <button class="btn btn-primary" onclick="loadUsers()">
           <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-          Actualizar
+          Refresh
         </button>
       </div>
       <div class="card">
         <div class="card-header">
-          <span class="card-title">Lista de jugadores registrados</span>
-          <span id="users-count" style="font-size:12px;color:var(--muted)">0 jugadores</span>
+          <span class="card-title">Registered players</span>
+          <span id="users-count" style="font-size:12px;color:var(--muted)">0 players</span>
         </div>
         <div id="users-list" style="padding:8px"></div>
       </div>
@@ -137,18 +151,18 @@
     <div class="page active" id="page-dashboard">
       <div class="page-header">
         <div>
-          <div class="page-title">Resumen</div>
-          <div class="page-sub">Estado actual del banco de preguntas</div>
+          <div class="page-title">Overview</div>
+          <div class="page-sub">Current state of the question bank</div>
         </div>
         <button class="btn btn-primary" onclick="showPage('questions'); openNewQuestion()">
           <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Nueva pregunta
+          New question
         </button>
       </div>
       <div class="stats-grid" id="stats-grid"></div>
       <div class="card">
         <div class="card-header">
-          <span class="card-title">Distribución por categoría y dificultad</span>
+          <span class="card-title">Distribution by category and difficulty</span>
         </div>
         <div class="card-body" id="distribution-table"></div>
       </div>
@@ -158,30 +172,46 @@
     <div class="page" id="page-questions">
       <div class="page-header">
         <div>
-          <div class="page-title" id="questions-title">Preguntas</div>
-          <div class="page-sub" id="questions-sub">Todas las categorías</div>
+          <div class="page-title" id="questions-title">Questions</div>
+          <div class="page-sub" id="questions-sub">All categories</div>
         </div>
         <button class="btn btn-primary" onclick="openNewQuestion()">
           <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Añadir pregunta
+          Add question
         </button>
       </div>
 
       <div class="filter-bar">
-        <input type="text" id="search-input" placeholder="Buscar pregunta..." oninput="renderQuestions()">
+        <input type="text" id="search-input" placeholder="Search question..." oninput="renderQuestions()">
         <select id="filter-cat" onchange="renderQuestions()">
-          <option value="">Todas las categorías</option>
+          <option value="">All categories</option>
         </select>
         <select id="filter-diff" onchange="renderQuestions()">
-          <option value="">Todas las dificultades</option>
-          <option value="fácil">Fácil</option>
-          <option value="medio">Medio</option>
-          <option value="difícil">Difícil</option>
+          <option value="">All difficulties</option>
+          <option value="fácil">Easy</option>
+          <option value="medio">Medium</option>
+          <option value="difícil">Hard</option>
         </select>
       </div>
 
       <div id="msg-questions" class="msg"></div>
       <div id="questions-list"></div>
+    </div>
+
+    <!-- EVENTS -->
+    <div class="page" id="page-events">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Events</div>
+          <div class="page-sub">Manage special events with custom questions</div>
+        </div>
+        <button class="btn btn-primary" onclick="openNewEvent()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New event
+        </button>
+      </div>
+      <div id="msg-events" class="msg"></div>
+      <div id="events-list"></div>
     </div>
 
   </div>
