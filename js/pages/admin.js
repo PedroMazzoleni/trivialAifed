@@ -1,7 +1,6 @@
 // pages/admin.js
 // Requiere: utils.js
 
-// Redirigir si no es admin
 if (!Session.isAdmin()) goTo('trivial-login.html');
 
 const TENANT = 'default';
@@ -15,11 +14,16 @@ const CAT_META = {
   kenya:   { name:'Kenya',     color:'#cc2200' },
 };
 
+const DIFF_COLORS = { fácil:'#18c25a', medio:'#f5a623', difícil:'#e84545' };
+
 let data       = { categories: [], questions: {} };
 let currentCat = null;
 let editingQ   = null;
 
-// ── INIT ─────────────────────────────────────────────────────────────────────
+// ════════════════════════════════════
+//  BANCO DE PREGUNTAS (código original)
+// ════════════════════════════════════
+
 async function loadData() {
   try {
     const raw = await apiGet(`/api/tenant/${TENANT}`);
@@ -39,7 +43,6 @@ async function loadData() {
   renderQuestions();
 }
 
-// ── SIDEBAR ───────────────────────────────────────────────────────────────────
 function renderSidebar() {
   setHTML('sidebar-cats', data.categories.map(cat => {
     const count = (data.questions[cat.id] || []).length;
@@ -61,7 +64,6 @@ function filterByCat(catId) {
   showPage('questions');
 }
 
-// ── DASHBOARD ─────────────────────────────────────────────────────────────────
 function renderDashboard() {
   const allQ   = Object.values(data.questions).flat();
   const total  = allQ.length;
@@ -104,7 +106,6 @@ function renderDashboard() {
     </table>`);
 }
 
-// ── QUESTIONS ─────────────────────────────────────────────────────────────────
 function renderFilterSelects() {
   el('filter-cat').innerHTML = '<option value="">Todas las categorías</option>' +
     data.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
@@ -170,7 +171,6 @@ function renderQuestions() {
   }).join('');
 }
 
-// ── MODAL ─────────────────────────────────────────────────────────────────────
 function openNewQuestion() {
   editingQ = null;
   setText('modal-title', 'Nueva pregunta');
@@ -199,9 +199,9 @@ function questionForm(q, selectedCat) {
       <div class="field"><label>Opción 3</label><input type="text" id="q-opt3" value="${wrongOpts[1]||''}" placeholder="Opción incorrecta"></div>
     </div>
     <div class="field"><label>Dificultad</label><select id="q-diff">
-      <option value="fácil"   ${q?.diff==='fácil'  ?'selected':''}>Fácil (+1)</option>
-      <option value="medio"   ${q?.diff==='medio'  ?'selected':''}>Medio (+2)</option>
-      <option value="difícil" ${q?.diff==='difícil'?'selected':''}>Difícil (+3)</option>
+      <option value="fácil"   ${q?.diff==='fácil'  ?'selected':''}>Fácil</option>
+      <option value="medio"   ${q?.diff==='medio'  ?'selected':''}>Medio</option>
+      <option value="difícil" ${q?.diff==='difícil'?'selected':''}>Difícil</option>
     </select></div>`;
 }
 
@@ -251,17 +251,16 @@ async function saveToServer() {
 
 function openModal()  { el('modal').classList.add('show'); }
 function closeModal() { el('modal').classList.remove('show'); }
-
 el('modal').addEventListener('click', e => { if (e.target === el('modal')) closeModal(); });
 
 function showPage(id) {
   qsAll('.page').forEach(p => p.classList.remove('active'));
   el('page-' + id).classList.add('active');
+  if (id === 'events') loadEvents();
 }
 
 function refresh() { renderSidebar(); renderDashboard(); renderQuestions(); }
 
-// ── USUARIOS ─────────────────────────────────────────────────────────────────
 async function loadUsers() {
   try {
     const list = await apiGet('/api/users');
@@ -281,6 +280,310 @@ async function loadUsers() {
   }
 }
 
-// ── START ─────────────────────────────────────────────────────────────────────
+// ════════════════════════════════════
+//  GESTIÓN DE EVENTOS
+// ════════════════════════════════════
+
+let eventQuestions = [];  // preguntas del evento en edición
+let editingEventId = null;
+
+const CAT_OPTIONS = Object.entries(CAT_META)
+  .map(([id, m]) => `<option value="${id}">${m.name}</option>`).join('');
+
+async function loadEvents() {
+  try {
+    const events = await apiGet('/api/events');
+    renderEventsList(events);
+  } catch {
+    setHTML('events-list', '<div style="padding:20px;color:var(--muted)">Error al cargar eventos</div>');
+  }
+}
+
+function renderEventsList(events) {
+  if (!events.length) {
+    setHTML('events-list', `
+      <div style="text-align:center;padding:60px;color:var(--muted);font-size:14px">
+        No hay eventos creados todavía.<br>
+        <button class="btn btn-primary" style="margin-top:20px" onclick="openNewEvent()">Crear primer evento</button>
+      </div>`);
+    return;
+  }
+
+  setHTML('events-list', events.map(ev => {
+    const color = CAT_META[ev.category]?.color || '#888';
+    const diffClass = ev.difficulty === 'fácil' ? 'easy' : ev.difficulty === 'medio' ? 'medio' : 'dificil';
+    return `
+      <div class="card" style="margin-bottom:12px;border-left:3px solid ${color}">
+        <div class="card-header" style="background:var(--card-bg)">
+          <div style="display:flex;align-items:center;gap:10px;flex:1">
+            <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0"></div>
+            <span class="card-title" style="font-size:15px">${ev.title}</span>
+            <span class="q-diff-badge ${diffClass}">${ev.difficulty}</span>
+            <span style="font-size:11px;color:var(--muted);margin-left:4px">${ev.category}</span>
+            <span style="font-size:11px;color:${ev.status==='active'?'#18c25a':ev.status==='upcoming'?'#3B9EFF':'var(--muted)'};margin-left:4px;font-weight:600;text-transform:uppercase">● ${ev.status}</span>
+          </div>
+          <div class="q-actions">
+            <button class="btn-icon" onclick="openEditEvent(${ev.id})" title="Editar">
+              <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="btn-icon danger" onclick="deleteEvent(${ev.id})" title="Eliminar">
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            </button>
+          </div>
+        </div>
+        ${ev.description ? `<div style="padding:10px 18px;font-size:13px;color:var(--muted)">${ev.description}</div>` : ''}
+      </div>`;
+  }).join(''));
+}
+
+function openNewEvent() {
+  editingEventId = null;
+  eventQuestions = [];
+  setText('modal-event-title', 'Nuevo evento');
+  renderEventForm({});
+  openEventModal();
+}
+
+async function openEditEvent(id) {
+  try {
+    const ev = await apiGet(`/api/events/${id}`);
+    editingEventId = id;
+    eventQuestions = (ev.questions || []).map(q => ({
+      question: q.question, answer: q.answer,
+      options: q.options, difficulty: q.difficulty
+    }));
+    setText('modal-event-title', 'Editar evento');
+    renderEventForm(ev);
+    openEventModal();
+  } catch {
+    alert('Error al cargar el evento');
+  }
+}
+
+function renderEventForm(ev) {
+  setHTML('modal-event-body', `
+    <div class="field">
+      <label>Título del evento</label>
+      <input type="text" id="ev-title" value="${ev.title || ''}" placeholder="Nombre del evento">
+    </div>
+    <div class="field">
+      <label>Descripción</label>
+      <textarea id="ev-desc" rows="2" placeholder="Descripción breve del evento">${ev.description || ''}</textarea>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Categoría</label>
+        <select id="ev-cat">
+          ${Object.entries(CAT_META).map(([id, m]) =>
+            `<option value="${id}" ${ev.category === id ? 'selected' : ''}>${m.name}</option>`
+          ).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label>Dificultad</label>
+        <select id="ev-diff">
+          <option value="fácil"   ${ev.difficulty === 'fácil'   ? 'selected' : ''}>Fácil</option>
+          <option value="medio"   ${ev.difficulty === 'medio'   ? 'selected' : ''}>Medio</option>
+          <option value="difícil" ${ev.difficulty === 'difícil' ? 'selected' : ''}>Difícil</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Estado</label>
+        <select id="ev-status">
+          <option value="active"   ${ev.status === 'active'   ? 'selected' : ''}>Activo</option>
+          <option value="upcoming" ${ev.status === 'upcoming' ? 'selected' : ''}>Próximo</option>
+          <option value="finished" ${ev.status === 'finished' ? 'selected' : ''}>Finalizado</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Fecha inicio</label>
+        <input type="datetime-local" id="ev-starts" value="${ev.starts_at ? ev.starts_at.slice(0,16) : ''}">
+      </div>
+    </div>
+    <div class="field">
+      <label>Fecha fin</label>
+      <input type="datetime-local" id="ev-ends" value="${ev.ends_at ? ev.ends_at.slice(0,16) : ''}">
+    </div>
+
+    <div style="border-top:1px solid var(--border);margin:16px 0 14px;padding-top:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <span style="font-family:var(--font-cond);font-weight:800;font-size:14px;text-transform:uppercase;letter-spacing:0.5px">
+          Preguntas del evento
+        </span>
+        <button class="btn btn-primary" style="padding:8px 16px;font-size:12px" onclick="addEventQuestion()">+ Añadir pregunta</button>
+      </div>
+      <div id="ev-questions-list"></div>
+    </div>
+  `);
+
+  setHTML('modal-event-footer', `
+    <button class="btn btn-ghost" onclick="closeEventModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveEvent()">
+      ${editingEventId ? 'Guardar cambios' : 'Crear evento'}
+    </button>
+  `);
+
+  renderEventQuestionsList();
+}
+
+function renderEventQuestionsList() {
+  const list = el('ev-questions-list');
+  if (!list) return;
+
+  if (!eventQuestions.length) {
+    list.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;border:1.5px dashed var(--border);border-radius:4px">
+      Sin preguntas todavía. Pulsa "Añadir pregunta" para empezar.
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = eventQuestions.map((q, i) => {
+    const diffClass = q.difficulty === 'fácil' ? 'easy' : q.difficulty === 'medio' ? 'medio' : 'dificil';
+    return `
+      <div class="q-item" style="margin-bottom:8px;border:1px solid var(--border);border-radius:4px">
+        <span class="q-diff-badge ${diffClass}">${q.difficulty}</span>
+        <div class="q-text-wrap" style="flex:1">
+          <div class="q-text" style="font-size:13px">${q.question}</div>
+          <div class="q-answer" style="font-size:11px">✓ ${q.answer}</div>
+        </div>
+        <div class="q-actions">
+          <button class="btn-icon" onclick="editEventQuestion(${i})" title="Editar">
+            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="btn-icon danger" onclick="removeEventQuestion(${i})" title="Eliminar">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function addEventQuestion() {
+  showEventQuestionSubModal(-1, {});
+}
+
+function editEventQuestion(idx) {
+  showEventQuestionSubModal(idx, eventQuestions[idx]);
+}
+
+function showEventQuestionSubModal(idx, q) {
+  // Usa el mismo modal genérico para la sub-pregunta
+  const isEdit = idx >= 0;
+  setText('modal-title', isEdit ? 'Editar pregunta' : 'Nueva pregunta del evento');
+  setHTML('modal-body', `
+    <div class="field">
+      <label>Pregunta</label>
+      <textarea id="evq-text" rows="3" placeholder="Escribe la pregunta...">${q.question || ''}</textarea>
+    </div>
+    <div class="field">
+      <label>Respuesta correcta</label>
+      <input type="text" id="evq-answer" value="${q.answer || ''}" placeholder="Respuesta correcta">
+    </div>
+    <div class="form-grid">
+      <div class="field"><label>Opción 2</label><input type="text" id="evq-opt2" value="${(q.options && q.options[1]) || ''}" placeholder="Opción incorrecta"></div>
+      <div class="field"><label>Opción 3</label><input type="text" id="evq-opt3" value="${(q.options && q.options[2]) || ''}" placeholder="Opción incorrecta (opcional)"></div>
+    </div>
+    <div class="field">
+      <label>Dificultad</label>
+      <select id="evq-diff">
+        <option value="fácil"   ${q.difficulty === 'fácil'   ? 'selected' : ''}>Fácil</option>
+        <option value="medio"   ${q.difficulty === 'medio'   ? 'selected' : ''}>Medio</option>
+        <option value="difícil" ${q.difficulty === 'difícil' ? 'selected' : ''}>Difícil</option>
+      </select>
+    </div>
+  `);
+  setHTML('modal-footer', `
+    <button class="btn btn-ghost" onclick="closeModal(); openEventModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveEventQuestion(${idx})">Guardar pregunta</button>
+  `);
+  el('modal-event').classList.remove('show');
+  openModal();
+}
+
+function saveEventQuestion(idx) {
+  const question = el('evq-text').value.trim();
+  const answer   = el('evq-answer').value.trim();
+  const opt2     = el('evq-opt2').value.trim();
+  const opt3     = el('evq-opt3').value.trim();
+  const diff     = el('evq-diff').value;
+
+  if (!question) return alert('Introduce la pregunta');
+  if (!answer)   return alert('Introduce la respuesta correcta');
+  if (!opt2)     return alert('Introduce al menos la opción 2');
+
+  const entry = {
+    question, answer,
+    options: [answer, opt2, opt3].filter(Boolean),
+    difficulty: diff
+  };
+
+  if (idx >= 0) eventQuestions[idx] = entry;
+  else          eventQuestions.push(entry);
+
+  closeModal();
+  openEventModal();
+  renderEventQuestionsList();
+}
+
+function removeEventQuestion(idx) {
+  if (!confirm('¿Eliminar esta pregunta?')) return;
+  eventQuestions.splice(idx, 1);
+  renderEventQuestionsList();
+}
+
+async function saveEvent() {
+  const title     = el('ev-title').value.trim();
+  const desc      = el('ev-desc').value.trim();
+  const category  = el('ev-cat').value;
+  const difficulty= el('ev-diff').value;
+  const status    = el('ev-status').value;
+  const starts_at = el('ev-starts').value || null;
+  const ends_at   = el('ev-ends').value   || null;
+
+  if (!title)    return alert('El evento necesita un título');
+  if (!category) return alert('Selecciona una categoría');
+
+  const payload = { title, description: desc, category, difficulty, status, starts_at, ends_at, questions: eventQuestions };
+
+  try {
+    let res;
+    if (editingEventId) {
+      res = await fetch(`${SERVER}/api/events/${editingEventId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(r => r.json());
+    } else {
+      res = await apiPost('/api/events', payload);
+    }
+
+    if (res.ok) {
+      closeEventModal();
+      flashMsg(editingEventId ? 'Evento actualizado' : 'Evento creado', 'success', 'msg-events');
+      loadEvents();
+    } else {
+      alert(res.msg || 'Error al guardar el evento');
+    }
+  } catch(e) {
+    alert('Error de conexión: ' + e.message);
+  }
+}
+
+async function deleteEvent(id) {
+  if (!confirm('¿Eliminar este evento y todas sus preguntas?')) return;
+  try {
+    const res = await fetch(`${SERVER}/api/events/${id}`, { method: 'DELETE' }).then(r => r.json());
+    if (res.ok) { flashMsg('Evento eliminado', 'success', 'msg-events'); loadEvents(); }
+    else alert(res.msg || 'Error al eliminar');
+  } catch { alert('Error de conexión'); }
+}
+
+function openEventModal()  { el('modal-event').classList.add('show'); }
+function closeEventModal() { el('modal-event').classList.remove('show'); }
+el('modal-event').addEventListener('click', e => { if (e.target === el('modal-event')) closeEventModal(); });
+
+// ── ARRANQUE ──────────────────────────────────────────────────────────────────
 loadData();
 loadUsers();

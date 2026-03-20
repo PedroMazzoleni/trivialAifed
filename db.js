@@ -1,11 +1,8 @@
 // ─── db.js ───────────────────────────────────────────────────────────────────
-// Conexión MySQL, creación de tablas, y rutas REST de autenticación y ranking.
-
 const mysql = require('mysql2/promise');
 
 let db = null;
 
-// ─── Inicializar conexión ─────────────────────────────────────────────────────
 async function initDB() {
   const url = process.env.DATABASE_URL ||
               process.env.MYSQL_PUBLIC_URL ||
@@ -59,7 +56,9 @@ async function initDB() {
   }
 }
 
-// ─── Actualizar estadísticas tras partida ─────────────────────────────────────
+// ── Exportar instancia de db para otros módulos ───────────────────────────────
+function getDB() { return db; }
+
 async function updateUserStats(playerName, points, isWinner) {
   if (!db) return;
   try {
@@ -70,7 +69,6 @@ async function updateUserStats(playerName, points, isWinner) {
   } catch(e) { console.error('Stats update error:', e.message); }
 }
 
-// ─── Registrar rutas REST en la app Express ───────────────────────────────────
 function registerAuthRoutes(app) {
 
   app.post('/api/register', async (req, res) => {
@@ -82,7 +80,6 @@ function registerAuthRoutes(app) {
         'INSERT INTO users (email, name, password, role) VALUES (?, ?, ?, ?)',
         [email, name, password, 'player']
       );
-      console.log('✅ Registrado:', email);
       res.json({ ok: true, name, role: 'player' });
     } catch(e) {
       if (e.code === 'ER_DUP_ENTRY') return res.json({ ok: false, msg: 'Este correo ya está registrado' });
@@ -97,7 +94,6 @@ function registerAuthRoutes(app) {
       const [rows] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
       if (!rows.length)               return res.json({ ok: false, msg: 'Usuario no encontrado' });
       if (rows[0].password !== password) return res.json({ ok: false, msg: 'Contraseña incorrecta' });
-      console.log('✅ Login:', email, rows[0].role);
       res.json({ ok: true, name: rows[0].name, role: rows[0].role });
     } catch(e) { res.json({ ok: false, msg: 'Error al iniciar sesión' }); }
   });
@@ -126,4 +122,4 @@ function registerAuthRoutes(app) {
   });
 }
 
-module.exports = { initDB, updateUserStats, registerAuthRoutes };
+module.exports = { initDB, getDB, updateUserStats, registerAuthRoutes };

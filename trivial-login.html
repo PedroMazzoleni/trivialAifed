@@ -6,23 +6,362 @@
 <title>Trivial — Acceder</title>
 <link rel="icon" type="image/png" href="images/logo-trivial.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/shared.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/navbar.css">
-<link rel="stylesheet" href="css/pages/login.css">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --green:    #2d7dd2;
+  --green-l:  #3a8fe0;
+  --green-bg: #0a0e1a;
+  --white:    #ffffff;
+  --text:     #e8eaf6;
+  --muted:    #8892b0;
+  --border:   #1e2a4a;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Barlow', sans-serif;
+  background: #0a0e1a;
+  color: #e8eaf6;
+}
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+}
+
+/* ── CARD ── */
+.card {
+  width: 100%;
+  max-width: 420px;
+  background: #0d1530;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 40px rgba(26,122,74,0.08);
+  animation: rise .38s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+@keyframes rise {
+  from { opacity:0; transform:translateY(14px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ── HEADER ── */
+.card-header {
+  padding: 36px 40px 28px;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 20px;
+}
+
+.card-header h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: 32px;
+  letter-spacing: -0.5px;
+  color: #e8eaf6;
+  line-height: 1;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.card-header p {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* ── TABS ── */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  flex: 1;
+  padding: 14px 0;
+  border: none;
+  background: transparent;
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color .15s;
+  position: relative;
+}
+
+.tab::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0; right: 0;
+  height: 2px;
+  background: var(--green);
+  transform: scaleX(0);
+  transition: transform .2s;
+}
+
+.tab.active {
+  color: #e8eaf6;
+}
+
+.tab.active::after {
+  transform: scaleX(1);
+}
+
+/* ── BODY ── */
+.card-body {
+  padding: 32px 40px 36px;
+}
+
+/* ── MSG ── */
+.msg {
+  display: none;
+  padding: 11px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  border-left: 3px solid;
+}
+
+.msg.error   { background: #fef2f2; color: #991b1b; border-color: #ef4444; }
+.msg.success { background: #f0fdf4; color: #14532d; border-color: var(--green); }
+.msg.show    { display: block; }
+
+/* ── FIELDS ── */
+.field {
+  margin-bottom: 18px;
+}
+
+.field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #e8eaf6;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.field input {
+  width: 100%;
+  padding: 12px 14px;
+  background: #0a0e1a;
+  border: 1.5px solid var(--border);
+  border-radius: 3px;
+  font-family: 'Barlow', sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: #e8eaf6;
+  outline: none;
+  transition: border-color .15s, background .15s, box-shadow .15s;
+}
+
+.field input:focus {
+  border-color: var(--green);
+  background: #0d1530;
+  box-shadow: 0 0 0 3px rgba(26,122,74,0.08);
+}
+
+.field input::placeholder { color: #9dbdad; }
+
+/* ── STRENGTH ── */
+.strength-bar {
+  height: 2px;
+  background: var(--border);
+  border-radius: 1px;
+  margin-top: 8px;
+  overflow: hidden;
+  display: none;
+}
+.strength-bar.show { display: block; }
+.strength-fill {
+  height: 100%;
+  transition: width .3s, background .3s;
+}
+
+/* ── EXTRAS ── */
+.form-extras {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -6px 0 22px;
+}
+
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.remember input[type=checkbox] {
+  appearance: none;
+  width: 15px; height: 15px;
+  border: 1.5px solid var(--border);
+  border-radius: 2px;
+  background: #0a0e1a;
+  cursor: pointer;
+  position: relative;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+
+.remember input[type=checkbox]:checked {
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.remember input[type=checkbox]:checked::after {
+  content: '';
+  position: absolute;
+  left: 3px; top: 1px;
+  width: 5px; height: 8px;
+  border: 1.5px solid #fff;
+  border-top: none; border-left: none;
+  transform: rotate(45deg);
+}
+
+.remember span {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.forgot {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green);
+  text-decoration: none;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.forgot:hover { text-decoration: underline; }
+
+/* ── BUTTONS ── */
+.btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 3px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background: var(--green);
+  color: #fff;
+  margin-bottom: 12px;
+}
+
+.btn-primary:hover  { background: var(--green-l); }
+.btn-primary:active { transform: scale(0.99); }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--muted);
+  border: 1.5px solid var(--border);
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+.btn-secondary:hover {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+/* ── LOADING ── */
+.spinner {
+  display: none;
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+}
+
+@keyframes spin { to { transform:rotate(360deg); } }
+
+.btn.loading .btn-label { display: none; }
+.btn.loading .spinner   { display: block; }
+
+/* ── DIVIDER ── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 12px;
+}
+
+.divider hr   { flex:1; border:none; border-top: 1px solid var(--border); }
+.divider span { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+
+/* ── FOOTER ── */
+.card-footer {
+  padding: 16px 40px 20px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+}
+
+.card-footer a {
+  color: var(--green);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 11px;
+}
+
+.card-footer a:hover { text-decoration: underline; }
+</style>
 </head>
 <body>
-
 <nav class="navbar">
   <div class="navbar-inner">
 
     <a class="navbar-logo" href="trivial-intro.html">
-      <img class="logo-main" src="images/logo.png" alt="Trivial Travel">
+      <img class="logo-main" src="images/logo-trivial.png" alt="Trivial Travel">
       <img class="logo-eu"   src="images/eu-logo.png" alt="Co-funded by EU">
     </a>
 
     <ul class="navbar-links">
       <li><a href="trivial-modos.html">Jugar</a></li>
       <li><a href="trivial-ranking.html">Ranking</a></li>
+      <li><a href="trivial-eventos.html">Eventos</a></li>
 
       <li id="dd-modos">
         <button onclick="toggleDropdown('dd-modos')">
@@ -30,8 +369,8 @@
           <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <ul class="navbar-dropdown">
-          <li><a href="trivial-lobby.html">🌐 Jugar Online</a></li>
-          <li><a href="trivial-ia-nivel.html">🤖 Jugar vs IA</a></li>
+          <li><a href="trivial-lobby.html">&#127760; Jugar Online</a></li>
+          <li><a href="trivial-ia-nivel.html">&#129302; Jugar vs IA</a></li>
         </ul>
       </li>
 
@@ -41,7 +380,7 @@
           <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <ul class="navbar-dropdown">
-          <li><a href="trivial-admin.html">📊 Panel Admin</a></li>
+          <li><a href="trivial-admin.html">&#128202; Panel Admin</a></li>
         </ul>
       </li>
     </ul>
@@ -62,12 +401,14 @@
 <div class="navbar-mobile" id="navbar-mobile">
   <a href="trivial-modos.html">Jugar</a>
   <a href="trivial-ranking.html">Ranking</a>
-  <a href="trivial-lobby.html" class="mobile-sub">🌐 Online</a>
-  <a href="trivial-ia-nivel.html" class="mobile-sub">🤖 vs IA</a>
+  <a href="trivial-eventos.html">Eventos</a>
+  <a href="trivial-lobby.html" class="mobile-sub">&#127760; Online</a>
+  <a href="trivial-ia-nivel.html" class="mobile-sub">&#129302; vs IA</a>
   <div class="mobile-divider"></div>
-  <a href="trivial-login.html" id="mobile-login">Iniciar sesión</a>
+  <a href="trivial-login.html" id="mobile-login">Iniciar sesi&#243;n</a>
   <a href="trivial-admin.html" id="mobile-admin" style="display:none">Panel Admin</a>
 </div>
+
 
 <div class="page">
   <div class="card">
@@ -106,14 +447,14 @@
           <a class="forgot" href="#">¿Olvidaste la contraseña?</a>
         </div>
 
-        <button class="btn btn-primary btn-full" id="btn-login" onclick="handleLogin()">
+        <button class="btn btn-primary" id="btn-login" onclick="handleLogin()">
           <span class="btn-label">Entrar</span>
           <div class="spinner"></div>
         </button>
 
         <div class="divider"><hr><span>o</span><hr></div>
 
-        <button class="btn btn-secondary btn-full" onclick="handleGuest()">
+        <button class="btn btn-secondary" onclick="handleGuest()">
           Entrar como invitado
         </button>
       </div>
@@ -136,7 +477,7 @@
           </div>
         </div>
 
-        <button class="btn btn-primary btn-full" id="btn-register" onclick="handleRegister()">
+        <button class="btn btn-primary" id="btn-register" onclick="handleRegister()">
           <span class="btn-label">Crear cuenta</span>
           <div class="spinner"></div>
         </button>
@@ -148,15 +489,152 @@
       ¿No tienes cuenta? <a onclick="switchTab('register')">Regístrate</a>
     </div>
 
-    <div class="ranking-link-bar">
-      <a href="trivial-ranking.html">🏆 Ver Ranking Global</a>
+    <div style="text-align:center;padding:12px 0 0;border-top:1px solid #1e2d50;margin-top:4px">
+      <a href="trivial-ranking.html" style="font-size:12px;color:#8892b0;text-decoration:none;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+        🏆 Ver Ranking Global
+      </a>
     </div>
 
   </div>
 </div>
 
+<script>
+const SERVER = window.location.origin;
+
+function switchTab(tab) {
+  const login = tab === 'login';
+  document.getElementById('tab-login').classList.toggle('active', login);
+  document.getElementById('tab-register').classList.toggle('active', !login);
+  document.getElementById('form-login').style.display    = login ? 'block' : 'none';
+  document.getElementById('form-register').style.display = login ? 'none'  : 'block';
+  document.getElementById('form-title').textContent      = login ? 'Acceder' : 'Crear cuenta';
+  document.getElementById('form-subtitle').textContent   = login ? 'Introduce tus datos para continuar' : 'Rellena el formulario para registrarte';
+  document.getElementById('form-footer').innerHTML       = login
+    ? '¿No tienes cuenta? <a onclick="switchTab(\'register\')">Regístrate</a>'
+    : '¿Ya tienes cuenta? <a onclick="switchTab(\'login\')">Inicia sesión</a>';
+  hideMsg();
+}
+
+function showMsg(text, type = 'error') {
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = `msg ${type} show`;
+}
+
+function hideMsg() {
+  document.getElementById('msg').className = 'msg';
+}
+
+function checkStrength(val) {
+  const bar  = document.getElementById('strength-bar');
+  const fill = document.getElementById('strength-fill');
+  bar.classList.toggle('show', val.length > 0);
+  let s = 0;
+  if (val.length >= 6)          s++;
+  if (val.length >= 10)         s++;
+  if (/[A-Z]/.test(val))        s++;
+  if (/[0-9]/.test(val))        s++;
+  if (/[^A-Za-z0-9]/.test(val)) s++;
+  const lvl = [
+    { w:'20%', c:'#ef4444' },
+    { w:'40%', c:'#f97316' },
+    { w:'60%', c:'#eab308' },
+    { w:'80%', c:'#84cc16' },
+    { w:'100%',c:'#22c55e' },
+  ][Math.min(s, 4)];
+  fill.style.width = lvl.w;
+  fill.style.background = lvl.c;
+}
+
+function setLoading(id, on) {
+  document.getElementById(id).classList.toggle('loading', on);
+}
+
+async function handleLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  hideMsg();
+  if (!email) return showMsg('Introduce tu correo o usuario');
+  if (!pass)  return showMsg('Introduce tu contraseña');
+
+  setLoading('btn-login', true);
+  try {
+    const r = await fetch(`${SERVER}/api/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pass })
+    });
+    const data = await r.json();
+    setLoading('btn-login', false);
+
+    if (!data.ok) return showMsg(data.msg || 'Error al iniciar sesión');
+
+    // Save session
+    sessionStorage.setItem('player_name', data.name);
+    sessionStorage.setItem('player_role', data.role);
+    sessionStorage.setItem('player_email', email);
+
+    showMsg('Sesión iniciada. Redirigiendo...', 'success');
+    setTimeout(() => {
+      if (data.role === 'admin') {
+        window.location.href = 'trivial-admin.html';
+      } else {
+        window.location.href = 'trivial-modos.html';
+      }
+    }, 800);
+  } catch {
+    setLoading('btn-login', false);
+    showMsg('No se puede conectar al servidor');
+  }
+}
+
+async function handleRegister() {
+  const name  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass  = document.getElementById('reg-pass').value;
+  hideMsg();
+  if (!name)                return showMsg('Elige un nombre de usuario');
+  if (name.length < 3)      return showMsg('El nombre debe tener al menos 3 caracteres');
+  if (!email)               return showMsg('Introduce tu correo electrónico');
+  if (!email.includes('@')) return showMsg('Correo electrónico no válido');
+  if (!pass)                return showMsg('Crea una contraseña');
+  if (pass.length < 6)      return showMsg('La contraseña debe tener al menos 6 caracteres');
+
+  setLoading('btn-register', true);
+  try {
+    const r = await fetch(`${SERVER}/api/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password: pass })
+    });
+    const data = await r.json();
+    setLoading('btn-register', false);
+
+    if (!data.ok) return showMsg(data.msg || 'Error al registrarse');
+
+    showMsg('Cuenta creada. Bienvenido, ' + name, 'success');
+    setTimeout(() => switchTab('login'), 1500);
+  } catch {
+    setLoading('btn-register', false);
+    showMsg('No se puede conectar al servidor');
+  }
+}
+
+function handleGuest() {
+  sessionStorage.setItem('player_name', 'Invitado');
+  sessionStorage.setItem('player_role', 'guest');
+  showMsg('Entrando como invitado...', 'success');
+  setTimeout(() => { window.location.href = 'trivial-modos.html'; }, 600);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const loginVisible = document.getElementById('form-login').style.display !== 'none';
+  if (loginVisible) handleLogin(); else handleRegister();
+});
+</script>
+
 <script src="js/utils.js"></script>
 <script src="js/navbar.js"></script>
-<script src="js/pages/login.js"></script>
 </body>
 </html>
