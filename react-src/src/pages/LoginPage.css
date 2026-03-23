@@ -51,8 +51,3 @@
 .card-footer { padding: 16px 40px 20px; border-top: 1px solid #1e2d50; text-align: center; font-size: 12px; font-weight: 500; color: #8892b0; letter-spacing: 0.3px; }
 .card-footer a { color: #2d7dd2; font-weight: 700; text-decoration: none; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; font-size: 11px; }
 .card-footer a:hover { text-decoration: underline; }
-
-/* ── RANKING LINK ── */
-.ranking-link { text-align: center; padding: 12px 0; border-top: 1px solid #1e2d50; margin-top: 4px; }
-.ranking-link a { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #8892b0; text-decoration: none; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; transition: color .15s; }
-.ranking-link a:hover { color: #2d7dd2; }

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Trophy } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import { Session } from '../utils/session'
 import { apiPost } from '../utils/api'
@@ -205,12 +204,6 @@ export default function LoginPage() {
               ? <>¿No tienes cuenta? <a onClick={() => switchTab('register')}>Regístrate</a></>
               : <>¿Ya tienes cuenta? <a onClick={() => switchTab('login')}>Inicia sesión</a></>
             }
-          </div>
-
-          <div className="ranking-link">
-            <a href="/trivial-ranking.html">
-              <Trophy size={14} /> Ver Ranking Global
-            </a>
           </div>
 
         </div>

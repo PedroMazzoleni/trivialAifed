@@ -49,25 +49,6 @@ export default function Navbar() {
             <li><a href="/trivial-ranking.html">Ranking</a></li>
             <li><a href="/trivial-eventos.html">Eventos</a></li>
 
-            <li id="dd-modos" className={modosOpen ? 'open' : undefined}>
-              <button onClick={(e) => { e.stopPropagation(); setModosOpen(o => !o); setAdminOpen(false) }}>
-                Modos
-                <ChevronDown className="chevron" size={10} />
-              </button>
-              <ul className="navbar-dropdown">
-                <li>
-                  <Link to="/lobby">
-                    <Globe size={13} /> Jugar Online
-                  </Link>
-                </li>
-                <li>
-                  <a href="/trivial-ia-nivel.html">
-                    <Bot size={13} /> Jugar vs IA
-                  </a>
-                </li>
-              </ul>
-            </li>
-
             {role === 'admin' && (
               <li id="dd-admin" className={adminOpen ? 'open' : undefined}>
                 <button onClick={(e) => { e.stopPropagation(); setAdminOpen(o => !o); setModosOpen(false) }}>
