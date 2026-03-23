@@ -33,6 +33,15 @@ export default function ModosPage() {
     <>
       <Navbar />
 
+      {/* Fondo animado */}
+      <div className="modos-bg" aria-hidden="true">
+        <div className="modos-orb modos-orb-1" />
+        <div className="modos-orb modos-orb-2" />
+        <div className="modos-orb modos-orb-3" />
+        <div className="modos-orb modos-orb-4" />
+        <div className="modos-grid" />
+      </div>
+
       <Link className="btn-back" to="/login">
         <ChevronLeft size={14} />
         Volver

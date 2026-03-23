@@ -1,6 +1,80 @@
 /* ModosPage.css */
 
+/* ── FONDO ANIMADO ── */
+.modos-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--bg);
+}
+
+/* Grid de puntos sutil */
+.modos-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(45,125,210,0.18) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: gridDrift 20s linear infinite;
+  opacity: 0.5;
+}
+
+/* Orbes flotantes */
+.modos-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: orbFloat linear infinite;
+  will-change: transform, opacity;
+}
+
+.modos-orb-1 {
+  width: 480px; height: 480px;
+  background: radial-gradient(circle, rgba(45,125,210,0.22) 0%, transparent 70%);
+  top: -120px; left: -100px;
+  animation-duration: 18s;
+  animation-delay: 0s;
+}
+.modos-orb-2 {
+  width: 380px; height: 380px;
+  background: radial-gradient(circle, rgba(100,60,200,0.18) 0%, transparent 70%);
+  bottom: -80px; right: -60px;
+  animation-duration: 22s;
+  animation-delay: -6s;
+}
+.modos-orb-3 {
+  width: 280px; height: 280px;
+  background: radial-gradient(circle, rgba(45,125,210,0.15) 0%, transparent 70%);
+  top: 40%; left: 60%;
+  animation-duration: 15s;
+  animation-delay: -3s;
+}
+.modos-orb-4 {
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(24,194,90,0.12) 0%, transparent 70%);
+  top: 55%; left: 10%;
+  animation-duration: 25s;
+  animation-delay: -10s;
+}
+
+@keyframes orbFloat {
+  0%   { transform: translate(0,    0)    scale(1);    opacity: 0.8; }
+  25%  { transform: translate(30px, -40px) scale(1.05); opacity: 1;   }
+  50%  { transform: translate(15px, -70px) scale(0.97); opacity: 0.7; }
+  75%  { transform: translate(-20px,-30px) scale(1.03); opacity: 0.9; }
+  100% { transform: translate(0,    0)    scale(1);    opacity: 0.8; }
+}
+
+@keyframes gridDrift {
+  from { background-position: 0 0; }
+  to   { background-position: 40px 40px; }
+}
+
 .page {
+  position: relative;
+  z-index: 1;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -52,6 +126,9 @@
 .mode-arrow { position: absolute; bottom: 28px; right: 28px; opacity: 0; transform: translateX(-6px); transition: all .2s; }
 .mode-arrow svg { color: var(--blue); }
 .mode-card:hover .mode-arrow { opacity: 1; transform: translateX(0); }
+
+/* btn-back encima del fondo */
+.btn-back { z-index: 2; }
 
 @media (max-width: 560px) {
   .cards     { grid-template-columns: 1fr; max-width: 400px; }
