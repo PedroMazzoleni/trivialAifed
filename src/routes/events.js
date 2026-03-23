@@ -44,6 +44,21 @@ function registerEventRoutes(app, db) {
 
   initEventTables().catch(e => console.error('Event tables error:', e.message));
 
+  // ── Auto-delete events 1 day after they end ───────────────────────────────
+  async function cleanupExpiredEvents() {
+    if (!db) return;
+    try {
+      const [result] = await db.execute(
+        'DELETE FROM events WHERE ends_at IS NOT NULL AND ends_at < DATE_SUB(NOW(), INTERVAL 1 DAY)'
+      );
+      if (result.affectedRows > 0)
+        console.log(`🗑️  Cleaned up ${result.affectedRows} expired event(s)`);
+    } catch(e) { console.error('Cleanup error:', e.message); }
+  }
+
+  cleanupExpiredEvents();
+  setInterval(cleanupExpiredEvents, 60 * 60 * 1000); // cada hora
+
   // ── GET /api/events — list all events ────────────────────────────────────
   app.get('/api/events', async (req, res) => {
     if (!db) return res.json([]);
