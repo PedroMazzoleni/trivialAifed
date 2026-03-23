@@ -8,6 +8,7 @@ let isHost         = false;
 let roomIsPrivate  = false;
 let players        = [];
 let selectedRounds = 6;
+let createTabMode  = 'public';
 
 // ── WINS ──────────────────────────────────────────────────────────────────────
 async function loadWins() {
@@ -95,18 +96,20 @@ function connectReadonly() {
 window.addEventListener('DOMContentLoaded', () => { loadWins(); connectReadonly(); });
 
 // ── ACCIONES ──────────────────────────────────────────────────────────────────
+function selectCreateTab(mode) {
+  createTabMode = mode;
+  el('tab-public').classList.toggle('active', mode === 'public');
+  el('tab-private').classList.toggle('active', mode === 'private');
+  el('btn-create-label').textContent = mode === 'private' ? '🔒 Crear sala privada' : '+ Crear sala pública';
+}
+
 function createRoom() {
   const name      = el('player-name').value.trim();
-  const isPrivate = el('room-private').checked;
+  const isPrivate = createTabMode === 'private';
   if (!name) return showMsg('Introduce tu nombre');
   hideMsg();
   setLoading('btn-create', true);
   initSocket(() => socket.emit('room:create', { playerName: name, tenantId: 'default', isPrivate }));
-}
-
-function updateCreateBtn() {
-  const priv = el('room-private').checked;
-  el('btn-create-label').textContent = priv ? '🔒 Crear sala privada' : '+ Crear nueva sala';
 }
 
 function joinRoomByCard(code) {
