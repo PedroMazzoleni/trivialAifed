@@ -240,6 +240,9 @@ function _doSpin(io, room) {
   room.spinCatId = cat.id;
   room.spinExtra = extra;
 
+  // Tell all clients to switch to the spin screen
+  broadcastEventRoom(io, room.eventId);
+
   // Broadcast spin command to all clients so they animate the wheel
   io.to('event:' + room.eventId).emit('event:doSpin', {
     catId: cat.id,
