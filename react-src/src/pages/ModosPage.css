@@ -8,6 +8,8 @@
   overflow: hidden;
   pointer-events: none;
   background: var(--bg);
+  --mx: -999px;
+  --my: -999px;
 }
 
 /* Grid de puntos */
@@ -56,6 +58,17 @@
   top: 60%; left: 8%;
   animation-duration: 25s;
   animation-delay: -10s;
+}
+
+/* Spotlight de puntos bajo el cursor */
+.modos-cursor-glow {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(120,190,255,0.9) 1.5px, transparent 1.5px);
+  background-size: 40px 40px;
+  -webkit-mask-image: radial-gradient(circle 160px at var(--mx) var(--my), black 10%, transparent 80%);
+  mask-image:         radial-gradient(circle 160px at var(--mx) var(--my), black 10%, transparent 80%);
+  transition: -webkit-mask-image 0.05s, mask-image 0.05s;
 }
 
 @keyframes orbFloat {

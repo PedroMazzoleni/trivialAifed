@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Globe, Bot, Trophy, BarChart3, ArrowRight, ChevronLeft, User } from 'lucide-react'
 import Navbar from '../components/Navbar'
@@ -11,6 +11,17 @@ export default function ModosPage() {
   const [wins,       setWins]       = useState(0)
   const [showWins,   setShowWins]   = useState(false)
   const isAdmin = Session.isAdmin()
+  const bgRef   = useRef(null)
+
+  // Seguimiento del cursor para iluminar los puntos del fondo
+  useEffect(() => {
+    function handleMove(e) {
+      bgRef.current?.style.setProperty('--mx', e.clientX + 'px')
+      bgRef.current?.style.setProperty('--my', e.clientY + 'px')
+    }
+    window.addEventListener('mousemove', handleMove)
+    return () => window.removeEventListener('mousemove', handleMove)
+  }, [])
 
   useEffect(() => {
     const name = Session.playerName()
@@ -34,12 +45,13 @@ export default function ModosPage() {
       <Navbar />
 
       {/* Fondo animado */}
-      <div className="modos-bg" aria-hidden="true">
+      <div className="modos-bg" ref={bgRef} aria-hidden="true">
         <div className="modos-orb modos-orb-1" />
         <div className="modos-orb modos-orb-2" />
         <div className="modos-orb modos-orb-3" />
         <div className="modos-orb modos-orb-4" />
         <div className="modos-grid" />
+        <div className="modos-cursor-glow" />
       </div>
 
       <Link className="btn-back" to="/login">
