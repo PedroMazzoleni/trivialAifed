@@ -11,6 +11,7 @@ function broadcastRoom(io, code) {
   const payload = {
     code:             room.code,
     state:            room.state,
+    isPrivate:        room.isPrivate || false,
     players:          room.players,
     categories:       room.categories || defaultCategories,
     currentPlayerIdx: room.currentPlayerIdx,
@@ -32,7 +33,7 @@ function broadcastRoom(io, code) {
 // ─── Broadcast sala list a todos los clientes ─────────────────────────────
 function broadcastRoomsList(io) {
   const list = Object.values(rooms)
-    .filter(r => r.state === 'lobby')
+    .filter(r => r.state === 'lobby' && !r.isPrivate)
     .map(r => ({ code: r.code, players: r.players.length }));
   io.emit('rooms:list', list);
 }
@@ -58,16 +59,17 @@ function startGameRoom(io, code, rounds) {
 function registerGameHandlers(io, socket) {
 
   // ── Crear sala ──────────────────────────────────────────────────────────────
-  socket.on('room:create', ({ tenantId = 'default', playerName }) => {
+  socket.on('room:create', ({ tenantId = 'default', playerName, isPrivate = false }) => {
     const code = createRoom(tenantId);
     const room = rooms[code];
-    room.host  = socket.id;
+    room.host      = socket.id;
+    room.isPrivate = !!isPrivate;
     const player = { id: socket.id, name: playerName, score: 0, color: '#E84545' };
     room.players.push(player);
     room.scores[socket.id] = 0;
     socket.join(code);
     socket.data.roomCode = code;
-    socket.emit('room:created', { code, player });
+    socket.emit('room:created', { code, player, isPrivate: room.isPrivate });
     broadcastRoom(io, code);
     broadcastRoomsList(io);
   });
@@ -161,7 +163,7 @@ function registerGameHandlers(io, socket) {
   // ── Listar salas disponibles ─────────────────────────────────────────────
   socket.on('rooms:list', () => {
     const list = Object.values(rooms)
-      .filter(r => r.state === 'lobby')
+      .filter(r => r.state === 'lobby' && !r.isPrivate)
       .map(r => ({ code: r.code, players: r.players.length }));
     socket.emit('rooms:list', list);
   });

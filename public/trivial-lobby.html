@@ -113,9 +113,21 @@
 
     <!-- Crear sala -->
     <button class="btn btn-primary" id="btn-create" onclick="createRoom()" style="margin-bottom:10px">
-      <span class="btn-label">+ Crear nueva sala</span>
+      <span class="btn-label" id="btn-create-label">+ Crear nueva sala</span>
       <div class="spinner"></div>
     </button>
+
+    <!-- Toggle sala privada -->
+    <div class="privacy-row">
+      <span class="privacy-label-text">
+        Sala privada
+        <span class="privacy-note">No aparece en la lista pública</span>
+      </span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="room-private" onchange="updateCreateBtn()">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
 
     <!-- Unirse con código -->
     <button class="btn-code-toggle" onclick="toggleCodePanel()">Tengo un código de sala</button>
@@ -137,7 +149,8 @@
     <div class="room-header">
       <span class="room-code-label">Código de sala</span>
       <div class="room-code" id="room-code-display">——</div>
-      <button class="copy-btn" onclick="copyCode()">
+      <div id="room-private-badge" class="room-private-badge" style="display:none">🔒 Sala privada</div>
+      <button class="copy-btn" onclick="copyCode()" style="margin-top:8px">
         <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
         Copiar código
       </button>

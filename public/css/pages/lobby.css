@@ -138,3 +138,19 @@
 .countdown-sub   { font-size: 13px; color: var(--muted); margin-top: 8px; }
 
 @keyframes countPop { 0% { transform: scale(1.4); opacity:0.4; } 100% { transform: scale(1); opacity:1; } }
+
+/* ════════════════════
+   SALA PRIVADA
+════════════════════ */
+.privacy-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; background: var(--card-bg); border: 1.5px solid var(--border); border-radius: 3px; margin-bottom: 10px; }
+.privacy-label-text { font-family: var(--font-cond); font-weight: 700; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+.privacy-note { font-size: 10px; opacity: 0.55; font-weight: 500; letter-spacing: 0; text-transform: none; font-family: inherit; }
+
+.toggle-switch { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; cursor: pointer; inset: 0; background: rgba(255,255,255,0.08); border: 1.5px solid var(--border); border-radius: 22px; transition: .2s; }
+.toggle-slider:before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; bottom: 3px; background: var(--muted); border-radius: 50%; transition: .2s; }
+.toggle-switch input:checked + .toggle-slider { background: rgba(45,125,210,0.2); border-color: var(--blue); }
+.toggle-switch input:checked + .toggle-slider:before { background: var(--blue); transform: translateX(18px); }
+
+.room-private-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(45,125,210,0.12); border: 1px solid rgba(45,125,210,0.3); border-radius: 3px; padding: 5px 12px; font-family: var(--font-cond); font-weight: 700; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--blue); margin-bottom: 4px; }

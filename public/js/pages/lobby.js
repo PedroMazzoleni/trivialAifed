@@ -5,6 +5,7 @@ let socket         = null;
 let myPlayer       = null;
 let roomCode       = null;
 let isHost         = false;
+let roomIsPrivate  = false;
 let players        = [];
 let selectedRounds = 6;
 
@@ -47,14 +48,14 @@ function initSocket(callback) {
   // Lista de salas en tiempo real
   socket.on('rooms:list', (list) => renderRoomsList(list));
 
-  socket.on('room:created', ({ code, player }) => {
-    myPlayer = player; roomCode = code; isHost = true;
+  socket.on('room:created', ({ code, player, isPrivate }) => {
+    myPlayer = player; roomCode = code; isHost = true; roomIsPrivate = !!isPrivate;
     setLoading('btn-create', false);
     showRoom(code);
   });
 
   socket.on('room:joined', ({ code, player }) => {
-    myPlayer = player; roomCode = code; isHost = false;
+    myPlayer = player; roomCode = code; isHost = false; roomIsPrivate = false;
     setLoading('btn-join',   false);
     setLoading('btn-create', false);
     showRoom(code);
@@ -83,8 +84,8 @@ function connectReadonly() {
   socket.on('disconnect',    ()     => setStatus('Reconectando...', false));
   socket.on('connect_error', ()     => setStatus('Sin conexión al servidor', false));
   socket.on('rooms:list',    (list) => renderRoomsList(list));
-  socket.on('room:created', ({ code, player }) => { myPlayer = player; roomCode = code; isHost = true;  setLoading('btn-create', false); showRoom(code); });
-  socket.on('room:joined',  ({ code, player }) => { myPlayer = player; roomCode = code; isHost = false; setLoading('btn-join', false); setLoading('btn-create', false); showRoom(code); });
+  socket.on('room:created', ({ code, player, isPrivate }) => { myPlayer = player; roomCode = code; isHost = true; roomIsPrivate = !!isPrivate; setLoading('btn-create', false); showRoom(code); });
+  socket.on('room:joined',  ({ code, player }) => { myPlayer = player; roomCode = code; isHost = false; roomIsPrivate = false; setLoading('btn-join', false); setLoading('btn-create', false); showRoom(code); });
   socket.on('room:update',  (room)  => { players = room.players; renderPlayers(room); updateStartBtn(room); });
   socket.on('game:countdown',({ seconds }) => showCountdown(seconds));
   socket.on('game:start',   ({ roomCode: rc }) => { const code = rc || roomCode; goTo(`trivial-online-juego.html?room=${code}&player=${encodeURIComponent(myPlayer.name)}&host=${isHost}`); });
@@ -95,11 +96,17 @@ window.addEventListener('DOMContentLoaded', () => { loadWins(); connectReadonly(
 
 // ── ACCIONES ──────────────────────────────────────────────────────────────────
 function createRoom() {
-  const name = el('player-name').value.trim();
+  const name      = el('player-name').value.trim();
+  const isPrivate = el('room-private').checked;
   if (!name) return showMsg('Introduce tu nombre');
   hideMsg();
   setLoading('btn-create', true);
-  initSocket(() => socket.emit('room:create', { playerName: name, tenantId: 'default' }));
+  initSocket(() => socket.emit('room:create', { playerName: name, tenantId: 'default', isPrivate }));
+}
+
+function updateCreateBtn() {
+  const priv = el('room-private').checked;
+  el('btn-create-label').textContent = priv ? '🔒 Crear sala privada' : '+ Crear nueva sala';
 }
 
 function joinRoomByCard(code) {
@@ -133,7 +140,9 @@ function leaveRoom() {
   if (socket) socket.disconnect();
   socket = null;
   showScreen('join');
-  myPlayer = null; roomCode = null; isHost = false; players = [];
+  myPlayer = null; roomCode = null; isHost = false; roomIsPrivate = false; players = [];
+  el('room-private').checked = false;
+  updateCreateBtn();
   connectReadonly();
 }
 
@@ -142,6 +151,7 @@ function showRoom(code) {
   setHTML('room-code-display', code);
   el('host-controls').classList.toggle('visible', isHost);
   el('waiting-host').classList.toggle('visible', !isHost);
+  el('room-private-badge').style.display = roomIsPrivate ? 'inline-flex' : 'none';
   showScreen('room');
 }
 
