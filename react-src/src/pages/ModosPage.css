@@ -10,51 +10,50 @@
   background: var(--bg);
 }
 
-/* Grid de puntos sutil */
+/* Grid de puntos */
 .modos-grid {
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(circle, rgba(45,125,210,0.18) 1px, transparent 1px);
+    radial-gradient(circle, rgba(45,125,210,0.45) 1px, transparent 1px);
   background-size: 40px 40px;
   animation: gridDrift 20s linear infinite;
-  opacity: 0.5;
 }
 
 /* Orbes flotantes */
 .modos-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
+  filter: blur(60px);
   animation: orbFloat linear infinite;
   will-change: transform, opacity;
 }
 
 .modos-orb-1 {
-  width: 480px; height: 480px;
-  background: radial-gradient(circle, rgba(45,125,210,0.22) 0%, transparent 70%);
-  top: -120px; left: -100px;
+  width: 500px; height: 500px;
+  background: rgba(45,125,210,0.55);
+  top: -160px; left: -120px;
   animation-duration: 18s;
   animation-delay: 0s;
 }
 .modos-orb-2 {
-  width: 380px; height: 380px;
-  background: radial-gradient(circle, rgba(100,60,200,0.18) 0%, transparent 70%);
-  bottom: -80px; right: -60px;
+  width: 420px; height: 420px;
+  background: rgba(100,60,210,0.45);
+  bottom: -100px; right: -80px;
   animation-duration: 22s;
   animation-delay: -6s;
 }
 .modos-orb-3 {
-  width: 280px; height: 280px;
-  background: radial-gradient(circle, rgba(45,125,210,0.15) 0%, transparent 70%);
-  top: 40%; left: 60%;
+  width: 300px; height: 300px;
+  background: rgba(45,125,210,0.4);
+  top: 35%; left: 58%;
   animation-duration: 15s;
   animation-delay: -3s;
 }
 .modos-orb-4 {
-  width: 200px; height: 200px;
-  background: radial-gradient(circle, rgba(24,194,90,0.12) 0%, transparent 70%);
-  top: 55%; left: 10%;
+  width: 220px; height: 220px;
+  background: rgba(24,194,90,0.35);
+  top: 60%; left: 8%;
   animation-duration: 25s;
   animation-delay: -10s;
 }
