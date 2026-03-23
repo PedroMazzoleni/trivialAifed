@@ -78,49 +78,54 @@
         <img src="images/logo-trivial.png" alt="Logo" style="width:36px;height:36px;border-radius:50%;object-fit:cover">
         <span class="brand" style="margin-bottom:0">Trivial Travel</span>
       </div>
-      <h1>Sala de juego</h1>
-      <p>Crea una sala o únete con el código de un amigo</p>
+      <h1>Jugar Online</h1>
+      <p>Únete a una sala o crea una nueva · 6 jugadores por partida</p>
       <div id="wins-badge" style="display:none">
         🏆 <span id="wins-count">0</span> partidas ganadas
       </div>
     </div>
 
-    <div class="card">
-      <div class="tabs">
-        <button class="tab active" id="tab-create" onclick="switchTab('create')">Crear sala</button>
-        <button class="tab"        id="tab-join"   onclick="switchTab('join')">Unirse</button>
+    <!-- Nombre del jugador -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-body" style="padding:20px 24px">
+        <div class="field" style="margin-bottom:0">
+          <label>Tu nombre</label>
+          <input type="text" id="player-name" placeholder="¿Cómo te llaman?" maxlength="20">
+        </div>
       </div>
+    </div>
 
-      <div class="card-body">
-        <div class="msg" id="msg"></div>
-
-        <!-- CREATE -->
-        <div class="tab-panel active" id="panel-create">
-          <div class="field">
-            <label>Tu nombre</label>
-            <input type="text" id="create-name" placeholder="¿Cómo te llaman?" maxlength="20">
-          </div>
-          <button class="btn btn-primary" id="btn-create" onclick="createRoom()">
-            <span class="btn-label">Crear sala</span>
-            <div class="spinner"></div>
-          </button>
+    <!-- Browser de salas -->
+    <div class="rooms-section">
+      <div class="rooms-header">
+        <span class="rooms-title">Salas disponibles</span>
+        <span class="rooms-live"><span class="live-dot"></span>En directo</span>
+      </div>
+      <div id="rooms-list">
+        <div class="rooms-empty">
+          <span>No hay salas abiertas</span>
+          <small>Crea una nueva para empezar</small>
         </div>
+      </div>
+    </div>
 
-        <!-- JOIN -->
-        <div class="tab-panel" id="panel-join">
-          <div class="field">
-            <label>Tu nombre</label>
-            <input type="text" id="join-name" placeholder="¿Cómo te llaman?" maxlength="20">
-          </div>
-          <div class="field">
-            <label>Código de sala</label>
-            <input type="text" id="join-code" class="code-input" placeholder="XXXXXX" maxlength="6">
-          </div>
-          <button class="btn btn-primary" id="btn-join" onclick="joinRoom()">
-            <span class="btn-label">Unirse a la sala</span>
-            <div class="spinner"></div>
-          </button>
-        </div>
+    <div class="msg" id="msg"></div>
+
+    <!-- Crear sala -->
+    <button class="btn btn-primary" id="btn-create" onclick="createRoom()" style="margin-bottom:10px">
+      <span class="btn-label">+ Crear nueva sala</span>
+      <div class="spinner"></div>
+    </button>
+
+    <!-- Unirse con código -->
+    <button class="btn-code-toggle" onclick="toggleCodePanel()">Tengo un código de sala</button>
+    <div class="code-panel" id="code-panel">
+      <div>
+        <input type="text" id="join-code" class="code-input" placeholder="XXXXXX" maxlength="6">
+        <button class="btn btn-secondary" id="btn-join" onclick="joinByCode()">
+          <span class="btn-label">Unirse</span>
+          <div class="spinner"></div>
+        </button>
       </div>
     </div>
 
@@ -181,6 +186,15 @@
     </div>
 
     <button class="btn-leave" onclick="leaveRoom()">Abandonar sala</button>
+
+    <!-- Cuenta atrás auto-inicio (6 jugadores) -->
+    <div class="countdown-overlay" id="countdown-overlay">
+      <div class="countdown-box">
+        <div class="countdown-title">¡Sala completa!</div>
+        <div class="countdown-num" id="countdown-num">3</div>
+        <div class="countdown-sub">Comenzando partida...</div>
+      </div>
+    </div>
 
   </div>
 

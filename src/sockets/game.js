@@ -29,6 +29,31 @@ function broadcastRoom(io, code) {
   io.to(code).emit('room:update', payload);
 }
 
+// ─── Broadcast sala list a todos los clientes ─────────────────────────────
+function broadcastRoomsList(io) {
+  const list = Object.values(rooms)
+    .filter(r => r.state === 'lobby')
+    .map(r => ({ code: r.code, players: r.players.length }));
+  io.emit('rooms:list', list);
+}
+
+// ─── Auto-iniciar partida ─────────────────────────────────────────────────
+function startGameRoom(io, code, rounds) {
+  const room = rooms[code];
+  if (!room) return;
+  room.state            = 'spinning';
+  room.currentRound     = 1;
+  room.turnInRound      = 0;
+  room.totalRounds      = rounds || 6;
+  room.currentPlayerIdx = 0;
+  room.usedQuestions    = {};
+  room.lastCatPerPlayer = {};
+  room.usedCatsPerPlayer= {};
+  io.to(code).emit('game:start', { roomCode: code });
+  setTimeout(() => broadcastRoom(io, code), 2500);
+  broadcastRoomsList(io);
+}
+
 // ─── Registrar todos los handlers de un socket ───────────────────────────────
 function registerGameHandlers(io, socket) {
 
@@ -44,6 +69,7 @@ function registerGameHandlers(io, socket) {
     socket.data.roomCode = code;
     socket.emit('room:created', { code, player });
     broadcastRoom(io, code);
+    broadcastRoomsList(io);
   });
 
   // ── Unirse a sala ───────────────────────────────────────────────────────────
@@ -61,6 +87,13 @@ function registerGameHandlers(io, socket) {
     socket.data.roomCode = code;
     socket.emit('room:joined', { code, player });
     broadcastRoom(io, code);
+    broadcastRoomsList(io);
+
+    // Auto-arrancar cuando la sala llega a 6 jugadores
+    if (room.players.length === 6) {
+      io.to(code).emit('game:countdown', { seconds: 3 });
+      setTimeout(() => startGameRoom(io, code, 6), 3000);
+    }
   });
 
   // ── Reconectar a sala ───────────────────────────────────────────────────────
@@ -116,22 +149,21 @@ function registerGameHandlers(io, socket) {
     }, 300);
   });
 
-  // ── Iniciar partida (solo host) ─────────────────────────────────────────────
+  // ── Iniciar partida (solo host, arranque manual con sala incompleta) ────────
   socket.on('game:start', ({ rounds } = {}) => {
     const code = socket.data.roomCode;
     const room = rooms[code];
     if (!room || room.host !== socket.id) return;
     if (room.players.length < 1) return;
-    room.state            = 'spinning';
-    room.currentRound     = 1;
-    room.turnInRound      = 0;
-    room.totalRounds      = rounds || 6;
-    room.currentPlayerIdx = 0;
-    room.usedQuestions    = {};
-    room.lastCatPerPlayer = {};
-    room.usedCatsPerPlayer= {};
-    io.to(code).emit('game:start', { roomCode: code });
-    setTimeout(() => broadcastRoom(io, code), 2500);
+    startGameRoom(io, code, rounds);
+  });
+
+  // ── Listar salas disponibles ─────────────────────────────────────────────
+  socket.on('rooms:list', () => {
+    const list = Object.values(rooms)
+      .filter(r => r.state === 'lobby')
+      .map(r => ({ code: r.code, players: r.players.length }));
+    socket.emit('rooms:list', list);
   });
 
   // ── Girar ruleta ────────────────────────────────────────────────────────────
@@ -332,11 +364,13 @@ function registerGameHandlers(io, socket) {
     const code = socket.data.roomCode;
     if (!code || !rooms[code]) return;
     const room = rooms[code];
+    const wasLobby = room.state === 'lobby';
     room.players = room.players.filter(p => p.id !== socket.id);
-    if (room.players.length === 0) { delete rooms[code]; return; }
+    if (room.players.length === 0) { delete rooms[code]; broadcastRoomsList(io); return; }
     if (room.host === socket.id)   room.host = room.players[0].id;
     if (room.currentPlayerIdx >= room.players.length) room.currentPlayerIdx = 0;
     broadcastRoom(io, code);
+    if (wasLobby) broadcastRoomsList(io);
   });
 }
 

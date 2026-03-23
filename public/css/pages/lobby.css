@@ -88,3 +88,53 @@
 
 .btn-leave { width: 100%; margin-top: 10px; padding: 11px; background: transparent; color: #c0392b; border: 1.5px solid #fbb; border-radius: 3px; font-family: var(--font-cond); font-weight: 700; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all .15s; }
 .btn-leave:hover { background: rgba(192,57,43,0.08); }
+
+/* ════════════════════
+   BROWSER DE SALAS
+════════════════════ */
+.rooms-section   { margin-bottom: 16px; }
+.rooms-header    { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding: 0 2px; }
+.rooms-title     { font-family: var(--font-cond); font-weight: 700; font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); }
+.rooms-live      { display: flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.live-dot        { width: 6px; height: 6px; border-radius: 50%; background: #2ecc71; animation: pulse-dot 1.5s infinite; flex-shrink: 0; }
+
+.rooms-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 28px; background: var(--card-bg); border: 1.5px dashed var(--border); border-radius: 4px; color: var(--muted); font-size: 13px; }
+.rooms-empty small { font-size: 11px; opacity: 0.6; }
+
+.room-card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--card-bg); border: 1.5px solid var(--border); border-radius: 4px; margin-bottom: 8px; animation: rise .25s cubic-bezier(0.16,1,0.3,1) both; transition: border-color .15s; }
+.room-card:hover { border-color: var(--blue); }
+.room-card.room-full { opacity: 0.5; pointer-events: none; }
+
+.room-card-info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.room-card-code { font-family: var(--font-cond); font-weight: 800; font-size: 18px; letter-spacing: 3px; color: var(--text); }
+.room-card-count { font-size: 11px; color: var(--muted); font-weight: 500; }
+.room-card-bar  { height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+.room-card-fill { height: 100%; background: var(--blue); border-radius: 2px; transition: width .3s; }
+.room-card-label-full { font-family: var(--font-cond); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+
+.btn-join-card { padding: 8px 18px; background: var(--blue); color: #fff; border: none; border-radius: 3px; font-family: var(--font-cond); font-weight: 800; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.btn-join-card:hover { opacity: 0.85; }
+
+/* ── Código toggle ── */
+.btn-code-toggle { width: 100%; padding: 10px; background: transparent; color: var(--muted); border: 1.5px solid var(--border); border-radius: 3px; font-family: var(--font-cond); font-weight: 700; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all .15s; margin-bottom: 0; }
+.btn-code-toggle:hover { border-color: var(--blue); color: var(--blue); }
+
+.code-panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .25s ease; overflow: hidden; }
+.code-panel.open { grid-template-rows: 1fr; }
+.code-panel > * { min-height: 0; overflow: hidden; }
+.code-panel input, .code-panel button { margin-top: 10px; }
+
+/* ════════════════════
+   CUENTA ATRÁS
+════════════════════ */
+.countdown-overlay { position: absolute; inset: 0; background: rgba(10,14,26,0.92); border-radius: 4px; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 10; }
+.countdown-overlay.visible { opacity: 1; pointer-events: all; }
+#screen-room { position: relative; }
+
+.countdown-box   { text-align: center; }
+.countdown-title { font-family: var(--font-cond); font-weight: 800; font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: var(--blue); margin-bottom: 12px; }
+.countdown-num   { font-family: var(--font-cond); font-weight: 800; font-size: 96px; line-height: 1; color: #fff; }
+.countdown-num.pop { animation: countPop .35s cubic-bezier(0.16,1,0.3,1); }
+.countdown-sub   { font-size: 13px; color: var(--muted); margin-top: 8px; }
+
+@keyframes countPop { 0% { transform: scale(1.4); opacity:0.4; } 100% { transform: scale(1); opacity:1; } }

@@ -12,8 +12,7 @@ let selectedRounds = 6;
 async function loadWins() {
   const name = Session.playerName();
   if (!name || name === 'Invitado') return;
-  el('create-name').value = name;
-  el('join-name').value   = name;
+  el('player-name').value = name;
   try {
     const data = await apiGet(`/api/wins/${encodeURIComponent(name)}`);
     setText('wins-count', data.wins || 0);
@@ -29,16 +28,24 @@ function initSocket(callback) {
 
   socket = io(SERVER, { transports: ['polling'], reconnection: true, timeout: 8000 });
 
-  socket.on('connect',       ()    => { setStatus('Conectado al servidor', true); callback(); });
+  socket.on('connect', () => {
+    setStatus('Conectado al servidor', true);
+    socket.emit('rooms:list');
+    callback();
+  });
+
   socket.on('disconnect',    ()    => setStatus('Reconectando...', false));
   socket.on('connect_error', ()    => {
     setStatus('Sin conexión al servidor', false);
     setLoading('btn-create', false);
-    setLoading('btn-join', false);
+    setLoading('btn-join',   false);
     showMsg('No se puede conectar al servidor.', 'error');
   });
 
-  socket.on('error',       ({ msg }) => showMsg(msg, 'error'));
+  socket.on('error',      ({ msg }) => showMsg(msg, 'error'));
+
+  // Lista de salas en tiempo real
+  socket.on('rooms:list', (list) => renderRoomsList(list));
 
   socket.on('room:created', ({ code, player }) => {
     myPlayer = player; roomCode = code; isHost = true;
@@ -48,7 +55,8 @@ function initSocket(callback) {
 
   socket.on('room:joined', ({ code, player }) => {
     myPlayer = player; roomCode = code; isHost = false;
-    setLoading('btn-join', false);
+    setLoading('btn-join',   false);
+    setLoading('btn-create', false);
     showRoom(code);
   });
 
@@ -58,23 +66,52 @@ function initSocket(callback) {
     updateStartBtn(room);
   });
 
+  // Cuenta atrás cuando llegan 6 jugadores
+  socket.on('game:countdown', ({ seconds }) => showCountdown(seconds));
+
   socket.on('game:start', ({ roomCode: rc }) => {
     const code = rc || roomCode;
     goTo(`trivial-online-juego.html?room=${code}&player=${encodeURIComponent(myPlayer.name)}&host=${isHost}`);
   });
 }
 
+// Conectar en modo solo-lectura para ver salas (sin entrar a ninguna aún)
+function connectReadonly() {
+  if (socket && socket.connected) return;
+  socket = io(SERVER, { transports: ['polling'], reconnection: true, timeout: 8000 });
+  socket.on('connect',       ()     => { setStatus('Conectado al servidor', true); socket.emit('rooms:list'); });
+  socket.on('disconnect',    ()     => setStatus('Reconectando...', false));
+  socket.on('connect_error', ()     => setStatus('Sin conexión al servidor', false));
+  socket.on('rooms:list',    (list) => renderRoomsList(list));
+  socket.on('room:created', ({ code, player }) => { myPlayer = player; roomCode = code; isHost = true;  setLoading('btn-create', false); showRoom(code); });
+  socket.on('room:joined',  ({ code, player }) => { myPlayer = player; roomCode = code; isHost = false; setLoading('btn-join', false); setLoading('btn-create', false); showRoom(code); });
+  socket.on('room:update',  (room)  => { players = room.players; renderPlayers(room); updateStartBtn(room); });
+  socket.on('game:countdown',({ seconds }) => showCountdown(seconds));
+  socket.on('game:start',   ({ roomCode: rc }) => { const code = rc || roomCode; goTo(`trivial-online-juego.html?room=${code}&player=${encodeURIComponent(myPlayer.name)}&host=${isHost}`); });
+  socket.on('error',        ({ msg }) => showMsg(msg, 'error'));
+}
+
+window.addEventListener('DOMContentLoaded', () => { loadWins(); connectReadonly(); });
+
 // ── ACCIONES ──────────────────────────────────────────────────────────────────
 function createRoom() {
-  const name = el('create-name').value.trim();
+  const name = el('player-name').value.trim();
   if (!name) return showMsg('Introduce tu nombre');
   hideMsg();
   setLoading('btn-create', true);
   initSocket(() => socket.emit('room:create', { playerName: name, tenantId: 'default' }));
 }
 
-function joinRoom() {
-  const name = el('join-name').value.trim();
+function joinRoomByCard(code) {
+  const name = el('player-name').value.trim();
+  if (!name) return showMsg('Introduce tu nombre primero');
+  hideMsg();
+  setLoading('btn-create', true);
+  initSocket(() => socket.emit('room:join', { code, playerName: name, tenantId: 'default' }));
+}
+
+function joinByCode() {
+  const name = el('player-name').value.trim();
   const code = el('join-code').value.trim().toUpperCase();
   if (!name)                    return showMsg('Introduce tu nombre');
   if (!code || code.length < 4) return showMsg('Introduce el código de sala');
@@ -97,6 +134,7 @@ function leaveRoom() {
   socket = null;
   showScreen('join');
   myPlayer = null; roomCode = null; isHost = false; players = [];
+  connectReadonly();
 }
 
 // ── UI ────────────────────────────────────────────────────────────────────────
@@ -120,7 +158,7 @@ function renderPlayers(room) {
     row.innerHTML = `
       <div class="player-dot" style="background:${p.color}"></div>
       <span class="player-name">${p.name}</span>
-      ${isMe       ? '<span class="player-you">Tú</span>'       : ''}
+      ${isMe       ? '<span class="player-you">Tú</span>'         : ''}
       ${isRoomHost ? '<span class="player-host">Anfitrión</span>' : ''}
     `;
     list.appendChild(row);
@@ -129,15 +167,67 @@ function renderPlayers(room) {
   if (room.players.length < 6) {
     const waiting = document.createElement('div');
     waiting.className = 'waiting-row';
-    waiting.innerHTML = `<div class="dots"><span></span><span></span><span></span></div> Esperando jugadores...`;
+    waiting.innerHTML = `<div class="dots"><span></span><span></span><span></span></div> Esperando jugadores (${room.players.length}/6)...`;
     list.appendChild(waiting);
   }
+}
+
+function renderRoomsList(list) {
+  const container = el('rooms-list');
+  if (!container) return;
+
+  if (!list || list.length === 0) {
+    container.innerHTML = `
+      <div class="rooms-empty">
+        <span>No hay salas abiertas</span>
+        <small>Crea una nueva para empezar</small>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = list.map(r => {
+    const pct  = (r.players / 6) * 100;
+    const full = r.players >= 6;
+    return `
+      <div class="room-card ${full ? 'room-full' : ''}">
+        <div class="room-card-info">
+          <span class="room-card-code">${r.code}</span>
+          <span class="room-card-count">${r.players}/6 jugadores</span>
+          <div class="room-card-bar"><div class="room-card-fill" style="width:${pct}%"></div></div>
+        </div>
+        ${full
+          ? '<span class="room-card-label-full">Llena</span>'
+          : `<button class="btn-join-card" onclick="joinRoomByCard('${r.code}')">Unirse →</button>`
+        }
+      </div>`;
+  }).join('');
+}
+
+function showCountdown(total) {
+  const overlay = el('countdown-overlay');
+  const numEl   = el('countdown-num');
+  overlay.classList.add('visible');
+  let n = total;
+  numEl.textContent = n;
+  const iv = setInterval(() => {
+    n--;
+    if (n <= 0) { clearInterval(iv); return; }
+    numEl.textContent = n;
+    numEl.classList.remove('pop');
+    void numEl.offsetWidth; // reflow
+    numEl.classList.add('pop');
+  }, 1000);
 }
 
 function updateStartBtn(room) {
   el('btn-start').classList.toggle('ready', room.players.length >= 1);
   const note = el('min-note');
   if (note) note.style.display = 'none';
+}
+
+function toggleCodePanel() {
+  const panel = el('code-panel');
+  panel.classList.toggle('open');
 }
 
 function setStatus(text, online) {
@@ -159,15 +249,10 @@ function copyCode() {
   });
 }
 
-function switchTab(tab) {
-  el('tab-create').classList.toggle('active', tab === 'create');
-  el('tab-join').classList.toggle('active', tab === 'join');
-  el('panel-create').classList.toggle('active', tab === 'create');
-  el('panel-join').classList.toggle('active', tab === 'join');
-  hideMsg();
-}
-
 // Auto uppercase en código
-el('join-code').addEventListener('input', function () {
-  this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+window.addEventListener('DOMContentLoaded', () => {
+  const jc = el('join-code');
+  if (jc) jc.addEventListener('input', function () {
+    this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  });
 });
