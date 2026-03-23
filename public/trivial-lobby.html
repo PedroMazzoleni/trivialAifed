@@ -85,6 +85,20 @@
       </div>
     </div>
 
+    <!-- Tabs pública / privada -->
+    <div class="create-tabs">
+      <button class="create-tab active" id="tab-public" onclick="selectCreateTab('public')">
+        <span class="create-tab-icon">🌐</span>
+        <span class="create-tab-title">Pública</span>
+        <span class="create-tab-note">Visible para todos</span>
+      </button>
+      <button class="create-tab" id="tab-private" onclick="selectCreateTab('private')">
+        <span class="create-tab-icon">🔒</span>
+        <span class="create-tab-title">Privada</span>
+        <span class="create-tab-note">Solo por código</span>
+      </button>
+    </div>
+
     <!-- Nombre del jugador -->
     <div class="card" style="margin-bottom:16px">
       <div class="card-body" style="padding:20px 24px">
@@ -110,20 +124,6 @@
     </div>
 
     <div class="msg" id="msg"></div>
-
-    <!-- Tabs pública / privada -->
-    <div class="create-tabs">
-      <button class="create-tab active" id="tab-public" onclick="selectCreateTab('public')">
-        <span class="create-tab-icon">🌐</span>
-        <span class="create-tab-title">Pública</span>
-        <span class="create-tab-note">Visible para todos</span>
-      </button>
-      <button class="create-tab" id="tab-private" onclick="selectCreateTab('private')">
-        <span class="create-tab-icon">🔒</span>
-        <span class="create-tab-title">Privada</span>
-        <span class="create-tab-note">Solo por código</span>
-      </button>
-    </div>
 
     <!-- Crear sala -->
     <button class="btn btn-primary" id="btn-create" onclick="createRoom()" style="margin-bottom:10px">
