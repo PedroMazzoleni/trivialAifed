@@ -26,10 +26,20 @@ const io     = new Server(server, {
 });
 
 app.use(express.json());
+
+// 1. React SPA (dist/ generado por Vite)
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// 2. Páginas vanilla y assets estáticos
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'trivial-intro.html'));
+// 3. Fallback SPA: cualquier ruta sin extensión de archivo sirve el index de React
+app.get('*', (req, res, next) => {
+  if (path.extname(req.path)) return next();
+  const distIndex = path.join(__dirname, 'dist', 'index.html');
+  const fs = require('fs');
+  if (fs.existsSync(distIndex)) res.sendFile(distIndex);
+  else res.sendFile(path.join(__dirname, 'public', 'trivial-intro.html'));
 });
 
 registerAuthRoutes(app);

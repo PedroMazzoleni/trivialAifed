@@ -1,0 +1,58 @@
+/* LoginPage.css */
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+}
+
+/* ── CARD ── */
+.card {
+  width: 100%;
+  max-width: 420px;
+  background: #0d1530;
+  border-radius: 4px;
+  border: 1px solid #1e2a4a;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+  animation: rise .38s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* ── HEADER ── */
+.card-header { padding: 36px 40px 28px; border-bottom: 1px solid #1e2a4a; }
+.card-header h1 { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 32px; letter-spacing: -0.5px; color: #e8eaf6; line-height: 1; margin-bottom: 6px; text-transform: uppercase; }
+.card-header p  { font-size: 13px; color: #8892b0; }
+
+/* ── BODY ── */
+.card-body { padding: 32px 40px 36px; }
+
+/* ── EXTRAS ── */
+.form-extras { display: flex; align-items: center; justify-content: space-between; margin: -6px 0 22px; }
+.remember    { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.remember input[type=checkbox] { appearance: none; width: 15px; height: 15px; border: 1.5px solid #1e2a4a; border-radius: 2px; background: #0a0e1a; cursor: pointer; position: relative; transition: all .15s; flex-shrink: 0; }
+.remember input[type=checkbox]:checked { background: #2d7dd2; border-color: #2d7dd2; }
+.remember input[type=checkbox]:checked::after { content: ''; position: absolute; left: 3px; top: 1px; width: 5px; height: 8px; border: 1.5px solid #fff; border-top: none; border-left: none; transform: rotate(45deg); }
+.remember span { font-size: 12px; font-weight: 500; color: #8892b0; text-transform: uppercase; letter-spacing: 0.5px; }
+.forgot { font-size: 12px; font-weight: 600; color: #2d7dd2; text-decoration: none; letter-spacing: 0.3px; text-transform: uppercase; }
+.forgot:hover { text-decoration: underline; }
+
+/* ── STRENGTH BAR ── */
+.strength-bar { height: 2px; background: #1e2d50; border-radius: 1px; margin-top: 8px; overflow: hidden; display: none; }
+.strength-bar.show { display: block; }
+.strength-fill { height: 100%; transition: width .3s, background .3s; }
+
+/* ── DIVIDER ── */
+.divider { display: flex; align-items: center; gap: 12px; margin: 4px 0 12px; }
+.divider hr   { flex: 1; border: none; border-top: 1px solid #1e2d50; }
+.divider span { font-size: 11px; font-weight: 600; color: #8892b0; letter-spacing: 1px; text-transform: uppercase; }
+
+/* ── FOOTER ── */
+.card-footer { padding: 16px 40px 20px; border-top: 1px solid #1e2d50; text-align: center; font-size: 12px; font-weight: 500; color: #8892b0; letter-spacing: 0.3px; }
+.card-footer a { color: #2d7dd2; font-weight: 700; text-decoration: none; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; font-size: 11px; }
+.card-footer a:hover { text-decoration: underline; }
+
+/* ── RANKING LINK ── */
+.ranking-link { text-align: center; padding: 12px 0; border-top: 1px solid #1e2d50; margin-top: 4px; }
+.ranking-link a { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #8892b0; text-decoration: none; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; transition: color .15s; }
+.ranking-link a:hover { color: #2d7dd2; }
