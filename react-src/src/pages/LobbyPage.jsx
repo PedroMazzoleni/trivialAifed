@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Globe, Lock, Copy, Check, ChevronLeft, Trophy } from 'lucide-react'
 import { io } from 'socket.io-client'
@@ -180,7 +180,7 @@ export default function LobbyPage() {
 
             <div className="header">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 10 }}>
-                <img src="/images/logo-trivial.png" alt="Logo" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />
+                <img src="/images/logo.png" alt="Logo" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />
                 <span className="brand" style={{ marginBottom: 0 }}>Trivial Travel</span>
               </div>
               <h1>Jugar Online</h1>

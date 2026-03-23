@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Globe, Bot, Trophy, BarChart3, ArrowRight, ChevronLeft, User } from 'lucide-react'
 import Navbar from '../components/Navbar'
@@ -51,7 +51,7 @@ export default function ModosPage() {
 
         <div className="header">
           <div className="header-logo-row">
-            <img src="/images/logo-trivial.png" alt="Logo" className="header-logo-img" />
+            <img src="/images/logo.png" alt="Logo" className="header-logo-img" />
             <span className="brand" style={{ marginBottom: 0 }}>Trivial Travel</span>
           </div>
           <h1>Elige el modo<br />de juego</h1>

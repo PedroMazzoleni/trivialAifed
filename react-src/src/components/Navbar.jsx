@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Globe, Bot, BarChart3, ChevronDown, Menu } from 'lucide-react'
 import { Session } from '../utils/session'
@@ -40,7 +40,7 @@ export default function Navbar() {
         <div className="navbar-inner">
 
           <Link className="navbar-logo" to="/">
-            <img className="logo-main" src="/images/logo-trivial.png" alt="Trivial Travel" />
+            <img className="logo-main" src="/images/logo.png" alt="Trivial Travel" />
             <img className="logo-eu"   src="/images/eu-logo.png"      alt="Co-funded by EU" />
           </Link>
 
