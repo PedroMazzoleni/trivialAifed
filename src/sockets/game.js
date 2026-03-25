@@ -361,6 +361,15 @@ function registerGameHandlers(io, socket) {
     socket.emit('admin:config', getTenantData(tenantId));
   });
 
+  // ── Chat ────────────────────────────────────────────────────────────────────
+  socket.on('chat:send', ({ message, playerName }) => {
+    const code = socket.data.roomCode;
+    if (!code || !message) return;
+    const clean = String(message).trim().slice(0, 100);
+    if (!clean) return;
+    io.to(code).emit('chat:message', { playerName, message: clean });
+  });
+
   // ── Desconexión ─────────────────────────────────────────────────────────────
   socket.on('disconnect', () => {
     const code = socket.data.roomCode;
