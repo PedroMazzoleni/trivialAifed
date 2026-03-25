@@ -19,9 +19,6 @@ let spinAngle     = 0;
 let isSpinning    = false;
 let iAnswered     = false;
 
-// Dynamic wheel categories — updated from room state so Kenya sub-cats etc. work
-let wheelCats = [...categories];
-
 const categories = [
   { id:'sports',  name:'Sports',    color:'#18c25a', emoji:'⚽' },
   { id:'geo',     name:'Geography', color:'#3B9EFF', emoji:'🌍' },
@@ -36,6 +33,9 @@ const categories = [
   { id:'skip',    name:'SKIP',      color:'#00e5ff', emoji:'⏭️', special:true },
   { id:'suerte',  name:'Lucky',     color:'#00ff88', emoji:'🍀', special:true },
 ];
+
+// Dynamic wheel categories — updated from room state so Kenya sub-cats etc. work
+let wheelCats = [...categories];
 
 const CAT_BACKGROUNDS = {
   sports:  'images/bg-sport.jpg',
@@ -132,9 +132,13 @@ function renderLobby(room) {
 }
 
 function renderLobbyControls() {
-  // Any player can start the event
-  el('btn-ev-start').style.display  = 'block';
-  el('ev-guest-wait').style.display = 'none';
+  if (isHost) {
+    el('btn-ev-start').style.display  = 'block';
+    el('ev-guest-wait').style.display = 'none';
+  } else {
+    el('btn-ev-start').style.display  = 'none';
+    el('ev-guest-wait').style.display = 'block';
+  }
 }
 
 function startEventGame() {
