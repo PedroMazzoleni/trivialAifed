@@ -213,12 +213,15 @@ export default function LobbyPage() {
             </div>
 
             {/* Nombre del jugador */}
-            <div className="card" style={{ marginBottom: 16 }}>
-              <div className="card-body" style={{ padding: '20px 24px' }}>
-                <div className="field" style={{ marginBottom: 0 }}>
-                  <label>Tu nombre</label>
+            <div className="rooms-section">
+              <div className="rooms-header">
+                <span className="rooms-title">Tu nombre</span>
+              </div>
+              <div className="card">
+                <div className="card-body" style={{ padding: '12px 14px' }}>
                   <input type="text" placeholder="¿Cómo te llaman?" maxLength={20}
-                    value={playerName} onChange={e => setPlayerName(e.target.value)} />
+                    value={playerName} onChange={e => setPlayerName(e.target.value)}
+                    style={{ marginBottom: 0 }} />
                 </div>
               </div>
             </div>
