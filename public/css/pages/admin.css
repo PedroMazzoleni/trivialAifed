@@ -95,6 +95,11 @@ html, body { min-height: 100%; }
 .filter-bar input  { flex: 1; min-width: 200px; }
 .filter-bar select { }
 
+/* ── ROUND BUTTONS (event form) ── */
+.round-btn { padding: 10px 8px; background: rgba(255,255,255,0.04); border: 1.5px solid var(--border); border-radius: 4px; font-family: var(--font-cond); font-weight: 800; font-size: 18px; color: var(--muted); cursor: pointer; transition: all .15s; text-align: center; width: 100%; }
+.round-btn:hover    { border-color: var(--green); color: var(--green); background: rgba(24,194,90,0.08); }
+.round-btn.selected { border-color: var(--green); background: rgba(24,194,90,0.18); color: #fff; box-shadow: 0 0 10px rgba(24,194,90,0.3); }
+
 /* ── MENSAJES (override color de success para admin usa --green) ── */
 .msg.success { border-color: var(--green); }
 

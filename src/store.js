@@ -7,7 +7,8 @@ const defaultCategories = [
     { id: 'geo',     name: 'Geography', color: '#3B9EFF', emoji: '🌍' },
     { id: 'culture', name: 'Culture',   color: '#f5a623', emoji: '🎭' },
     { id: 'history', name: 'History',   color: '#e84545', emoji: '📜' },
-    { id: 'eu',      name: 'EU',        color: '#a259ff', emoji: '🇪🇺' },
+    { id: 'eu',      name: 'Europa',    color: '#a259ff', emoji: '🇪🇺' },
+    { id: 'kenya',   name: 'Kenya',     color: '#cc2200', emoji: '🦒' },
       { id: 'doble',   name: 'x2 Pts',   color: '#FFD700', emoji: '⚡', special: true },
     { id: 'robo',    name: 'Robo',      color: '#ff4dff', emoji: '💸', special: true },
     { id: 'bomba',   name: 'Bomba',     color: '#ff6600', emoji: '💣', special: true },
@@ -165,8 +166,27 @@ const defaultCategories = [
       {q:"Which treaty, signed in 1957, created the European Economic Community (EEC)?",a:"The Treaty of Rome",opts:["The treaty of Sarajevo","The Vatican Treaty","The Treaty of Rome"],diff:"difícil"},
       {q:"Which policies aim to reduce economic, social and territorial disparities between regions?",a:"Cohesion policies",opts:["Equality policies","Economic policies","Cohesion policies"],diff:"difícil"},
     ],
+    kenya: [
+      {q:"What is the capital city of Kenya?",a:"Nairobi",opts:["Nairobi","Mombasa","Kisumu"],diff:"fácil"},
+      {q:"What are the two official languages of Kenya?",a:"Swahili and English",opts:["Swahili and English","French and Swahili","Arabic and English"],diff:"fácil"},
+      {q:"Which ocean borders Kenya to the east?",a:"Indian Ocean",opts:["Indian Ocean","Atlantic Ocean","Red Sea"],diff:"fácil"},
+      {q:"What is the currency of Kenya?",a:"Kenyan Shilling",opts:["Kenyan Shilling","Kenyan Pound","East African Franc"],diff:"fácil"},
+      {q:"What is the name of the famous wildlife reserve in Kenya known for hosting the Great Migration?",a:"Maasai Mara",opts:["Maasai Mara","Amboseli","Tsavo"],diff:"fácil"},
+      {q:"What is Kenya's second largest city and main coastal port?",a:"Mombasa",opts:["Mombasa","Kisumu","Nakuru"],diff:"fácil"},
+      {q:"Which continent is Kenya located in?",a:"Africa",opts:["Africa","South America","Asia"],diff:"fácil"},
+      {q:"Kenya gained independence in 1963 from which country?",a:"United Kingdom",opts:["United Kingdom","France","Portugal"],diff:"medio"},
+      {q:"Which Kenyan athlete, known as the greatest marathoner, won the Olympic Marathon in 2016 and 2020?",a:"Eliud Kipchoge",opts:["Eliud Kipchoge","Geoffrey Kipkoech","Wilson Kipsang"],diff:"medio"},
+      {q:"What is the name of Kenya's largest lake, shared with Uganda and Tanzania?",a:"Lake Victoria",opts:["Lake Victoria","Lake Turkana","Lake Naivasha"],diff:"medio"},
+      {q:"The Maasai Mara is connected to which famous Tanzanian wildlife park, forming a single great ecosystem?",a:"Serengeti",opts:["Serengeti","Ngorongoro","Kilimanjaro"],diff:"medio"},
+      {q:"What is the name of the tallest mountain in Kenya?",a:"Mount Kenya",opts:["Mount Kenya","Mount Elgon","Mount Kilimanjaro"],diff:"medio"},
+      {q:"Who was Kenya's first President after independence?",a:"Jomo Kenyatta",opts:["Jomo Kenyatta","Daniel arap Moi","Tom Mboya"],diff:"difícil"},
+      {q:"In which year did Kenya become a republic?",a:"1964",opts:["1963","1964","1967"],diff:"difícil"},
+      {q:"Which Kenyan tea-growing region produces some of the finest tea in Africa?",a:"Kericho",opts:["Kericho","Nyeri","Kisii"],diff:"difícil"},
+      {q:"What is the name of the ancient coastal town in Kenya that is a UNESCO World Heritage Site?",a:"Lamu",opts:["Lamu","Malindi","Kilifi"],diff:"difícil"},
+      {q:"Which large lake in northern Kenya is the world's largest desert lake and largest alkaline lake?",a:"Lake Turkana",opts:["Lake Turkana","Lake Baringo","Lake Bogoria"],diff:"difícil"},
+    ],
   };
-  
+
   // ─── Estado compartido ────────────────────────────────────────────────────────
   const tenants = {};   // tenantId → { categories, questions, config }
   const rooms   = {};   // roomCode → gameState

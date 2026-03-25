@@ -51,7 +51,7 @@ const ALL_NORMAL_CATS = [
   { id: 'geo',     name: 'Geography', color: '#3B9EFF', emoji: '🌍' },
   { id: 'culture', name: 'Culture',   color: '#f5a623', emoji: '🎭' },
   { id: 'history', name: 'History',   color: '#e84545', emoji: '📜' },
-  { id: 'eu',      name: 'EU',        color: '#a259ff', emoji: '🇪🇺' },
+  { id: 'eu',      name: 'Europa',    color: '#a259ff', emoji: '🇪🇺' },
   { id: 'kenya',   name: 'Kenya',     color: '#cc2200', emoji: '🦒' },
 ];
 
@@ -117,6 +117,7 @@ function registerEventGameHandlers(io, socket) {
 
       eventRooms[eid] = {
         eventId:       eid,
+        tenantId:      'default',
         eventTitle:    eventData?.title    || 'Event',
         eventCategory,
         totalRounds:   eventData?.rounds   || 6,
@@ -300,6 +301,20 @@ function _doSpin(io, room) {
 function _loadQuestion(io, room, categoryId, difficulty) {
   const diffMap = { easy: 'fácil', medium: 'medio', hard: 'difícil' };
   const q = getUniqueQuestion(room, categoryId, diffMap[difficulty] || 'medio');
+
+  if (!q) {
+    // No questions available for this category — skip to next round
+    room.currentRound++;
+    if (room.currentRound > room.totalRounds) {
+      room.state = 'finished';
+      const sorted = [...room.players].sort((a, b) => b.score - a.score);
+      sorted.forEach((player, idx) => updateUserStats(player.name, player.score, idx === 0));
+    } else {
+      setTimeout(() => _doSpin(io, room), 2000);
+    }
+    broadcastEventRoom(io, room.eventId);
+    return;
+  }
 
   room.currentCategory   = categoryId;
   room.currentDifficulty = difficulty;

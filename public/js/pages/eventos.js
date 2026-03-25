@@ -31,11 +31,16 @@ const CAT_COLORS = {
     renderEvents();
   }
   
+  function parseEventDate(str) {
+    // MySQL returns "2026-03-25 08:00:00" (space); normalise to ISO for consistent local-time parsing
+    return new Date(str.replace(' ', 'T'));
+  }
+
   function getEventStatus(ev) {
     const now = new Date();
     if (!ev.starts_at && !ev.ends_at) return ev.status || 'active';
-    if (ev.ends_at && new Date(ev.ends_at) < now) return 'finished';
-    if (ev.starts_at && new Date(ev.starts_at) > now) return 'upcoming';
+    if (ev.ends_at && parseEventDate(ev.ends_at) < now) return 'finished';
+    if (ev.starts_at && parseEventDate(ev.starts_at) > now) return 'upcoming';
     return 'active';
   }
   

@@ -10,7 +10,7 @@ const CAT_META = {
   geo:     { name:'Geography', color:'#3B9EFF' },
   culture: { name:'Culture',   color:'#f5a623' },
   history: { name:'History',   color:'#e84545' },
-  eu:      { name:'EU',        color:'#a259ff' },
+  eu:      { name:'Europa',     color:'#a259ff' },
   kenya:   { name:'Kenya',     color:'#cc2200' },
   mixed:   { name:'Mixed',     color:'#9b59b6' },
 };
@@ -400,11 +400,11 @@ function renderEventForm(ev) {
     <div class="form-grid">
       <div class="field">
         <label>Start date</label>
-        <input type="datetime-local" id="ev-starts" value="${ev.starts_at ? ev.starts_at.slice(0,16) : ''}">
+        <input type="datetime-local" id="ev-starts" value="${ev.starts_at ? ev.starts_at.replace(' ','T').slice(0,16) : ''}">
       </div>
       <div class="field">
         <label>End date</label>
-        <input type="datetime-local" id="ev-ends" value="${ev.ends_at ? ev.ends_at.slice(0,16) : ''}">
+        <input type="datetime-local" id="ev-ends" value="${ev.ends_at ? ev.ends_at.replace(' ','T').slice(0,16) : ''}">
       </div>
     </div>
 
