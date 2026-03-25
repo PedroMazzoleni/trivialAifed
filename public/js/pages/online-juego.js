@@ -135,6 +135,14 @@ function connectSocket() {
 
   socket.on('connect_error', (err) => console.log('❌ Error conexión:', err.message));
   socket.on('disconnect',    (reason) => console.log('🔌 Desconectado:', reason));
+
+  // ── CHAT ──────────────────────────────────────────────────────────────────
+  socket.on('chat:message', ({ playerName, message }) => {
+    addChatMsg(playerName, message, false);
+  });
+  socket.on('chat:system', ({ message }) => {
+    addChatMsg('', message, true);
+  });
 }
 
 // ── ROOM UPDATE ───────────────────────────────────────────────────────────────
@@ -722,6 +730,16 @@ function showResults(room) {
       <span class="podium-pts" style="color:${p.color}">${p.score}</span>
     </div>
   `).join('');
+
+  // Abrir chat al terminar la partida
+  setTimeout(() => {
+    const panel = document.getElementById('chat-panel');
+    if (panel) {
+      panel.classList.remove('collapsed');
+      _chatOpen = true;
+      addChatMsg('', '🏁 ¡Partida terminada! Chatea con tus rivales.', true);
+    }
+  }, 800);
 }
 
 // ── MINI SCORES ───────────────────────────────────────────────────────────────
@@ -746,6 +764,58 @@ function _showScreen_unused(id) {
 
 function playAgain() { goTo('trivial-lobby.html'); }
 function goHome()    { goTo('trivial-modos.html'); }
+
+// ── CHAT ──────────────────────────────────────────────────────────────────────
+let _chatOpen = false;
+let _unread   = 0;
+
+function toggleChat() {
+  _chatOpen = !_chatOpen;
+  document.getElementById('chat-panel').classList.toggle('collapsed', !_chatOpen);
+  if (_chatOpen) {
+    _unread = 0;
+    const badge = document.getElementById('chat-unread');
+    badge.style.display = 'none';
+    // Scroll to bottom
+    const msgs = document.getElementById('chat-messages');
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+}
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg   = (input.value || '').trim();
+  if (!msg || !socket) return;
+  socket.emit('chat:send', { message: msg, playerName: MY_NAME });
+  input.value = '';
+}
+
+function addChatMsg(playerName, message, isSystem = false) {
+  const msgs = document.getElementById('chat-messages');
+  if (!msgs) return;
+  const isMe  = playerName === MY_NAME;
+  const div   = document.createElement('div');
+
+  if (isSystem) {
+    div.className = 'chat-msg system';
+    div.innerHTML = `<span class="chat-msg-text">${message}</span>`;
+  } else {
+    div.className = `chat-msg${isMe ? ' is-me' : ''}`;
+    div.innerHTML = `
+      <span class="chat-msg-name${isMe ? ' me' : ''}">${isMe ? 'Tú' : playerName}</span>
+      <span class="chat-msg-text">${message}</span>`;
+  }
+
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  // Badge si chat está cerrado
+  if (!_chatOpen && !isSystem) {
+    _unread++;
+    const badge = document.getElementById('chat-unread');
+    if (badge) { badge.textContent = _unread; badge.style.display = 'inline-flex'; }
+  }
+}
 
 let muted = false;
 function toggleMute() {
