@@ -185,11 +185,11 @@ function registerEventGameHandlers(io, socket) {
     broadcastEventRoom(io, eid);
   });
 
-  // ── Start event game (host only) ────────────────────────────────────────────
+  // ── Start event game (any player in the room) ───────────────────────────────
   socket.on('event:start', () => {
     const eid  = socket.data.eventId;
     const room = getEventRoom(eid);
-    if (!room || room.host !== socket.id) return;
+    if (!room || room.state !== 'waiting') return;
     if (room.players.length < 1) return;
 
     room.state        = 'spinning';

@@ -19,6 +19,9 @@ let spinAngle     = 0;
 let isSpinning    = false;
 let iAnswered     = false;
 
+// Dynamic wheel categories — updated from room state so Kenya sub-cats etc. work
+let wheelCats = [...categories];
+
 const categories = [
   { id:'sports',  name:'Sports',    color:'#18c25a', emoji:'⚽' },
   { id:'geo',     name:'Geography', color:'#3B9EFF', emoji:'🌍' },
@@ -95,6 +98,9 @@ function connectSocket() {
 
 // ── STATE MACHINE ─────────────────────────────────────────────────────────────
 function handleUpdate(room) {
+  // Sync wheel categories from server so event-specific sectors (kenya sub-cats etc.) work
+  if (room.categories && room.categories.length) wheelCats = room.categories;
+
   // Update round progress bar
   const pct = ((room.currentRound - 1) / room.totalRounds) * 100;
   el('ev-progress-fill').style.width = pct + '%';
@@ -126,15 +132,9 @@ function renderLobby(room) {
 }
 
 function renderLobbyControls() {
-  const startBtn  = el('btn-ev-start');
-  const guestWait = el('ev-guest-wait');
-  if (isHost) {
-    startBtn.style.display  = 'block';
-    guestWait.style.display = 'none';
-  } else {
-    startBtn.style.display  = 'none';
-    guestWait.style.display = 'block';
-  }
+  // Any player can start the event
+  el('btn-ev-start').style.display  = 'block';
+  el('ev-guest-wait').style.display = 'none';
 }
 
 function startEventGame() {
@@ -145,7 +145,7 @@ function startEventGame() {
 function renderSpin(room) {
   el('ev-spin-round').textContent = `Round ${room.currentRound} / ${room.totalRounds}`;
   renderMiniScores(room, 'mini-scores-spin');
-  drawWheel(categories, spinAngle);
+  drawWheel(wheelCats, spinAngle);
   el('cat-reveal').classList.remove('show');
 }
 
@@ -154,11 +154,11 @@ function doSpin(catId, diff, extra) {
   isSpinning = true;
   iAnswered  = false;
 
-  const cat    = categories.find(c => c.id === catId);
+  const cat    = wheelCats.find(c => c.id === catId);
   if (!cat) { isSpinning = false; return; }
 
-  const n      = categories.length;
-  const catIdx = categories.findIndex(c => c.id === catId);
+  const n      = wheelCats.length;
+  const catIdx = wheelCats.findIndex(c => c.id === catId);
   const slice  = (2 * Math.PI) / n;
 
   const targetOffset = Math.PI / 2 - catIdx * slice - slice / 2;
@@ -181,10 +181,10 @@ function doSpin(catId, diff, extra) {
     const mod   = ((spinAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
     const sec   = Math.floor(mod / slice) % n;
     if (sec !== lastSector) { lastSector = sec; }
-    drawWheel(categories, spinAngle);
+    drawWheel(wheelCats, spinAngle);
     if (t < 1) { requestAnimationFrame(frame); return; }
     isSpinning = false;
-    drawWheel(categories, spinAngle, catId);
+    drawWheel(wheelCats, spinAngle, catId);
     _bounceReveal(catId, cat);
   }
   requestAnimationFrame(frame);
@@ -199,9 +199,9 @@ function _bounceReveal(catId, cat) {
   function bounceFrame(now) {
     const t   = Math.min((now - bounceStart) / BOUNCE_DUR, 1);
     const osc = Math.sin(t * Math.PI) * BOUNCE_ANGLE * (1 - t * 0.6);
-    drawWheel(categories, baseAngle - osc, catId);
+    drawWheel(wheelCats, baseAngle - osc, catId);
     if (t < 1) { requestAnimationFrame(bounceFrame); return; }
-    drawWheel(categories, baseAngle, catId);
+    drawWheel(wheelCats, baseAngle, catId);
     // Show reveal
     const reveal = el('cat-reveal');
     reveal.style.background  = hexToRgba(cat.color, 0.15);
@@ -217,7 +217,7 @@ function _bounceReveal(catId, cat) {
 // ── QUESTION ──────────────────────────────────────────────────────────────────
 function renderQuestion(room) {
   const q   = room.currentQuestion;
-  const cat = categories.find(c => c.id === room.currentCategory);
+  const cat = wheelCats.find(c => c.id === room.currentCategory);
 
   // Background
   const bgEl = el('screen-question');
