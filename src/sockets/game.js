@@ -233,7 +233,7 @@ function registerGameHandlers(io, socket) {
           broadcastRoom(io, code);
           return;
         }
-        const normalCats    = ['sports','geo','culture','history','eu','kenya'];
+        const normalCats    = ['sports','geo','culture','history','eu'];
         const randCat       = normalCats[Math.floor(Math.random() * normalCats.length)];
         room.currentQuestion  = getUniqueQuestion(room, randCat, null);
         room.currentDifficulty= 'medium';

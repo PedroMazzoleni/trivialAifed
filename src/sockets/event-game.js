@@ -52,7 +52,14 @@ const ALL_NORMAL_CATS = [
   { id: 'culture', name: 'Culture',   color: '#f5a623', emoji: '🎭' },
   { id: 'history', name: 'History',   color: '#e84545', emoji: '📜' },
   { id: 'eu',      name: 'Europa',    color: '#a259ff', emoji: '🇪🇺' },
-  { id: 'kenya',   name: 'Kenya',     color: '#cc2200', emoji: '🦒' },
+];
+
+// Kenya event sub-categories — shown as wheel sectors in Kenya events
+const KENYA_SUB_CATS = [
+  { id: 'kenya_geo',     name: 'Geography', color: '#3B9EFF', emoji: '🗺️' },
+  { id: 'kenya_nature',  name: 'Wildlife',  color: '#18c25a', emoji: '🦁' },
+  { id: 'kenya_history', name: 'History',   color: '#e84545', emoji: '📜' },
+  { id: 'kenya_culture', name: 'Culture',   color: '#f5a623', emoji: '🎭' },
 ];
 
 const SPECIAL_CATS_LIST = [
@@ -65,40 +72,39 @@ const SPECIAL_CATS_LIST = [
 
 /**
  * Build a custom wheel for an event.
- * - If category is 'mixed': use all normal cats + specials (default wheel)
- * - If category is specific (e.g. 'kenya'): replace all normal cat slots
- *   with multiple sectors of that category (5 sectors) + specials
+ * - 'mixed': all normal cats + specials
+ * - 'kenya': Kenya sub-category sectors + specials
+ * - specific cat (e.g. 'eu'): 5 sectors of that category + specials
  */
 function buildEventCategories(eventCategory) {
   if (!eventCategory || eventCategory === 'mixed') {
     return [...ALL_NORMAL_CATS, ...SPECIAL_CATS_LIST];
   }
-
+  if (eventCategory === 'kenya') {
+    return [...KENYA_SUB_CATS, ...SPECIAL_CATS_LIST];
+  }
   const cat = ALL_NORMAL_CATS.find(c => c.id === eventCategory);
   if (!cat) return [...ALL_NORMAL_CATS, ...SPECIAL_CATS_LIST];
-
-  // Create 5 sectors of the event category + 5 specials = 10 sectors
-  const eventSectors = Array(5).fill(null).map(() => ({ ...cat }));
-  return [...eventSectors, ...SPECIAL_CATS_LIST];
+  // Single-category event: fill 5 sectors with that category + 5 specials
+  return [...Array(5).fill(null).map(() => ({ ...cat })), ...SPECIAL_CATS_LIST];
 }
 
 function pickRandomCategory(room) {
-  const eventCat  = room.eventCategory;
-  const allCats   = room.categories || defaultCategories;
+  const eventCat   = room.eventCategory;
+  const allCats    = room.categories || defaultCategories;
   const normalCats = allCats.filter(c => !c.special);
 
-  if (eventCat === 'mixed') {
-    // Pick any normal category avoiding recent repeats
+  // mixed and kenya both pick from the non-special wheel sectors, avoiding recent repeats
+  if (eventCat === 'mixed' || eventCat === 'kenya') {
     if (!room.usedCatsRound) room.usedCatsRound = [];
-    // Get unique ids of available categories
     const uniqueIds = [...new Set(normalCats.map(c => c.id))];
-    let availableIds = uniqueIds.filter(id => !room.usedCatsRound.includes(id));
-    if (!availableIds.length) { room.usedCatsRound = []; availableIds = uniqueIds; }
-    const pickedId = availableIds[Math.floor(Math.random() * availableIds.length)];
+    let available = uniqueIds.filter(id => !room.usedCatsRound.includes(id));
+    if (!available.length) { room.usedCatsRound = []; available = uniqueIds; }
+    const pickedId = available[Math.floor(Math.random() * available.length)];
     room.usedCatsRound.push(pickedId);
     return normalCats.find(c => c.id === pickedId) || normalCats[0];
   } else {
-    // Specific category event — always return that category
+    // Single-category event — always return that category
     return normalCats.find(c => c.id === eventCat) || normalCats[0];
   }
 }
