@@ -49,6 +49,46 @@ async function initDB() {
       VALUES ('admin', 'Admin', 'admin1234', 'admin')
     `);
 
+    // ── Events tables ─────────────────────────────────────────────────────
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS events (
+        id          INT AUTO_INCREMENT PRIMARY KEY,
+        title       VARCHAR(200) NOT NULL,
+        description TEXT,
+        category    VARCHAR(100) NOT NULL,
+        difficulty  VARCHAR(20)  NOT NULL DEFAULT 'medio',
+        status      VARCHAR(20)  NOT NULL DEFAULT 'active',
+        rounds      INT          NOT NULL DEFAULT 6,
+        starts_at   DATETIME,
+        ends_at     DATETIME,
+        created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS event_questions (
+        id         INT AUTO_INCREMENT PRIMARY KEY,
+        event_id   INT NOT NULL,
+        question   TEXT NOT NULL,
+        answer     VARCHAR(500) NOT NULL,
+        options    TEXT NOT NULL,
+        difficulty VARCHAR(20) NOT NULL DEFAULT 'medio',
+        FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Auto-cleanup expired events every hour
+    const cleanupExpired = async () => {
+      try {
+        const [r] = await db.execute(
+          'DELETE FROM events WHERE ends_at IS NOT NULL AND ends_at < DATE_SUB(NOW(), INTERVAL 1 DAY)'
+        );
+        if (r.affectedRows > 0) console.log(`🗑️  Limpiados ${r.affectedRows} evento(s) expirados`);
+      } catch(e) {}
+    };
+    cleanupExpired();
+    setInterval(cleanupExpired, 60 * 60 * 1000);
+
     console.log('✅ MySQL conectado y tablas listas');
   } catch(e) {
     console.error('❌ MySQL error:', e.message);
