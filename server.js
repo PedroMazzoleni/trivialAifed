@@ -36,6 +36,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // 3. Fallback SPA: cualquier ruta sin extensión de archivo sirve el index de React
 app.get('*', (req, res, next) => {
   if (path.extname(req.path)) return next();
+  if (req.path.startsWith('/api/')) return next();
   const distIndex = path.join(__dirname, 'dist', 'index.html');
   const fs = require('fs');
   if (fs.existsSync(distIndex)) res.sendFile(distIndex);
