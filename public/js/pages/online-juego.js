@@ -22,7 +22,6 @@ let categories = [
   { id:'culture', name:'Culture',   color:'#f5a623', emoji:'🎭' },
   { id:'history', name:'Historia',  color:'#e84545', emoji:'📜' },
   { id:'eu',      name:'EU',        color:'#a259ff', emoji:'🇪🇺' },
-  { id:'kenya',   name:'Kenya',     color:'#cc2200', emoji:'🦒' },
   { id:'doble',   name:'x2 Pts',   color:'#FFD700', emoji:'⚡', special:true },
   { id:'robo',    name:'Robo',      color:'#ff4dff', emoji:'💸', special:true },
   { id:'bomba',   name:'Bomba',     color:'#ff6600', emoji:'💣', special:true },
@@ -36,7 +35,6 @@ const CAT_BACKGROUNDS = {
   culture: 'images/bg-culture.jpg',
   history: 'images/bg-history.jpg',
   eu:      'images/bg-eu.jpg',
-  kenya:   'images/bg-kenya.jpg',
 };
 
 // ── AUDIO ─────────────────────────────────────────────────────────────────────
