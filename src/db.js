@@ -14,10 +14,19 @@ async function initDB() {
   }
 
   try {
+    const { URL } = require('url');
+    const { promises: dns } = require('dns');
+    const parsed = new URL(url);
+    const addresses = await dns.resolve4(parsed.hostname);
+    const ipv4 = addresses[0];
+
     db = new Pool({
-      connectionString: url,
-      ssl: { rejectUnauthorized: false },
-      family: 4,
+      host:     ipv4,
+      port:     parseInt(parsed.port) || 5432,
+      user:     decodeURIComponent(parsed.username),
+      password: decodeURIComponent(parsed.password),
+      database: parsed.pathname.replace('/', ''),
+      ssl:      { rejectUnauthorized: false },
     });
 
     await db.query('SELECT 1');
