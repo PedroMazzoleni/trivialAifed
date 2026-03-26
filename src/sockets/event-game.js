@@ -410,20 +410,18 @@ function _loadQuestion(io, room, categoryId, difficulty) {
 
   // Use exclusive event questions if available
   if (room.eventQuestions && room.eventQuestions.length > 0) {
-    if (!room.usedEventQIdx) room.usedEventQIdx = [];
-    let available = room.eventQuestions
-      .map((q, i) => ({ q, i }))
-      .filter(({ i }) => !room.usedEventQIdx.includes(i));
-
-    // Reset if all used
-    if (!available.length) {
-      room.usedEventQIdx = [];
-      available = room.eventQuestions.map((q, i) => ({ q, i }));
+    // Build a shuffled queue if empty or not initialized
+    if (!room.eventQQueue || room.eventQQueue.length === 0) {
+      const indices = room.eventQuestions.map((_, i) => i);
+      // Fisher-Yates shuffle
+      for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+      }
+      room.eventQQueue = indices;
     }
-
-    const picked = available[Math.floor(Math.random() * available.length)];
-    room.usedEventQIdx.push(picked.i);
-    q = picked.q;
+    const idx = room.eventQQueue.shift();
+    q = room.eventQuestions[idx];
   } else {
     // Fallback to general question bank
     const diffMap = { easy: 'fácil', medium: 'medio', hard: 'difícil' };
