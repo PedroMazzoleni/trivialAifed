@@ -345,6 +345,10 @@ async function openEditEvent(id) {
     editingEventId = id;
     setText('modal-event-title', 'Edit event');
     renderEventForm(ev);
+    // Load existing questions
+    if (ev.questions && ev.questions.length) {
+      ev.questions.forEach(q => addEventQuestion(q));
+    }
     openEventModal();
   } catch {
     alert('Error loading event');
@@ -411,6 +415,18 @@ function renderEventForm(ev) {
     <div style="padding:14px 16px;background:rgba(45,125,210,0.06);border:1px solid rgba(45,125,210,0.2);border-radius:4px;font-size:13px;color:var(--muted);line-height:1.6">
       🎡 <strong style="color:var(--text)">Spin Wheel mode</strong> — unlimited players join the event room. Each round, the wheel spins and everyone answers the same question simultaneously. A podium is revealed at the end.
     </div>
+
+    <!-- ── PREGUNTAS DEL EVENTO ── -->
+    <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <span style="font-family:var(--font-cond);font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Preguntas del evento</span>
+        <button type="button" onclick="addEventQuestion()" style="background:rgba(45,125,210,0.15);border:1px solid rgba(45,125,210,0.3);border-radius:3px;padding:5px 14px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--blue);cursor:pointer">+ Añadir pregunta</button>
+      </div>
+      <div id="ev-questions-list" style="display:flex;flex-direction:column;gap:10px"></div>
+      <div id="ev-no-questions" style="text-align:center;padding:20px;color:var(--muted);font-size:13px">
+        No hay preguntas todavía. Pulsa "+ Añadir pregunta" para empezar.
+      </div>
+    </div>
   `);
 
   setHTML('modal-event-footer', `
@@ -430,6 +446,109 @@ function selectEventRounds(n) {
   });
 }
 
+// ── PREGUNTAS DEL EVENTO ──────────────────────────────────────────────────────
+let _evQCount = 0;
+
+function addEventQuestion(existing = null) {
+  _evQCount++;
+  const qId = _evQCount;
+  const list = el('ev-questions-list');
+  const noQ  = el('ev-no-questions');
+  if (noQ) noQ.style.display = 'none';
+
+  const div = document.createElement('div');
+  div.id = `evq-block-${qId}`;
+  div.style.cssText = 'background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:4px;padding:14px';
+
+  // Build options html (always 3 options)
+  const opts = existing ? existing.options : ['', '', ''];
+  const optsHtml = opts.map((opt, i) => `
+    <input type="text" id="evq-opt-${qId}-${i}"
+      value="${(opt||'').replace(/"/g,'&quot;')}"
+      placeholder="Opción ${i+1}"
+      style="flex:1;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:13px;outline:none;min-width:0">
+  `).join('');
+
+  div.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">Pregunta ${qId}</span>
+      <button type="button" onclick="removeEventQuestion(${qId})" style="background:none;border:none;color:#e84545;cursor:pointer;font-size:16px;line-height:1">✕</button>
+    </div>
+    <div class="field" style="margin-bottom:10px">
+      <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;display:block;margin-bottom:6px">Pregunta</label>
+      <input type="text" id="evq-q-${qId}"
+        value="${existing ? (existing.question||'').replace(/"/g,'&quot;') : ''}"
+        placeholder="Escribe la pregunta aquí..."
+        style="width:100%;padding:10px;background:var(--bg);border:1.5px solid var(--border);border-radius:3px;color:var(--text);font-size:14px;outline:none">
+    </div>
+    <div class="field" style="margin-bottom:10px">
+      <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#18c25a;font-weight:700;display:block;margin-bottom:6px">✓ Respuesta correcta</label>
+      <input type="text" id="evq-a-${qId}"
+        value="${existing ? (existing.answer||'').replace(/"/g,'&quot;') : ''}"
+        placeholder="Escribe la respuesta correcta..."
+        style="width:100%;padding:10px;background:var(--bg);border:1.5px solid #18c25a;border-radius:3px;color:#18c25a;font-size:14px;outline:none">
+    </div>
+    <div class="field" style="margin-bottom:0">
+      <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;display:block;margin-bottom:6px">Opciones de respuesta (mínimo 2)</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${optsHtml}
+        <button type="button" onclick="addOptionToQuestion(${qId})"
+          style="padding:8px 10px;background:rgba(255,255,255,0.05);border:1px dashed var(--border);border-radius:3px;color:var(--muted);cursor:pointer;font-size:12px;white-space:nowrap">+ opción</button>
+      </div>
+    </div>
+  `;
+
+  list.appendChild(div);
+}
+
+function removeEventQuestion(qId) {
+  const block = el(`evq-block-${qId}`);
+  if (block) block.remove();
+  // Show "no questions" message if list is empty
+  const list = el('ev-questions-list');
+  if (list && list.children.length === 0) {
+    const noQ = el('ev-no-questions');
+    if (noQ) noQ.style.display = 'block';
+  }
+}
+
+function addOptionToQuestion(qId) {
+  const block = el(`evq-block-${qId}`);
+  if (!block) return;
+  const optionsWrap = block.querySelector('[style*="display:flex;gap:6px"]');
+  if (!optionsWrap) return;
+  const currentOpts = optionsWrap.querySelectorAll('input[type="text"]').length;
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.id = `evq-opt-${qId}-${currentOpts}`;
+  input.placeholder = `Opción ${currentOpts + 1}`;
+  input.style.cssText = 'flex:1;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:13px;outline:none;min-width:120px';
+  const addBtn = optionsWrap.querySelector('button');
+  optionsWrap.insertBefore(input, addBtn);
+}
+
+function collectEventQuestions() {
+  const list = el('ev-questions-list');
+  if (!list) return [];
+  const questions = [];
+  list.querySelectorAll('[id^="evq-block-"]').forEach(block => {
+    const qId = block.id.replace('evq-block-', '');
+    const question = (el(`evq-q-${qId}`)?.value || '').trim();
+    const answer   = (el(`evq-a-${qId}`)?.value || '').trim();
+    const options  = [];
+    block.querySelectorAll(`input[id^="evq-opt-${qId}-"]`).forEach(inp => {
+      const v = inp.value.trim();
+      if (v) options.push(v);
+    });
+    if (question && answer && options.length >= 2) {
+      // Make sure correct answer is in options
+      if (!options.includes(answer)) options.push(answer);
+      questions.push({ question, answer, options, difficulty: 'medio' });
+    }
+  });
+  return questions;
+}
+
 async function saveEvent() {
   const title     = el('ev-title').value.trim();
   const desc      = el('ev-desc').value.trim();
@@ -439,10 +558,16 @@ async function saveEvent() {
   const starts_at = el('ev-starts').value || null;
   const ends_at   = el('ev-ends').value   || null;
 
-  if (!title)    return alert('The event needs a title');
-  if (!category) return alert('Select a category');
+  if (!title)    return alert('El evento necesita un título');
+  if (!category) return alert('Selecciona una categoría');
 
-  const payload = { title, description: desc, category, difficulty: 'medio', status, rounds, starts_at, ends_at, questions: [] };
+  const questions = collectEventQuestions();
+  if (!questions.length) return alert('Añade al menos una pregunta al evento');
+  if (questions.length < rounds) {
+    if (!confirm(`Tienes ${questions.length} pregunta(s) pero ${rounds} rondas. ¿Continuar de todas formas?`)) return;
+  }
+
+  const payload = { title, description: desc, category, difficulty: 'medio', status, rounds, starts_at, ends_at, questions };
 
   try {
     let res;
@@ -458,13 +583,13 @@ async function saveEvent() {
 
     if (res.ok) {
       closeEventModal();
-      flashMsg(editingEventId ? 'Event updated' : 'Event created', 'success', 'msg-events');
+      flashMsg(editingEventId ? `Evento actualizado (${questions.length} preguntas)` : `Evento creado con ${questions.length} preguntas`, 'success', 'msg-events');
       loadEvents();
     } else {
-      alert(res.msg || 'Error saving event');
+      alert(res.msg || 'Error al guardar el evento');
     }
   } catch(e) {
-    alert('Connection error: ' + e.message);
+    alert('Error de conexión: ' + e.message);
   }
 }
 
