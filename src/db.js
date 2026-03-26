@@ -1,38 +1,29 @@
 // ─── db.js ───────────────────────────────────────────────────────────────────
-const mysql = require('mysql2/promise');
+const { Pool } = require('pg');
 
 let db = null;
 
 async function initDB() {
   const url = process.env.DATABASE_URL ||
-              process.env.MYSQL_PUBLIC_URL ||
-              process.env.MYSQL_URL;
+              process.env.POSTGRES_URL  ||
+              process.env.DATABASE_PRIVATE_URL;
+
+  if (!url) {
+    console.warn('⚠️  No DATABASE_URL found — running without database');
+    return;
+  }
+
   try {
-    if (url) {
-      db = await mysql.createPool({
-        uri: url,
-        ssl: { rejectUnauthorized: false },
-        waitForConnections: true,
-        connectionLimit: 5,
-      });
-    } else {
-      db = await mysql.createPool({
-        host:     process.env.MYSQL_HOST     || process.env.MYSQLHOST,
-        port:     parseInt(process.env.MYSQL_PORT || process.env.MYSQLPORT || 3306),
-        user:     process.env.MYSQL_USER     || process.env.MYSQLUSER     || 'root',
-        password: process.env.MYSQL_PASSWORD || process.env.MYSQL_ROOT_PASSWORD,
-        database: process.env.MYSQL_DATABASE || process.env.MYSQLDATABASE || 'railway',
-        ssl: { rejectUnauthorized: false },
-        waitForConnections: true,
-        connectionLimit: 5,
-      });
-    }
+    db = new Pool({
+      connectionString: url,
+      ssl: { rejectUnauthorized: false },
+    });
 
-    await db.execute('SELECT 1');
+    await db.query('SELECT 1');
 
-    await db.execute(`
+    await db.query(`
       CREATE TABLE IF NOT EXISTS users (
-        id           INT AUTO_INCREMENT PRIMARY KEY,
+        id           SERIAL PRIMARY KEY,
         email        VARCHAR(255) UNIQUE NOT NULL,
         name         VARCHAR(100) NOT NULL,
         password     VARCHAR(255) NOT NULL,
@@ -44,66 +35,61 @@ async function initDB() {
       )
     `);
 
-    await db.execute(`
-      INSERT IGNORE INTO users (email, name, password, role)
+    await db.query(`
+      INSERT INTO users (email, name, password, role)
       VALUES ('admin', 'Admin', 'admin1234', 'admin')
+      ON CONFLICT (email) DO NOTHING
     `);
 
-    // ── Events tables ─────────────────────────────────────────────────────
-    await db.execute(`
+    await db.query(`
       CREATE TABLE IF NOT EXISTS events (
-        id          INT AUTO_INCREMENT PRIMARY KEY,
+        id          SERIAL PRIMARY KEY,
         title       VARCHAR(200) NOT NULL,
         description TEXT,
         category    VARCHAR(100) NOT NULL,
         difficulty  VARCHAR(20)  NOT NULL DEFAULT 'medio',
         status      VARCHAR(20)  NOT NULL DEFAULT 'active',
         rounds      INT          NOT NULL DEFAULT 6,
-        starts_at   DATETIME,
-        ends_at     DATETIME,
+        starts_at   TIMESTAMP,
+        ends_at     TIMESTAMP,
         created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
-    await db.execute(`
+    await db.query(`
       CREATE TABLE IF NOT EXISTS event_questions (
-        id         INT AUTO_INCREMENT PRIMARY KEY,
-        event_id   INT NOT NULL,
+        id         SERIAL PRIMARY KEY,
+        event_id   INT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
         question   TEXT NOT NULL,
         answer     VARCHAR(500) NOT NULL,
         options    TEXT NOT NULL,
-        difficulty VARCHAR(20) NOT NULL DEFAULT 'medio',
-        FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+        difficulty VARCHAR(20) NOT NULL DEFAULT 'medio'
       )
     `);
 
-    // Auto-cleanup expired events every hour
     const cleanupExpired = async () => {
       try {
-        const [r] = await db.execute(
-          'DELETE FROM events WHERE ends_at IS NOT NULL AND ends_at < DATE_SUB(NOW(), INTERVAL 1 DAY)'
-        );
-        if (r.affectedRows > 0) console.log(`🗑️  Limpiados ${r.affectedRows} evento(s) expirados`);
+        const r = await db.query("DELETE FROM events WHERE ends_at IS NOT NULL AND ends_at < NOW() - INTERVAL '1 day'");
+        if (r.rowCount > 0) console.log('🗑️  Limpiados ' + r.rowCount + ' evento(s) expirados');
       } catch(e) {}
     };
     cleanupExpired();
     setInterval(cleanupExpired, 60 * 60 * 1000);
 
-    console.log('✅ MySQL conectado y tablas listas');
+    console.log('✅ PostgreSQL conectado y tablas listas');
   } catch(e) {
-    console.error('❌ MySQL error:', e.message);
+    console.error('❌ PostgreSQL error:', e.message);
     db = null;
   }
 }
 
-// ── Exportar instancia de db para otros módulos ───────────────────────────────
 function getDB() { return db; }
 
 async function updateUserStats(playerName, points, isWinner) {
   if (!db) return;
   try {
-    await db.execute(
-      'UPDATE users SET total_points = total_points + ?, games_played = games_played + 1, wins = wins + ? WHERE name = ?',
+    await db.query(
+      'UPDATE users SET total_points = total_points + $1, games_played = games_played + 1, wins = wins + $2 WHERE name = $3',
       [points, isWinner ? 1 : 0, playerName]
     );
   } catch(e) { console.error('Stats update error:', e.message); }
@@ -116,13 +102,10 @@ function registerAuthRoutes(app) {
     if (!name || !email || !password) return res.json({ ok: false, msg: 'Faltan campos' });
     if (!db) return res.json({ ok: false, msg: 'Base de datos no disponible' });
     try {
-      await db.execute(
-        'INSERT INTO users (email, name, password, role) VALUES (?, ?, ?, ?)',
-        [email, name, password, 'player']
-      );
+      await db.query('INSERT INTO users (email, name, password, role) VALUES ($1, $2, $3, $4)', [email, name, password, 'player']);
       res.json({ ok: true, name, role: 'player' });
     } catch(e) {
-      if (e.code === 'ER_DUP_ENTRY') return res.json({ ok: false, msg: 'Este correo ya está registrado' });
+      if (e.code === '23505') return res.json({ ok: false, msg: 'Este correo ya está registrado' });
       res.json({ ok: false, msg: 'Error al registrar' });
     }
   });
@@ -130,34 +113,36 @@ function registerAuthRoutes(app) {
   app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.json({ ok: false, msg: 'Faltan campos' });
+    if (!db) return res.json({ ok: false, msg: 'Base de datos no disponible' });
     try {
-      const [rows] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
-      if (!rows.length)               return res.json({ ok: false, msg: 'Usuario no encontrado' });
-      if (rows[0].password !== password) return res.json({ ok: false, msg: 'Contraseña incorrecta' });
-      res.json({ ok: true, name: rows[0].name, role: rows[0].role });
+      const r = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+      if (!r.rows.length)                  return res.json({ ok: false, msg: 'Usuario no encontrado' });
+      if (r.rows[0].password !== password) return res.json({ ok: false, msg: 'Contraseña incorrecta' });
+      res.json({ ok: true, name: r.rows[0].name, role: r.rows[0].role });
     } catch(e) { res.json({ ok: false, msg: 'Error al iniciar sesión' }); }
   });
 
   app.get('/api/users', async (req, res) => {
+    if (!db) return res.json([]);
     try {
-      const [rows] = await db.execute("SELECT email, name, role FROM users WHERE role != 'admin'");
-      res.json(rows);
+      const r = await db.query("SELECT email, name, role FROM users WHERE role != 'admin'");
+      res.json(r.rows);
     } catch(e) { res.json([]); }
   });
 
   app.get('/api/ranking', async (req, res) => {
+    if (!db) return res.json([]);
     try {
-      const [rows] = await db.execute(
-        "SELECT name, wins, total_points as totalPoints, games_played as gamesPlayed FROM users WHERE role != 'admin' ORDER BY wins DESC, total_points DESC"
-      );
-      res.json(rows);
+      const r = await db.query("SELECT name, wins, total_points AS \"totalPoints\", games_played AS \"gamesPlayed\" FROM users WHERE role != 'admin' ORDER BY wins DESC, total_points DESC");
+      res.json(r.rows);
     } catch(e) { res.json([]); }
   });
 
   app.get('/api/wins/:name', async (req, res) => {
+    if (!db) return res.json({ wins: 0 });
     try {
-      const [rows] = await db.execute('SELECT wins FROM users WHERE name = ?', [req.params.name]);
-      res.json({ wins: rows[0] ? rows[0].wins : 0 });
+      const r = await db.query('SELECT wins FROM users WHERE name = $1', [req.params.name]);
+      res.json({ wins: r.rows[0] ? r.rows[0].wins : 0 });
     } catch(e) { res.json({ wins: 0 }); }
   });
 }
