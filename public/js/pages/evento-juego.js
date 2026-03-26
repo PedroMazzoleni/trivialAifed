@@ -554,6 +554,34 @@ function hexToRgba(hex, alpha) {
 function goToEvents() { goTo('trivial-eventos.html'); }
 function goHome()     { goTo('trivial-modos.html'); }
 
+// ── AUDIO ─────────────────────────────────────────────────────────────────────
+const EventAudio = (() => {
+  let ctx = null;
+  function getCtx() {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+  function tone(freq, type, vol, dur, delay = 0) {
+    try {
+      const c = getCtx();
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.connect(gain); gain.connect(c.destination);
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, c.currentTime + delay);
+      gain.gain.setValueAtTime(0, c.currentTime + delay);
+      gain.gain.linearRampToValueAtTime(vol, c.currentTime + delay + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + delay + dur);
+      osc.start(c.currentTime + delay);
+      osc.stop(c.currentTime + delay + dur + 0.05);
+    } catch(e) {}
+  }
+  return {
+    chatMsg() { tone(880, 'sine', 0.08, 0.06, 0); tone(1100, 'sine', 0.06, 0.08, 0.05); },
+  };
+})();
+
 // ── CHAT ──────────────────────────────────────────────────────────────────────
 let _chatOpen = false;
 let _unread   = 0;
@@ -597,6 +625,7 @@ function addChatMsg(playerName, message, isSystem = false) {
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
 
+  if (!isSystem) EventAudio.chatMsg();
   if (!_chatOpen && !isSystem) {
     _unread++;
     const badge = document.getElementById('chat-unread');
