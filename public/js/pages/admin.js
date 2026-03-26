@@ -741,7 +741,9 @@ function adminCloseEvent(id) {
 function adminStartEvent(eventId) {
   if (!adminSocket) return alert('Sin conexión al servidor');
   adminSocket.emit('admin:startEvent', { eventId: String(eventId) });
-  flashMsg('▶ Partida iniciada', 'success', 'msg-events');
+  // Listen for error response
+  adminSocket.once('error', ({ msg }) => alert('⚠️ ' + msg));
+  flashMsg('▶ Iniciando partida...', 'success', 'msg-events');
 }
 
 function adminStopEvent(eventId) {
@@ -753,22 +755,37 @@ function adminStopEvent(eventId) {
 
 async function toggleEventStatus(id, newStatus) {
   try {
-    // Get current event data first
     const ev = await apiGet(`/api/events/${id}`);
-    ev.status = newStatus;
+    // Build a clean payload — don't send questions array back to avoid issues
+    const payload = {
+      title:       ev.title,
+      description: ev.description || '',
+      category:    ev.category,
+      difficulty:  ev.difficulty || 'medio',
+      status:      newStatus,
+      rounds:      ev.rounds || 6,
+      starts_at:   ev.starts_at || null,
+      ends_at:     ev.ends_at   || null,
+      questions:   (ev.questions || []).map(q => ({
+        question:   q.question,
+        answer:     q.answer,
+        options:    Array.isArray(q.options) ? q.options : JSON.parse(q.options || '[]'),
+        difficulty: q.difficulty || 'medio',
+      })),
+    };
     const res = await fetch(`${SERVER}/api/events/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(ev)
+      body: JSON.stringify(payload),
     }).then(r => r.json());
     if (res.ok) {
-      const label = newStatus === 'active' ? '✅ Evento activado' : '⏹️ Evento desactivado';
-      flashMsg(label, 'success', 'msg-events');
+      const labels = { active:'✅ Evento abierto', closed:'🔒 Evento cerrado', finished:'⏹ Evento finalizado', upcoming:'📅 Evento programado' };
+      flashMsg(labels[newStatus] || 'Estado actualizado', 'success', 'msg-events');
       loadEvents();
     } else {
       alert(res.msg || 'Error al cambiar estado');
     }
-  } catch { alert('Error de conexión'); }
+  } catch(e) { alert('Error de conexión: ' + e.message); }
 }
 
 async function deleteEvent(id) {
@@ -787,3 +804,4 @@ el('modal-event').addEventListener('click', e => { if (e.target === el('modal-ev
 // ── STARTUP ───────────────────────────────────────────────────────────────────
 loadData();
 loadUsers();
+loadEvents();
