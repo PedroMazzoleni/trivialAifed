@@ -19,6 +19,15 @@ function broadcastEventRoom(io, eventId) {
   const room = getEventRoom(eventId);
   if (!room) return;
   io.to('event:' + eventId).emit('event:update', buildEventPayload(room));
+
+  // Also notify admin watchers
+  io.to('admin:events').emit('admin:eventStatus', {
+    eventId:      room.eventId,
+    players:      room.players.length,
+    state:        room.state,
+    currentRound: room.currentRound,
+    totalRounds:  room.totalRounds,
+  });
 }
 
 function buildEventPayload(room) {
@@ -284,6 +293,51 @@ function registerEventGameHandlers(io, socket) {
     room._autoAdvanceTimer = null;
     room._questionTimer    = null;
     _advanceRound(io, room);
+  });
+
+  // ── Admin controls ───────────────────────────────────────────────────────────
+  socket.on('admin:watchEvents', () => {
+    socket.join('admin:events');
+    // Send current status of all event rooms
+    Object.values(eventRooms).forEach(room => {
+      socket.emit('admin:eventStatus', {
+        eventId:      room.eventId,
+        players:      room.players.length,
+        state:        room.state,
+        currentRound: room.currentRound,
+        totalRounds:  room.totalRounds,
+      });
+    });
+  });
+
+  socket.on('admin:startEvent', ({ eventId }) => {
+    const room = getEventRoom(eventId);
+    if (!room) return socket.emit('error', { msg: 'Sala de evento no encontrada. Los jugadores deben unirse primero.' });
+    if (room.state !== 'waiting') return socket.emit('error', { msg: 'El evento ya está en curso' });
+    if (!room.players.length) return socket.emit('error', { msg: 'No hay jugadores en la sala' });
+
+    room.state        = 'spinning';
+    room.currentRound = 1;
+    room.allAnswers   = [];
+    room.usedQuestions = {};
+    room.usedCatsRound = [];
+    _doSpin(io, room);
+  });
+
+  socket.on('admin:stopEvent', ({ eventId }) => {
+    const room = getEventRoom(eventId);
+    if (!room) return;
+    clearTimeout(room._questionTimer);
+    clearTimeout(room._autoAdvanceTimer);
+    room.state = 'finished';
+    const sorted = [...room.players].sort((a, b) => b.score - a.score);
+    sorted.forEach((player, idx) => updateUserStats(player.name, player.score, idx === 0));
+    broadcastEventRoom(io, eventId);
+    // Notify admins
+    io.to('admin:events').emit('admin:eventStatus', {
+      eventId, players: room.players.length, state: 'finished',
+      currentRound: room.currentRound, totalRounds: room.totalRounds,
+    });
   });
 
   // ── Disconnect ──────────────────────────────────────────────────────────────
