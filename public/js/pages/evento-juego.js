@@ -94,6 +94,14 @@ function connectSocket() {
   socket.on('connect_error', () => {
     el('ev-title-display').textContent = 'Connection error. Please refresh.';
   });
+
+  // ── Chat listeners ────────────────────────────────────────────────────────
+  socket.on('chat:message', ({ playerName, message }) => {
+    addChatMsg(playerName, message, false);
+  });
+  socket.on('chat:system', ({ message }) => {
+    addChatMsg('', message, true);
+  });
 }
 
 // ── STATE MACHINE ─────────────────────────────────────────────────────────────
@@ -545,3 +553,53 @@ function hexToRgba(hex, alpha) {
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
 function goToEvents() { goTo('trivial-eventos.html'); }
 function goHome()     { goTo('trivial-modos.html'); }
+
+// ── CHAT ──────────────────────────────────────────────────────────────────────
+let _chatOpen = false;
+let _unread   = 0;
+
+function toggleChat() {
+  _chatOpen = !_chatOpen;
+  document.getElementById('chat-panel').classList.toggle('collapsed', !_chatOpen);
+  if (_chatOpen) {
+    _unread = 0;
+    const badge = document.getElementById('chat-unread');
+    if (badge) badge.style.display = 'none';
+    const msgs = document.getElementById('chat-messages');
+    if (msgs) msgs.scrollTop = msgs.scrollHeight;
+  }
+}
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg   = (input.value || '').trim();
+  if (!msg || !socket) return;
+  socket.emit('chat:send', { message: msg, playerName: MY_NAME });
+  input.value = '';
+}
+
+function addChatMsg(playerName, message, isSystem = false) {
+  const msgs = document.getElementById('chat-messages');
+  if (!msgs) return;
+  const isMe = playerName === MY_NAME;
+  const div  = document.createElement('div');
+
+  if (isSystem) {
+    div.className = 'chat-msg system';
+    div.innerHTML = `<span class="chat-msg-text">${message}</span>`;
+  } else {
+    div.className = `chat-msg${isMe ? ' is-me' : ''}`;
+    div.innerHTML = `
+      <span class="chat-msg-name${isMe ? ' me' : ''}">${isMe ? 'Tú' : playerName}</span>
+      <span class="chat-msg-text">${message}</span>`;
+  }
+
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  if (!_chatOpen && !isSystem) {
+    _unread++;
+    const badge = document.getElementById('chat-unread');
+    if (badge) { badge.textContent = _unread; badge.style.display = 'inline-flex'; }
+  }
+}
