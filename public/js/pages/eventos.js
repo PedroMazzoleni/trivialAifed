@@ -16,7 +16,9 @@ const CAT_COLORS = {
   
   async function loadEvents() {
     try {
-      allEvents = await apiGet('/api/events');
+      const all = await apiGet('/api/events');
+      // Hide closed events from players
+      allEvents = all.filter(ev => ev.status !== 'closed');
       renderEvents();
     } catch {
       document.getElementById('eventos-grid').innerHTML =
