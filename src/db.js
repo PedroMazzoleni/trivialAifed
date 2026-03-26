@@ -17,6 +17,7 @@ async function initDB() {
     db = new Pool({
       connectionString: url,
       ssl: { rejectUnauthorized: false },
+      family: 4,
     });
 
     await db.query('SELECT 1');
