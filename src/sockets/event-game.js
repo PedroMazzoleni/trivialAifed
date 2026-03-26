@@ -77,9 +77,13 @@ function buildEventCategories(eventCategory) {
   const cat = ALL_NORMAL_CATS.find(c => c.id === eventCategory);
   if (!cat) return [...ALL_NORMAL_CATS, ...SPECIAL_CATS_LIST];
 
-  // Create 5 sectors of the event category + 5 specials = 10 sectors
-  const eventSectors = Array(5).fill(null).map(() => ({ ...cat }));
-  return [...eventSectors, ...SPECIAL_CATS_LIST];
+  // Interleave: category, special, category, special...
+  const result = [];
+  for (let i = 0; i < SPECIAL_CATS_LIST.length; i++) {
+    result.push({ ...cat });
+    result.push(SPECIAL_CATS_LIST[i]);
+  }
+  return result; // [Cat, Doble, Cat, Robo, Cat, Bomba, Cat, SKIP, Cat, Suerte]
 }
 
 function pickRandomCategory(room) {
