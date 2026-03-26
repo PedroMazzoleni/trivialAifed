@@ -258,12 +258,18 @@ function registerEventGameHandlers(io, socket) {
     // Broadcast updated answer count immediately (live progress)
     broadcastEventRoom(io, eid);
 
-    // If ALL players have answered, auto-advance after a short delay
+    // If ALL players have answered → move to answer state and schedule advance
     if (room.allAnswers.length >= room.players.length) {
+      clearTimeout(room._questionTimer);  // cancel the 20s timeout
       clearTimeout(room._autoAdvanceTimer);
+      room._questionTimer = null;
+
+      room.state = 'answer';
+      broadcastEventRoom(io, eid);
+
       room._autoAdvanceTimer = setTimeout(() => {
         _advanceRound(io, room);
-      }, 4000);
+      }, 5000); // show scoreboard 5s before next round
     }
   });
 
@@ -274,6 +280,9 @@ function registerEventGameHandlers(io, socket) {
     if (!room || room.host !== socket.id) return;
     if (room.state !== 'answer') return;
     clearTimeout(room._autoAdvanceTimer);
+    clearTimeout(room._questionTimer);
+    room._autoAdvanceTimer = null;
+    room._questionTimer    = null;
     _advanceRound(io, room);
   });
 
@@ -357,45 +366,52 @@ function _loadQuestion(io, room, categoryId, difficulty) {
 
   broadcastEventRoom(io, room.eventId);
 
-  // Auto-advance after 20 seconds (time limit) even if not all answered
+  // Auto-advance after 20 seconds if not all answered
   clearTimeout(room._questionTimer);
   room._questionTimer = setTimeout(() => {
-    if (room.state === 'question') {
-      room.state = 'answer';
-      broadcastEventRoom(io, room.eventId);
-      // Auto-advance round after 4s
-      clearTimeout(room._autoAdvanceTimer);
-      room._autoAdvanceTimer = setTimeout(() => _advanceRound(io, room), 4000);
-    }
+    if (room.state !== 'question') return; // already advanced
+    clearTimeout(room._autoAdvanceTimer);
+    room.state = 'answer';
+    broadcastEventRoom(io, room.eventId);
+    room._autoAdvanceTimer = setTimeout(() => {
+      _advanceRound(io, room);
+    }, 5000);
   }, 20000);
 }
 
 function _advanceRound(io, room) {
-  // Show answer state briefly
-  room.state = 'answer';
-  broadcastEventRoom(io, room.eventId);
+  // Guard: only advance from answer state
+  if (room.state !== 'answer') return;
 
-  room.currentRound++;
+  // Clear all pending timers first
+  clearTimeout(room._autoAdvanceTimer);
+  clearTimeout(room._questionTimer);
+  room._autoAdvanceTimer = null;
+  room._questionTimer    = null;
 
-  if (room.currentRound > room.totalRounds) {
-    // Game over
-    setTimeout(() => {
-      room.state = 'finished';
-      const sorted = [...room.players].sort((a, b) => b.score - a.score);
-      sorted.forEach((player, idx) => updateUserStats(player.name, player.score, idx === 0));
-      broadcastEventRoom(io, room.eventId);
-      // Clean up room after 10 minutes
-      setTimeout(() => { delete eventRooms[room.eventId]; }, 600000);
-    }, 3000);
+  // Check if game is over BEFORE incrementing
+  if (room.currentRound >= room.totalRounds) {
+    // Last round done — show finished
+    room.state = 'finished';
+    const sorted = [...room.players].sort((a, b) => b.score - a.score);
+    sorted.forEach((player, idx) => updateUserStats(player.name, player.score, idx === 0));
+    broadcastEventRoom(io, room.eventId);
+    // Clean up room after 10 minutes
+    setTimeout(() => { delete eventRooms[String(room.eventId)]; }, 600000);
     return;
   }
 
-  // Next spin after scoreboard display
+  // Advance to next round
+  room.currentRound++;
+  room.allAnswers = [];
+  room.spinCatId  = null;
+  room.spinExtra  = null;
+
+  // Wait for scoreboard to be visible before spinning
   setTimeout(() => {
-    room.allAnswers = [];
-    room.spinCatId  = null;
-    room.spinExtra  = null;
-    _doSpin(io, room);
+    if (room.state !== 'finished') {
+      _doSpin(io, room);
+    }
   }, 5000);
 }
 
