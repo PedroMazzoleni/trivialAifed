@@ -307,7 +307,13 @@ function renderEventsList(events) {
 
   setHTML('events-list', events.map(ev => {
     const color = CAT_META[ev.category]?.color || '#888';
-    const statusColor = ev.status==='active'?'#18c25a':ev.status==='upcoming'?'#3B9EFF':'var(--muted)';
+    const isActive   = ev.status === 'active';
+    const isUpcoming = ev.status === 'upcoming';
+    const isFinished = ev.status === 'finished';
+    const isClosed   = ev.status === 'closed';
+    const statusColor = isActive ? '#18c25a' : isUpcoming ? '#3B9EFF' : '#8892b0';
+    const statusLabel = isActive ? '● ABIERTO' : isUpcoming ? '● PRÓXIMO' : isFinished ? '● FINALIZADO' : '● CERRADO';
+
     return `
       <div class="card" style="margin-bottom:12px;border-left:3px solid ${color}">
         <div class="card-header" style="background:var(--card-bg)">
@@ -315,29 +321,51 @@ function renderEventsList(events) {
             <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0"></div>
             <span class="card-title" style="font-size:15px">${ev.title}</span>
             <span style="font-size:11px;color:var(--muted)">${ev.category}</span>
-            <span style="font-family:var(--font-cond);font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:2px;background:rgba(45,125,210,0.1);color:var(--blue)">${ev.rounds || 6} rounds</span>
-            <span style="font-size:11px;color:${statusColor};font-weight:600;text-transform:uppercase">● ${ev.status}</span>
+            <span style="font-family:var(--font-cond);font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:2px;background:rgba(45,125,210,0.1);color:var(--blue)">${ev.rounds || 6} rondas</span>
+            <span style="font-size:11px;color:${statusColor};font-weight:600;text-transform:uppercase">${statusLabel}</span>
           </div>
           <div class="q-actions">
-            ${ev.status !== 'active'
-              ? `<button class="btn-icon" onclick="toggleEventStatus(${ev.id}, 'active')" title="Activar" style="color:#18c25a">
-                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="10 8 16 12 10 16 10 8"/></svg>
-                </button>`
-              : `<button class="btn-icon" onclick="toggleEventStatus(${ev.id}, 'finished')" title="Desactivar" style="color:#e84545">
-                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><rect x="9" y="9" width="6" height="6"/></svg>
-                </button>`
-            }
-            <button class="btn-icon" onclick="openEditEvent(${ev.id})" title="Edit">
+            <button class="btn-icon" onclick="openEditEvent(${ev.id})" title="Editar">
               <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
-            <button class="btn-icon danger" onclick="deleteEvent(${ev.id})" title="Delete">
+            <button class="btn-icon danger" onclick="deleteEvent(${ev.id})" title="Borrar">
               <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
             </button>
           </div>
         </div>
-        ${ev.description ? `<div style="padding:10px 18px;font-size:13px;color:var(--muted)">${ev.description}</div>` : ''}
+        ${ev.description ? `<div style="padding:8px 18px;font-size:13px;color:var(--muted)">${ev.description}</div>` : ''}
+
+        <!-- Panel de control del admin -->
+        <div style="padding:12px 18px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span id="ev-players-${ev.id}" style="font-size:12px;color:var(--muted)">👥 0 en sala</span>
+            <span id="ev-round-${ev.id}" style="font-size:12px;color:var(--muted)"></span>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${!isActive ? `
+              <button onclick="adminOpenEvent(${ev.id})"
+                style="padding:6px 14px;background:rgba(45,125,210,0.15);border:1px solid rgba(45,125,210,0.3);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--blue);cursor:pointer">
+                🔓 Abrir
+              </button>` : ''}
+            ${isActive ? `
+              <button onclick="adminStartEvent(${ev.id})"
+                style="padding:6px 14px;background:rgba(24,194,90,0.15);border:1px solid rgba(24,194,90,0.3);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#18c25a;cursor:pointer">
+                ▶ Iniciar partida
+              </button>
+              <button onclick="adminStopEvent(${ev.id})"
+                style="padding:6px 14px;background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.3);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#f5a623;cursor:pointer">
+                ⏸ Parar partida
+              </button>
+              <button onclick="adminCloseEvent(${ev.id})"
+                style="padding:6px 14px;background:rgba(232,69,69,0.1);border:1px solid rgba(232,69,69,0.2);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#e84545;cursor:pointer">
+                🔒 Cerrar evento
+              </button>` : ''}
+          </div>
+        </div>
       </div>`;
   }).join(''));
+
+  connectAdminSocket();
 }
 
 function openNewEvent() {
@@ -428,11 +456,16 @@ function renderEventForm(ev) {
     <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <span style="font-family:var(--font-cond);font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Preguntas del evento</span>
-        <button type="button" onclick="addEventQuestion()" style="background:rgba(45,125,210,0.15);border:1px solid rgba(45,125,210,0.3);border-radius:3px;padding:5px 14px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--blue);cursor:pointer">+ Añadir pregunta</button>
+        <div style="display:flex;gap:6px">
+          <button type="button" onclick="el('ev-file-upload').click()" style="background:rgba(255,165,0,0.15);border:1px solid rgba(255,165,0,0.3);border-radius:3px;padding:5px 14px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#f5a623;cursor:pointer">📄 Subir PDF/TXT</button>
+          <button type="button" onclick="addEventQuestion()" style="background:rgba(45,125,210,0.15);border:1px solid rgba(45,125,210,0.3);border-radius:3px;padding:5px 14px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--blue);cursor:pointer">+ Añadir pregunta</button>
+        </div>
       </div>
+      <input type="file" id="ev-file-upload" accept=".pdf,.txt,.md" style="display:none" onchange="handleEventFileUpload(event)">
+      <div id="ev-file-status" style="display:none;padding:10px 14px;border-radius:4px;font-size:13px;margin-bottom:10px"></div>
       <div id="ev-questions-list" style="display:flex;flex-direction:column;gap:10px"></div>
       <div id="ev-no-questions" style="text-align:center;padding:20px;color:var(--muted);font-size:13px">
-        No hay preguntas todavía. Pulsa "+ Añadir pregunta" para empezar.
+        No hay preguntas todavía. Pulsa "+ Añadir pregunta" o sube un archivo PDF/TXT.
       </div>
     </div>
   `);
@@ -509,7 +542,67 @@ function addEventQuestion(existing = null) {
   list.appendChild(div);
 }
 
-function removeEventQuestion(qId) {
+// ── SUBIDA DE ARCHIVO PARA EXTRAER PREGUNTAS ─────────────────────────────────
+async function handleEventFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const status = el('ev-file-status');
+  status.style.display    = 'block';
+  status.style.background = 'rgba(45,125,210,0.1)';
+  status.style.border     = '1px solid rgba(45,125,210,0.3)';
+  status.style.color      = 'var(--blue)';
+  status.innerHTML        = '⏳ Analizando archivo con IA...';
+
+  try {
+    let body;
+
+    if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+      // PDF → base64
+      const pdfBase64 = await new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload  = () => res(reader.result.split(',')[1]);
+        reader.onerror = rej;
+        reader.readAsDataURL(file);
+      });
+      body = { pdfBase64 };
+    } else {
+      // TXT / MD → plain text
+      const text = await file.text();
+      body = { text };
+    }
+
+    // Call our server endpoint (which has the API key)
+    const res  = await fetch(`${SERVER}/api/extract-questions`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(body),
+    });
+    const data = await res.json();
+
+    if (!data.ok) throw new Error(data.msg || 'Error desconocido');
+
+    // Add extracted questions to the form
+    data.questions.forEach(q => addEventQuestion({
+      question: q.question,
+      answer:   q.answer,
+      options:  q.options,
+    }));
+
+    status.style.background = 'rgba(24,194,90,0.1)';
+    status.style.border     = '1px solid rgba(24,194,90,0.3)';
+    status.style.color      = '#18c25a';
+    status.innerHTML        = `✅ ${data.questions.length} preguntas extraídas del archivo`;
+    event.target.value      = '';
+
+  } catch(e) {
+    status.style.background = 'rgba(232,69,69,0.1)';
+    status.style.border     = '1px solid rgba(232,69,69,0.3)';
+    status.style.color      = '#e84545';
+    status.innerHTML        = `❌ Error: ${e.message}`;
+    event.target.value      = '';
+  }
+}
   const block = el(`evq-block-${qId}`);
   if (block) block.remove();
   // Show "no questions" message if list is empty
@@ -599,6 +692,63 @@ async function saveEvent() {
   } catch(e) {
     alert('Error de conexión: ' + e.message);
   }
+}
+
+// ── ADMIN SOCKET — control eventos en tiempo real ─────────────────────────────
+let adminSocket = null;
+
+function connectAdminSocket() {
+  if (adminSocket && adminSocket.connected) return;
+  adminSocket = io(SERVER, { transports: ['polling'] });
+
+  adminSocket.on('connect', () => {
+    adminSocket.emit('admin:watchEvents');
+  });
+
+  // Recibir actualizaciones de estado de salas de eventos
+  adminSocket.on('admin:eventStatus', ({ eventId, players, state, currentRound, totalRounds }) => {
+    const playersEl = el(`ev-players-${eventId}`);
+    const roundEl   = el(`ev-round-${eventId}`);
+    const startBtn  = el(`ev-btn-start-${eventId}`);
+    const stopBtn   = el(`ev-btn-stop-${eventId}`);
+
+    if (playersEl) playersEl.textContent = `👥 ${players} jugador${players !== 1 ? 'es' : ''} en sala`;
+
+    if (roundEl) {
+      if (state === 'waiting') roundEl.textContent = '⏳ Esperando jugadores';
+      else if (state === 'spinning') roundEl.textContent = `🎡 Girando... Ronda ${currentRound}/${totalRounds}`;
+      else if (state === 'question') roundEl.textContent = `❓ Pregunta — Ronda ${currentRound}/${totalRounds}`;
+      else if (state === 'answer') roundEl.textContent = `✅ Respuestas — Ronda ${currentRound}/${totalRounds}`;
+      else if (state === 'finished') roundEl.textContent = '🏁 Partida terminada';
+      else roundEl.textContent = '';
+    }
+
+    if (startBtn) startBtn.style.opacity = (state === 'waiting') ? '1' : '0.4';
+    if (stopBtn)  stopBtn.style.opacity  = (state !== 'waiting' && state !== 'finished') ? '1' : '0.4';
+  });
+}
+
+function adminOpenEvent(id) {
+  toggleEventStatus(id, 'active');
+}
+
+function adminCloseEvent(id) {
+  if (!confirm('¿Cerrar el evento? Dejará de aparecer para los jugadores.')) return;
+  toggleEventStatus(id, 'closed');
+  if (adminSocket) adminSocket.emit('admin:stopEvent', { eventId: String(id) });
+}
+
+function adminStartEvent(eventId) {
+  if (!adminSocket) return alert('Sin conexión al servidor');
+  adminSocket.emit('admin:startEvent', { eventId: String(eventId) });
+  flashMsg('▶ Partida iniciada', 'success', 'msg-events');
+}
+
+function adminStopEvent(eventId) {
+  if (!confirm('¿Parar la partida en curso?')) return;
+  if (!adminSocket) return alert('Sin conexión al servidor');
+  adminSocket.emit('admin:stopEvent', { eventId: String(eventId) });
+  flashMsg('⏸ Partida parada', 'success', 'msg-events');
 }
 
 async function toggleEventStatus(id, newStatus) {
