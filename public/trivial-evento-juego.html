@@ -442,6 +442,57 @@
   </div>
 </div>
 
+
+<!-- ── RANKING GLOBAL ──────────────────────────────────────────────────────── -->
+<div class="screen" id="screen-global-ranking" style="background:#0a0e1a;overflow-y:auto;justify-content:flex-start;padding-top:40px">
+  <div style="max-width:520px;width:100%;margin:0 auto;padding:0 16px 60px">
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:32px;letter-spacing:3px;text-transform:uppercase;color:#FFD700">🏆 RANKING GLOBAL</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:4px">Clasificación final del evento</div>
+    </div>
+
+    <!-- Resultado personal -->
+    <div id="gr-my-result" style="margin-bottom:20px"></div>
+
+    <!-- Top 10 -->
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">TOP 10</div>
+    <div id="gr-top10-list" style="display:flex;flex-direction:column;gap:6px"></div>
+
+    <div style="margin-top:32px;display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-primary" onclick="goToEvents()">Volver a Eventos</button>
+      <button class="btn btn-ghost" onclick="goHome()">Inicio</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.gr-my-result.top10 {
+  display:flex;align-items:center;gap:12px;
+  background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.3);
+  border-radius:8px;padding:14px 16px;
+}
+.gr-my-result.outside {
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+  border-radius:8px;padding:14px 16px;text-align:center;
+}
+.gr-my-result.outside .gr-my-text { font-size:15px;color:#e8eaf6; }
+.gr-my-result.outside .gr-my-text strong { color:#FFD700; }
+.gr-my-pos { font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:28px;min-width:40px;text-align:center; }
+.gr-my-name { flex:1;font-weight:700;font-size:16px; }
+.gr-my-score { font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;color:#FFD700; }
+.gr-row {
+  display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
+  border-radius:6px;padding:10px 14px;
+}
+.gr-row.is-me { background:rgba(45,125,210,0.18);border-color:rgba(45,125,210,0.4); }
+.gr-row.tied  { border-color:rgba(255,215,0,0.3); }
+.gr-pos { font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:18px;min-width:32px;text-align:center; }
+.gr-name { flex:1;font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px; }
+.gr-tied { font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:1.5px;font-weight:700;color:#FFD700;text-transform:uppercase;padding:2px 6px;background:rgba(255,215,0,0.15);border-radius:2px; }
+.gr-score { font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;color:#FFD700; }
+</style>
+
 <script src="/socket.io/socket.io.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/pages/evento-juego.js"></script>
