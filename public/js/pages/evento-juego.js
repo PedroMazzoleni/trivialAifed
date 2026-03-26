@@ -10,7 +10,7 @@ const EVENT_CAT     = params.get('cat')      || 'mixed';
 const EVENT_ROUNDS  = parseInt(params.get('rounds') || '6');
 
 const LETTERS    = ['A','B','C','D'];
-const TIME_LIMIT = 20;
+const TIME_LIMIT = 15;
 
 let socket, myPlayer, isHost = false, roomState = null;
 let timerInterval = null;
@@ -93,6 +93,27 @@ function connectSocket() {
 
   socket.on('connect_error', () => {
     el('ev-title-display').textContent = 'Connection error. Please refresh.';
+  });
+
+  // ── Grupos ────────────────────────────────────────────────────────────────
+  socket.on('event:groupAssigned', ({ groupKey, groupNumber, totalGroups, players }) => {
+    addChatMsg('', `⚡ Has sido asignado al Grupo ${groupNumber} de ${totalGroups} (${players.length} jugadores)`, true);
+  });
+
+  socket.on('event:lobbyUpdate', ({ players, totalPlayers }) => {
+    if (roomState && roomState.state === 'waiting') {
+      el('ev-players-count').textContent = totalPlayers;
+      el('ev-player-list').innerHTML = players.map(p => `
+        <div class="ev-player-row">
+          <span class="ev-player-name">${p.name}</span>
+          ${p.name === MY_NAME ? '<span class="player-you">You</span>' : ''}
+        </div>`).join('');
+    }
+  });
+
+  // ── Ranking global ────────────────────────────────────────────────────────
+  socket.on('event:globalRanking', ({ ranking }) => {
+    showGlobalRanking(ranking);
   });
 
   // ── Chat listeners ────────────────────────────────────────────────────────
@@ -553,6 +574,54 @@ function hexToRgba(hex, alpha) {
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
 function goToEvents() { goTo('trivial-eventos.html'); }
 function goHome()     { goTo('trivial-modos.html'); }
+
+// ── RANKING GLOBAL ────────────────────────────────────────────────────────────
+function showGlobalRanking(ranking) {
+  clearInterval(timerInterval);
+  clearInterval(sbCountdown);
+  showScreen('global-ranking');
+
+  const myEntry = ranking.find(p => p.name === MY_NAME);
+  const myPos   = myEntry ? myEntry.position : ranking.length;
+  const myScore = myEntry ? myEntry.score : 0;
+  const top10   = ranking.slice(0, 10);
+
+  // Cabecera personal
+  const grHeader = el('gr-my-result');
+  if (grHeader) {
+    if (myPos <= 10) {
+      const medals = ['🥇','🥈','🥉'];
+      grHeader.innerHTML = `
+        <div class="gr-my-pos top">${medals[myPos-1] || '#' + myPos}</div>
+        <div class="gr-my-name">${MY_NAME}</div>
+        <div class="gr-my-score">${myScore} pts</div>`;
+      grHeader.className = 'gr-my-result top10';
+    } else {
+      grHeader.innerHTML = `
+        <div class="gr-my-text">Has acabado en el puesto <strong>#${myPos}</strong> con <strong>${myScore} puntos</strong></div>`;
+      grHeader.className = 'gr-my-result outside';
+    }
+  }
+
+  // Top 10
+  const list = el('gr-top10-list');
+  if (list) {
+    const medals = ['🥇','🥈','🥉'];
+    list.innerHTML = top10.map((p, i) => {
+      const isMe   = p.name === MY_NAME;
+      const medal  = medals[i] || '';
+      // Detectar empates
+      const tied   = top10.filter(x => x.score === p.score).length > 1;
+      return `
+        <div class="gr-row ${isMe ? 'is-me' : ''} ${tied ? 'tied' : ''}">
+          <div class="gr-pos">${medal || p.position}</div>
+          <div class="gr-name">${p.name} ${isMe ? '<span class="player-you">Tú</span>' : ''}</div>
+          ${tied ? '<div class="gr-tied">EMPATE</div>' : ''}
+          <div class="gr-score">${p.score} pts</div>
+        </div>`;
+    }).join('');
+  }
+}
 
 // ── AUDIO ─────────────────────────────────────────────────────────────────────
 const EventAudio = (() => {
