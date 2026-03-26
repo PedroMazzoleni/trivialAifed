@@ -462,6 +462,7 @@ function addEventQuestion(existing = null) {
   if (noQ) noQ.style.display = 'none';
 
   const opts = existing ? existing.options : ['', '', ''];
+  const existingCat = existing ? (existing.category || '') : '';
   const div  = document.createElement('div');
   div.id = `evq-block-${qId}`;
   div.style.cssText = 'background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:4px;padding:14px';
@@ -478,6 +479,18 @@ function addEventQuestion(existing = null) {
       <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#18c25a;font-weight:700;display:block;margin-bottom:4px">✓ Respuesta correcta</label>
       <input type="text" id="evq-a-${qId}" value="${existing ? (existing.answer||'').replace(/"/g,'&quot;') : ''}" placeholder="Respuesta correcta..." style="width:100%;padding:10px;background:var(--bg);border:1.5px solid #18c25a;border-radius:3px;color:#18c25a;font-size:14px;outline:none">
     </div>
+    <div class="field" style="margin-bottom:8px">
+      <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#a259ff;font-weight:700;display:block;margin-bottom:4px">🎯 Categoría en ruleta</label>
+      <select id="evq-cat-${qId}" style="width:100%;padding:8px 10px;background:var(--bg);border:1.5px solid #a259ff;border-radius:3px;color:var(--text);font-size:13px;outline:none">
+        <option value="">-- Sin categoría específica --</option>
+      <option value="sports">⚽ Sports</option>
+      <option value="geo">🌍 Geography</option>
+      <option value="culture">🎭 Culture</option>
+      <option value="history">📜 History</option>
+      <option value="eu">🇪🇺 Europa</option>
+      <option value="kenya">🦒 Kenya</option>
+      </select>
+    </div>
     <div class="field" style="margin-bottom:0">
       <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;display:block;margin-bottom:4px">Opciones (mínimo 2)</label>
       <div id="evq-opts-${qId}" style="display:flex;gap:6px;flex-wrap:wrap">
@@ -486,6 +499,11 @@ function addEventQuestion(existing = null) {
       </div>
     </div>`;
   list.appendChild(div);
+  // Setear categoría si existe
+  if (existingCat) {
+    const catSel = el(`evq-cat-${qId}`);
+    if (catSel) catSel.value = existingCat;
+  }
 }
 
 function removeEvQ(qId) {
