@@ -266,6 +266,12 @@ function renderQuestion(room) {
   const me = room.players.find(p => p.name === MY_NAME);
   el('my-score-hud').textContent = `${me ? me.score : 0} pts`;
 
+  // Si ya respondí, solo actualizar los dots — no tocar botones ni feedback
+  if (iAnswered) {
+    renderAnsweredDots(room);
+    return;
+  }
+
   // Options
   const alreadyAnswered = room.allAnswers && room.allAnswers.find(a => a.playerName === MY_NAME);
   const grid = el('q-options');
