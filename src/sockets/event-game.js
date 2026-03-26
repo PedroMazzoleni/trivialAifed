@@ -51,15 +51,8 @@ const ALL_NORMAL_CATS = [
   { id: 'geo',     name: 'Geography', color: '#3B9EFF', emoji: '🌍' },
   { id: 'culture', name: 'Culture',   color: '#f5a623', emoji: '🎭' },
   { id: 'history', name: 'History',   color: '#e84545', emoji: '📜' },
-  { id: 'eu',      name: 'Europa',    color: '#a259ff', emoji: '🇪🇺' },
-];
-
-// Kenya event sub-categories — shown as wheel sectors in Kenya events
-const KENYA_SUB_CATS = [
-  { id: 'kenya_geo',     name: 'Geography', color: '#3B9EFF', emoji: '🗺️' },
-  { id: 'kenya_nature',  name: 'Wildlife',  color: '#18c25a', emoji: '🦁' },
-  { id: 'kenya_history', name: 'History',   color: '#e84545', emoji: '📜' },
-  { id: 'kenya_culture', name: 'Culture',   color: '#f5a623', emoji: '🎭' },
+  { id: 'eu',      name: 'EU',        color: '#a259ff', emoji: '🇪🇺' },
+  { id: 'kenya',   name: 'Kenya',     color: '#cc2200', emoji: '🦒' },
 ];
 
 const SPECIAL_CATS_LIST = [
@@ -72,39 +65,40 @@ const SPECIAL_CATS_LIST = [
 
 /**
  * Build a custom wheel for an event.
- * - 'mixed': all normal cats + specials
- * - 'kenya': Kenya sub-category sectors + specials
- * - specific cat (e.g. 'eu'): 5 sectors of that category + specials
+ * - If category is 'mixed': use all normal cats + specials (default wheel)
+ * - If category is specific (e.g. 'kenya'): replace all normal cat slots
+ *   with multiple sectors of that category (5 sectors) + specials
  */
 function buildEventCategories(eventCategory) {
   if (!eventCategory || eventCategory === 'mixed') {
     return [...ALL_NORMAL_CATS, ...SPECIAL_CATS_LIST];
   }
-  if (eventCategory === 'kenya') {
-    return [...KENYA_SUB_CATS, ...SPECIAL_CATS_LIST];
-  }
+
   const cat = ALL_NORMAL_CATS.find(c => c.id === eventCategory);
   if (!cat) return [...ALL_NORMAL_CATS, ...SPECIAL_CATS_LIST];
-  // Single-category event: fill 5 sectors with that category + 5 specials
-  return [...Array(5).fill(null).map(() => ({ ...cat })), ...SPECIAL_CATS_LIST];
+
+  // Create 5 sectors of the event category + 5 specials = 10 sectors
+  const eventSectors = Array(5).fill(null).map(() => ({ ...cat }));
+  return [...eventSectors, ...SPECIAL_CATS_LIST];
 }
 
 function pickRandomCategory(room) {
-  const eventCat   = room.eventCategory;
-  const allCats    = room.categories || defaultCategories;
+  const eventCat  = room.eventCategory;
+  const allCats   = room.categories || defaultCategories;
   const normalCats = allCats.filter(c => !c.special);
 
-  // mixed and kenya both pick from the non-special wheel sectors, avoiding recent repeats
-  if (eventCat === 'mixed' || eventCat === 'kenya') {
+  if (eventCat === 'mixed') {
+    // Pick any normal category avoiding recent repeats
     if (!room.usedCatsRound) room.usedCatsRound = [];
+    // Get unique ids of available categories
     const uniqueIds = [...new Set(normalCats.map(c => c.id))];
-    let available = uniqueIds.filter(id => !room.usedCatsRound.includes(id));
-    if (!available.length) { room.usedCatsRound = []; available = uniqueIds; }
-    const pickedId = available[Math.floor(Math.random() * available.length)];
+    let availableIds = uniqueIds.filter(id => !room.usedCatsRound.includes(id));
+    if (!availableIds.length) { room.usedCatsRound = []; availableIds = uniqueIds; }
+    const pickedId = availableIds[Math.floor(Math.random() * availableIds.length)];
     room.usedCatsRound.push(pickedId);
     return normalCats.find(c => c.id === pickedId) || normalCats[0];
   } else {
-    // Single-category event — always return that category
+    // Specific category event — always return that category
     return normalCats.find(c => c.id === eventCat) || normalCats[0];
   }
 }
@@ -112,36 +106,57 @@ function pickRandomCategory(room) {
 function registerEventGameHandlers(io, socket) {
 
   // ── Join event room ─────────────────────────────────────────────────────────
-  socket.on('event:join', ({ eventId, playerName, eventData }) => {
+  socket.on('event:join', async ({ eventId, playerName, eventData }) => {
     const eid = String(eventId);
 
     // Create room if it doesn't exist
     if (!eventRooms[eid]) {
-      const td = getTenantData('default');
       const eventCategory = eventData?.category || 'mixed';
       const eventCategories = buildEventCategories(eventCategory);
 
+      // Load event questions from DB
+      let eventQuestions = [];
+      try {
+        const { getDB } = require('../db');
+        const db = getDB();
+        if (db) {
+          const [rows] = await db.execute(
+            'SELECT * FROM event_questions WHERE event_id = ? ORDER BY id',
+            [eid]
+          );
+          eventQuestions = rows.map(q => ({
+            q:    q.question,
+            a:    q.answer,
+            opts: JSON.parse(q.options),
+            diff: q.difficulty || 'medio',
+          }));
+        }
+      } catch(e) {
+        console.error('Error loading event questions:', e.message);
+      }
+
       eventRooms[eid] = {
-        eventId:       eid,
-        tenantId:      'default',
-        eventTitle:    eventData?.title    || 'Event',
+        eventId:         eid,
+        eventTitle:      eventData?.title    || 'Event',
         eventCategory,
-        totalRounds:   eventData?.rounds   || 6,
-        categories:    eventCategories,
-        state:         'waiting',
-        players:       [],
-        scores:        {},
-        currentRound:  1,
+        totalRounds:     eventData?.rounds   || 6,
+        categories:      eventCategories,
+        eventQuestions,               // preguntas exclusivas del evento
+        usedEventQIdx:   [],          // índices ya usados
+        state:           'waiting',
+        players:         [],
+        scores:          {},
+        currentRound:    1,
         currentQuestion: null,
         currentCategory: null,
         currentDifficulty: null,
-        specialEffect: null,
-        allAnswers:    [],
-        usedQuestions: {},
-        usedCatsRound: [],
-        host:          null,
-        spinCatId:     null,
-        spinExtra:     null,
+        specialEffect:   null,
+        allAnswers:      [],
+        usedQuestions:   {},
+        usedCatsRound:   [],
+        host:            null,
+        spinCatId:       null,
+        spinExtra:       null,
       };
     }
 
@@ -185,11 +200,11 @@ function registerEventGameHandlers(io, socket) {
     broadcastEventRoom(io, eid);
   });
 
-  // ── Start event game (any player in the room) ───────────────────────────────
+  // ── Start event game (host only) ────────────────────────────────────────────
   socket.on('event:start', () => {
     const eid  = socket.data.eventId;
     const room = getEventRoom(eid);
-    if (!room || room.state !== 'waiting') return;
+    if (!room || room.host !== socket.id) return;
     if (room.players.length < 1) return;
 
     room.state        = 'spinning';
@@ -305,21 +320,28 @@ function _doSpin(io, room) {
 }
 
 function _loadQuestion(io, room, categoryId, difficulty) {
-  const diffMap = { easy: 'fácil', medium: 'medio', hard: 'difícil' };
-  const q = getUniqueQuestion(room, categoryId, diffMap[difficulty] || 'medio');
+  let q = null;
 
-  if (!q) {
-    // No questions available for this category — skip to next round
-    room.currentRound++;
-    if (room.currentRound > room.totalRounds) {
-      room.state = 'finished';
-      const sorted = [...room.players].sort((a, b) => b.score - a.score);
-      sorted.forEach((player, idx) => updateUserStats(player.name, player.score, idx === 0));
-    } else {
-      setTimeout(() => _doSpin(io, room), 2000);
+  // Use exclusive event questions if available
+  if (room.eventQuestions && room.eventQuestions.length > 0) {
+    if (!room.usedEventQIdx) room.usedEventQIdx = [];
+    let available = room.eventQuestions
+      .map((q, i) => ({ q, i }))
+      .filter(({ i }) => !room.usedEventQIdx.includes(i));
+
+    // Reset if all used
+    if (!available.length) {
+      room.usedEventQIdx = [];
+      available = room.eventQuestions.map((q, i) => ({ q, i }));
     }
-    broadcastEventRoom(io, room.eventId);
-    return;
+
+    const picked = available[Math.floor(Math.random() * available.length)];
+    room.usedEventQIdx.push(picked.i);
+    q = picked.q;
+  } else {
+    // Fallback to general question bank
+    const diffMap = { easy: 'fácil', medium: 'medio', hard: 'difícil' };
+    q = getUniqueQuestion(room, categoryId, diffMap[difficulty] || 'medio');
   }
 
   room.currentCategory   = categoryId;
