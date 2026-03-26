@@ -95,6 +95,7 @@ const Audio = (() => {
     victory()        { [523,659,784,1047,1319].forEach((f,i) => tone(f,'sine',0.25,0.3,i*0.12)); },
     click()          { tone(800,'sine',0.1,0.06); noise(0.05,0.04,0); },
     playerJoin()     { tone(440,'sine',0.15,0.1,0); tone(550,'sine',0.15,0.12,0.08); },
+    chatMsg()        { tone(880,'sine',0.08,0.06,0); tone(1100,'sine',0.06,0.08,0.05); },
   };
 })();
 
@@ -808,6 +809,7 @@ function addChatMsg(playerName, message, isSystem = false) {
   msgs.scrollTop = msgs.scrollHeight;
 
   // Badge si chat está cerrado
+  if (!isSystem) Audio.chatMsg();
   if (!_chatOpen && !isSystem) {
     _unread++;
     const badge = document.getElementById('chat-unread');
