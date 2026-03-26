@@ -250,7 +250,6 @@ async function saveToServer() {
 
 function openModal()  { el('modal').classList.add('show'); }
 function closeModal() { el('modal').classList.remove('show'); }
-el('modal').addEventListener('click', e => { if (e.target === el('modal')) closeModal(); });
 
 function showPage(id) {
   qsAll('.page').forEach(p => p.classList.remove('active'));
@@ -290,8 +289,9 @@ async function loadEvents() {
   try {
     const events = await apiGet('/api/events');
     renderEventsList(events);
-  } catch {
-    setHTML('events-list', '<div style="padding:20px;color:var(--muted)">Error loading events</div>');
+  } catch(e) {
+    console.error('loadEvents error:', e);
+    setHTML('events-list', '<div style="padding:20px;color:var(--muted)">Error loading events: ' + e.message + '</div>');
   }
 }
 
@@ -565,7 +565,12 @@ async function deleteEvent(id) {
 
 function openEventModal()  { el('modal-event').classList.add('show'); }
 function closeEventModal() { el('modal-event').classList.remove('show'); }
-el('modal-event').addEventListener('click', e => { if (e.target === el('modal-event')) closeEventModal(); });
+document.addEventListener('DOMContentLoaded', () => {
+  const me = el('modal-event');
+  if (me) me.addEventListener('click', e => { if (e.target === me) closeEventModal(); });
+  const m = el('modal');
+  if (m) m.addEventListener('click', e => { if (e.target === m) closeModal(); });
+});
 
 // ── ADMIN SOCKET — control eventos ────────────────────────────────────────────
 let adminSocket = null;
