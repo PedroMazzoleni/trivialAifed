@@ -18,6 +18,7 @@ let sbCountdown   = null;
 let spinAngle     = 0;
 let isSpinning    = false;
 let iAnswered     = false;
+let _shuffledOpts = null; // orden fijo de opciones para la ronda actual
 
 const categories = [
   { id:'sports',  name:'Sports',    color:'#18c25a', emoji:'⚽' },
@@ -185,7 +186,8 @@ function renderSpin(room) {
 function doSpin(catId, diff, extra) {
   if (isSpinning) return;
   isSpinning = true;
-  iAnswered  = false;
+  iAnswered     = false;
+  _shuffledOpts = null;
 
   const cat    = wheelCats.find(c => c.id === catId);
   if (!cat) { isSpinning = false; return; }
@@ -278,7 +280,8 @@ function renderQuestion(room) {
   grid.innerHTML = '';
 
   if (q) {
-    const shuffled = [...q.opts].sort(() => Math.random() - 0.5);
+    if (!_shuffledOpts) _shuffledOpts = [...q.opts].sort(() => Math.random() - 0.5);
+    const shuffled = _shuffledOpts;
     shuffled.forEach((opt, i) => {
       const btn = document.createElement('button');
       btn.className = 'opt-btn';
