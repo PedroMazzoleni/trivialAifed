@@ -210,7 +210,7 @@ function registerEventGameHandlers(io, socket) {
       player: room.players.find(p => p.id === socket.id),
     });
 
-    io.to(String(eid)).emit('chat:system', { message: `${playerName} se ha unido al evento` });
+    io.to('event:' + eid).emit('chat:system', { message: `${playerName} se ha unido al evento` });
     broadcastEventRoom(io, eid);
   });
 
@@ -357,7 +357,7 @@ function registerEventGameHandlers(io, socket) {
     if (!eid || !message) return;
     const clean = String(message).trim().slice(0, 100);
     if (!clean) return;
-    io.to(String(eid)).emit('chat:message', { playerName, message: clean });
+    io.to('event:' + eid).emit('chat:message', { playerName, message: clean });
   });
 
   socket.on('disconnect', () => {
