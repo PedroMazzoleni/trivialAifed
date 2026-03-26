@@ -73,11 +73,16 @@ async function initDB() {
         question   TEXT NOT NULL,
         answer     VARCHAR(500) NOT NULL,
         options    TEXT NOT NULL,
-        difficulty VARCHAR(20) NOT NULL DEFAULT 'medio'
+        difficulty VARCHAR(20) NOT NULL DEFAULT 'medio',
+        category   VARCHAR(50)  DEFAULT NULL
       )
     `);
 
-    const cleanupExpired = async () => {
+          // Añadir columna category si no existe (migración)
+      try {
+        await db.query("ALTER TABLE event_questions ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT NULL");
+      } catch(e) {}
+      const cleanupExpired = async () => {
       try {
         const r = await db.query("DELETE FROM events WHERE ends_at IS NOT NULL AND ends_at < NOW() - INTERVAL '1 day'");
         if (r.rowCount > 0) console.log('🗑️  Limpiados ' + r.rowCount + ' evento(s) expirados');
