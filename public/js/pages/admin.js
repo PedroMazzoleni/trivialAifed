@@ -553,7 +553,6 @@ async function saveEvent() {
     } else { alert(res.msg || 'Error al guardar'); }
   } catch(e) { alert('Error de conexión: ' + e.message); }
 }
-}
 
 async function deleteEvent(id) {
   if (!confirm('Delete this event?')) return;
