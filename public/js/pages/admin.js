@@ -319,6 +319,14 @@ function renderEventsList(events) {
             <span style="font-size:11px;color:${statusColor};font-weight:600;text-transform:uppercase">● ${ev.status}</span>
           </div>
           <div class="q-actions">
+            ${ev.status !== 'active'
+              ? `<button class="btn-icon" onclick="toggleEventStatus(${ev.id}, 'active')" title="Activar" style="color:#18c25a">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="10 8 16 12 10 16 10 8"/></svg>
+                </button>`
+              : `<button class="btn-icon" onclick="toggleEventStatus(${ev.id}, 'finished')" title="Desactivar" style="color:#e84545">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><rect x="9" y="9" width="6" height="6"/></svg>
+                </button>`
+            }
             <button class="btn-icon" onclick="openEditEvent(${ev.id})" title="Edit">
               <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
@@ -591,6 +599,26 @@ async function saveEvent() {
   } catch(e) {
     alert('Error de conexión: ' + e.message);
   }
+}
+
+async function toggleEventStatus(id, newStatus) {
+  try {
+    // Get current event data first
+    const ev = await apiGet(`/api/events/${id}`);
+    ev.status = newStatus;
+    const res = await fetch(`${SERVER}/api/events/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ev)
+    }).then(r => r.json());
+    if (res.ok) {
+      const label = newStatus === 'active' ? '✅ Evento activado' : '⏹️ Evento desactivado';
+      flashMsg(label, 'success', 'msg-events');
+      loadEvents();
+    } else {
+      alert(res.msg || 'Error al cambiar estado');
+    }
+  } catch { alert('Error de conexión'); }
 }
 
 async function deleteEvent(id) {
