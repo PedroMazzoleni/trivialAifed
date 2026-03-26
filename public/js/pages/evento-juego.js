@@ -354,9 +354,9 @@ function renderScoreboard(room) {
   const maxScore = sorted[0] ? sorted[0].score : 1;
 
   // Round info
-  el('sb-round').textContent = `Round ${room.currentRound - 1} of ${room.totalRounds}`;
-  const remaining = room.totalRounds - (room.currentRound - 1);
-  el('sb-sub').textContent   = remaining > 0 ? `${remaining} round${remaining !== 1 ? 's' : ''} remaining` : 'Last round complete';
+  el('sb-round').textContent = `Ronda ${room.currentRound} de ${room.totalRounds}`;
+  const remaining = room.totalRounds - room.currentRound;
+  el('sb-sub').textContent   = remaining > 0 ? `Quedan ${remaining} ronda${remaining !== 1 ? 's' : ''}` : 'Última ronda';
 
   // Banner: show correct answer
   const banner = el('sb-banner');
@@ -388,17 +388,18 @@ function renderScoreboard(room) {
     el('sb-btn-next').style.display = 'block';
   }
 
-  // Countdown
+  // Simple countdown display — server controls actual timing
   let t = 5;
   el('sb-fill').style.width      = '100%';
   el('sb-fill').style.transition = 'none';
-  el('sb-countdown-text').textContent = `Next in ${t}s...`;
+  el('sb-countdown-text').textContent = `Siguiente en ${t}s...`;
 
+  clearInterval(sbCountdown);
   sbCountdown = setInterval(() => {
     t--;
     el('sb-fill').style.transition = 'width 1s linear';
-    el('sb-fill').style.width      = `${(t/5)*100}%`;
-    el('sb-countdown-text').textContent = t > 0 ? `Next in ${t}s...` : 'Loading...';
+    el('sb-fill').style.width      = `${Math.max(0, (t / 5)) * 100}%`;
+    el('sb-countdown-text').textContent = t > 0 ? `Siguiente en ${t}s...` : 'Cargando...';
     if (t <= 0) clearInterval(sbCountdown);
   }, 1000);
 }
