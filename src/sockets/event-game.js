@@ -312,13 +312,22 @@ function registerEventGameHandlers(io, socket) {
 
   socket.on('admin:startEvent', ({ eventId }) => {
     const room = getEventRoom(eventId);
-    if (!room) return socket.emit('error', { msg: 'Sala de evento no encontrada. Los jugadores deben unirse primero.' });
-    if (room.state !== 'waiting') return socket.emit('error', { msg: 'El evento ya está en curso' });
-    if (!room.players.length) return socket.emit('error', { msg: 'No hay jugadores en la sala' });
+    if (!room) {
+      socket.emit('error', { msg: 'No hay jugadores en la sala todavía. Los jugadores deben unirse primero desde la página de eventos.' });
+      return;
+    }
+    if (room.state !== 'waiting') {
+      socket.emit('error', { msg: 'El evento ya está en curso' });
+      return;
+    }
+    if (!room.players.length) {
+      socket.emit('error', { msg: 'No hay jugadores en la sala' });
+      return;
+    }
 
-    room.state        = 'spinning';
-    room.currentRound = 1;
-    room.allAnswers   = [];
+    room.state         = 'spinning';
+    room.currentRound  = 1;
+    room.allAnswers    = [];
     room.usedQuestions = {};
     room.usedCatsRound = [];
     _doSpin(io, room);
