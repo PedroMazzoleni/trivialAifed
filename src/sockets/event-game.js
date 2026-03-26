@@ -133,11 +133,11 @@ function registerEventGameHandlers(io, socket) {
         const { getDB } = require('../db');
         const db = getDB();
         if (db) {
-          const [rows] = await db.execute(
-            'SELECT * FROM event_questions WHERE event_id = ? ORDER BY id',
+          const result = await db.query(
+            'SELECT * FROM event_questions WHERE event_id = $1 ORDER BY id',
             [eid]
           );
-          eventQuestions = rows.map(q => ({
+          eventQuestions = result.rows.map(q => ({
             q:    q.question,
             a:    q.answer,
             opts: JSON.parse(q.options),
