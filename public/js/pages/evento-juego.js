@@ -132,13 +132,13 @@ function renderLobby(room) {
 }
 
 function renderLobbyControls() {
-  if (isHost) {
-    el('btn-ev-start').style.display  = 'block';
-    el('ev-guest-wait').style.display = 'none';
-  } else {
-    el('btn-ev-start').style.display  = 'none';
-    el('ev-guest-wait').style.display = 'block';
-  }
+  // Start button removed — admin controls game start from admin panel
+  el('btn-ev-start').style.display  = 'none';
+  el('ev-guest-wait').style.display = 'block';
+  el('ev-guest-wait').innerHTML = `
+    <div class="dots"><span></span><span></span><span></span></div>
+    Esperando a que el administrador inicie el evento...
+  `;
 }
 
 function startEventGame() {
@@ -383,10 +383,8 @@ function renderScoreboard(room) {
       </div>`;
   }).join('');
 
-  // Host gets manual advance button
-  if (isHost) {
-    el('sb-btn-next').style.display = 'block';
-  }
+  // Admin controls next round — no button for players
+  el('sb-btn-next').style.display = 'none';
 
   // Simple countdown display — server controls actual timing
   let t = 5;
