@@ -32,7 +32,7 @@ if (playerName && playerName !== 'Invitado') {
     .catch(() => {});
 }
 
-// ── Guardar URL actual en sessionStorage para volver aquí ──────────────────
+// ── Save URL actual en sessionStorage para volver aquí ──────────────────
 sessionStorage.setItem('last_page', 'trivial-modos.html');
 
 // ── Cargar evento activo y mostrar banner ──────────────────────────────────
@@ -57,7 +57,7 @@ async function loadActiveEvents() {
     const banner = el('event-banner');
     banner.innerHTML = '';
 
-    // Cargar conteo de jugadores en cada evento
+    // Cargar conteo de players en cada evento
     banner.innerHTML = active.map(ev => {
       const color = CAT_COLORS[ev.category] || '#2d7dd2';
       const bg    = CAT_BG[ev.category] || '';
@@ -67,9 +67,9 @@ async function loadActiveEvents() {
             <div class="event-live-bg"></div>
             <div class="event-live-pulse"></div>
             <div class="event-live-content">
-              <div class="event-live-badge">🔴 EN VIVO</div>
+              <div class="event-live-badge">🔴 LIVE</div>
               <div class="event-live-title">${ev.title}</div>
-              <div class="event-live-meta">${ev.category} · ${ev.rounds} rondas</div>
+              <div class="event-live-meta">${ev.category} · ${ev.rounds} rounds</div>
               <div class="event-live-players" id="ev-live-players-${ev.id}">👥 cargando...</div>
             </div>
             <div class="event-live-arrow">
