@@ -260,15 +260,24 @@ function showPage(id) {
 function refresh() { renderSidebar(); renderDashboard(); renderQuestions(); }
 
 async function loadUsers() {
+  if (!el('msg-users')) {
+    const msgDiv = document.createElement('div');
+    msgDiv.id = 'msg-users';
+    msgDiv.className = 'msg';
+    const usersList = el('users-list');
+    if (usersList) usersList.parentNode.insertBefore(msgDiv, usersList);
+  }
   try {
     const list = await apiGet('/api/users');
     setText('users-count', `${list.length} player${list.length !== 1 ? 's' : ''}`);
     setHTML('users-list', list.length
       ? list.map((u, i) => `
-          <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;border-bottom:1px solid var(--border)${i===list.length-1?';border-bottom:none':''}">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border)${i===list.length-1?';border-bottom:none':''}">
             ${avatarHTML(u.name, i, 34)}
             <div style="flex:1"><div style="font-size:14px;font-weight:600">${u.name}</div><div style="font-size:12px;color:var(--muted)">${u.email}</div></div>
-            <span style="font-family:var(--font-cond);font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:2px;background:rgba(24,194,90,0.1);color:var(--green)">${u.role}</span>
+            <span style="font-family:var(--font-cond);font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:2px;background:rgba(24,194,90,0.1);color:var(--green);margin-right:8px">${u.role}</span>
+            <button onclick="resetUserPassword('${u.email}','${u.name}')" title="Resetear contraseña" style="background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);border-radius:3px;padding:5px 9px;color:#f5a623;cursor:pointer;font-size:11px;font-family:var(--font-cond);font-weight:700;letter-spacing:1px">🔑 RESET</button>
+            <button onclick="deleteUser('${u.email}','${u.name}')" title="Borrar usuario" style="background:rgba(232,69,69,0.1);border:1px solid rgba(232,69,69,0.2);border-radius:3px;padding:5px 9px;color:#e84545;cursor:pointer;font-size:11px;font-family:var(--font-cond);font-weight:700;letter-spacing:1px">🗑 BORRAR</button>
           </div>`)
         .join('')
       : `<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px">No registered players yet</div>`
@@ -646,6 +655,32 @@ async function toggleEventStatus(id, newStatus) {
     if (res.ok) { flashMsg('Estado actualizado', 'success', 'msg-events'); loadEvents(); }
     else alert(res.msg || 'Error');
   } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── GESTIÓN DE USUARIOS ──────────────────────────────────────────────────────
+async function resetUserPassword(email, name) {
+  const newPass = prompt(`Nueva contraseña para ${name}:`);
+  if (!newPass) return;
+  if (newPass.length < 6) { alert('Mínimo 6 caracteres'); return; }
+  try {
+    const res = await fetch(`${SERVER}/api/admin/users/${encodeURIComponent(email)}/reset-password`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newPassword: newPass }),
+    }).then(r => r.json());
+    if (res.ok) { flashMsg(`✅ Contraseña de ${name} actualizada`, 'success', 'msg-users'); }
+    else alert(res.msg || 'Error');
+  } catch { alert('Error de conexión'); }
+}
+
+async function deleteUser(email, name) {
+  if (!confirm(`¿Borrar al usuario ${name}? Esta acción no se puede deshacer.`)) return;
+  try {
+    const res = await fetch(`${SERVER}/api/admin/users/${encodeURIComponent(email)}`, {
+      method: 'DELETE',
+    }).then(r => r.json());
+    if (res.ok) { flashMsg(`🗑 Usuario ${name} eliminado`, 'success', 'msg-users'); loadUsers(); }
+    else alert(res.msg || 'Error');
+  } catch { alert('Error de conexión'); }
 }
 
 // ── STARTUP ───────────────────────────────────────────────────────────────────
