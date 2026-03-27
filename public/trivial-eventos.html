@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trivial — Eventos</title>
+<title>Trivial — Events</title>
 <link rel="icon" type="image/png" href="images/logo.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/shared.css">
@@ -21,13 +21,13 @@
     <ul class="navbar-links">
       <li><a href="trivial-modos.html">Home &amp; Network</a></li>
       <li><a href="trivial-ranking.html">Ranking</a></li>
-      <li><a href="trivial-eventos.html" class="active">Eventos</a></li>
+      <li><a href="trivial-eventos.html" class="active">Events</a></li>
       <li id="dd-admin" style="display:none">
         <button onclick="toggleDropdown('dd-admin')">
           Admin <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <ul class="navbar-dropdown">
-          <li><a href="trivial-admin.html">📊 Panel Admin</a></li>
+          <li><a href="trivial-admin.html">📊 Admin Panel</a></li>
         </ul>
       </li>
     </ul>
@@ -40,16 +40,16 @@
 <div class="navbar-mobile" id="navbar-mobile">
   <a href="trivial-modos.html">Home &amp; Network</a>
   <a href="trivial-ranking.html">Ranking</a>
-  <a href="trivial-eventos.html">Eventos</a>
+  <a href="trivial-eventos.html">Events</a>
   <div class="mobile-divider"></div>
-  <a href="trivial-admin.html" id="mobile-admin" style="display:none">Panel Admin</a>
+  <a href="trivial-admin.html" id="mobile-admin" style="display:none">Admin Panel</a>
 </div>
 
 <!-- HERO -->
 <div class="eventos-hero">
   <div class="eventos-hero-inner">
     <span class="eventos-eyebrow">Trivial Travel</span>
-    <h1>Eventos</h1>
+    <h1>Events</h1>
     <p>Participa en los eventos especiales con preguntas exclusivas</p>
   </div>
 </div>
@@ -69,7 +69,7 @@
   <div class="eventos-grid" id="eventos-grid">
     <div class="eventos-loading">
       <div class="dots"><span></span><span></span><span></span></div>
-      Cargando eventos...
+      Loading eventos...
     </div>
   </div>
 </div>
