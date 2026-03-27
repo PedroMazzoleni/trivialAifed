@@ -97,9 +97,9 @@ function connectSocket() {
     el('ev-title-display').textContent = 'Connection error. Please refresh.';
   });
 
-  // ── Grupos ────────────────────────────────────────────────────────────────
+  // ── Groups ────────────────────────────────────────────────────────────────
   socket.on('event:groupAssigned', ({ groupKey, groupNumber, totalGroups, players }) => {
-    addChatMsg('', `⚡ Has sido asignado al Grupo ${groupNumber} de ${totalGroups} (${players.length} jugadores)`, true);
+    addChatMsg('', `⚡ You have been assigned to Group ${groupNumber} de ${totalGroups} (${players.length} players)`, true);
   });
 
   socket.on('event:lobbyUpdate', ({ players, totalPlayers }) => {
@@ -112,7 +112,7 @@ function connectSocket() {
             <span class="ev-player-name">${p.name}</span>
             ${p.name === MY_NAME ? '<span class="player-you">Tú</span>' : ''}
           </div>`).join('')
-        : '<div style="padding:16px;color:var(--muted);font-size:13px;text-align:center">Esperando jugadores...</div>';
+        : '<div style="padding:16px;color:var(--muted);font-size:13px;text-align:center">Waiting for players...</div>';
     }
   });
 
@@ -179,7 +179,7 @@ function renderLobbyControls() {
   el('ev-guest-wait').style.display = 'block';
   el('ev-guest-wait').innerHTML = `
     <div class="dots"><span></span><span></span><span></span></div>
-    Esperando a que el administrador inicie el evento...
+    Waiting for the admin to start the event...
   `;
 }
 
@@ -404,9 +404,9 @@ function renderScoreboard(room) {
   const maxScore = sorted[0] ? sorted[0].score : 1;
 
   // Round info
-  el('sb-round').textContent = `Ronda ${room.currentRound} de ${room.totalRounds}`;
+  el('sb-round').textContent = `Round ${room.currentRound} de ${room.totalRounds}`;
   const remaining = room.totalRounds - room.currentRound;
-  el('sb-sub').textContent   = remaining > 0 ? `Quedan ${remaining} ronda${remaining !== 1 ? 's' : ''}` : 'Última ronda';
+  el('sb-sub').textContent   = remaining > 0 ? `Remaining ${remaining} ronda${remaining !== 1 ? 's' : ''}` : 'Last round';
 
   // Banner: show correct answer
   const banner = el('sb-banner');
@@ -440,14 +440,14 @@ function renderScoreboard(room) {
   let t = 5;
   el('sb-fill').style.width      = '100%';
   el('sb-fill').style.transition = 'none';
-  el('sb-countdown-text').textContent = `Siguiente en ${t}s...`;
+  el('sb-countdown-text').textContent = `Next in ${t}s...`;
 
   clearInterval(sbCountdown);
   sbCountdown = setInterval(() => {
     t--;
     el('sb-fill').style.transition = 'width 1s linear';
     el('sb-fill').style.width      = `${Math.max(0, (t / 5)) * 100}%`;
-    el('sb-countdown-text').textContent = t > 0 ? `Siguiente en ${t}s...` : 'Cargando...';
+    el('sb-countdown-text').textContent = t > 0 ? `Next in ${t}s...` : 'Loading...';
     if (t <= 0) clearInterval(sbCountdown);
   }, 1000);
 }
@@ -634,7 +634,7 @@ function showWildcardResult(message) {
   setTimeout(() => { result.style.opacity = '0'; }, 4000);
 }
 
-// ── RANKING GLOBAL ────────────────────────────────────────────────────────────
+// ── GLOBAL RANKING ────────────────────────────────────────────────────────────
 function showGlobalRanking(ranking) {
   clearInterval(timerInterval);
   clearInterval(sbCountdown);
