@@ -165,39 +165,6 @@ const defaultCategories = [
       {q:"Which treaty, signed in 1957, created the European Economic Community (EEC)?",a:"The Treaty of Rome",opts:["The treaty of Sarajevo","The Vatican Treaty","The Treaty of Rome"],diff:"difícil"},
       {q:"Which policies aim to reduce economic, social and territorial disparities between regions?",a:"Cohesion policies",opts:["Equality policies","Economic policies","Cohesion policies"],diff:"difícil"},
     ],
-    kenya_geo: [
-      {q:"What is the capital city of Kenya?",a:"Nairobi",opts:["Nairobi","Mombasa","Kisumu"],diff:"fácil"},
-      {q:"Which ocean borders Kenya to the east?",a:"Indian Ocean",opts:["Indian Ocean","Atlantic Ocean","Red Sea"],diff:"fácil"},
-      {q:"What is Kenya's second largest city and main coastal port?",a:"Mombasa",opts:["Mombasa","Kisumu","Nakuru"],diff:"fácil"},
-      {q:"What is the name of Kenya's largest lake, shared with Uganda and Tanzania?",a:"Lake Victoria",opts:["Lake Victoria","Lake Turkana","Lake Naivasha"],diff:"medio"},
-      {q:"What is the name of the tallest mountain in Kenya?",a:"Mount Kenya",opts:["Mount Kenya","Mount Elgon","Mount Kilimanjaro"],diff:"medio"},
-      {q:"Which large lake in northern Kenya is the world's largest desert lake?",a:"Lake Turkana",opts:["Lake Turkana","Lake Baringo","Lake Bogoria"],diff:"difícil"},
-      {q:"Through which Kenyan city does the equator pass, known for its flower and vegetable farms?",a:"Nanyuki",opts:["Nanyuki","Nakuru","Nyeri"],diff:"difícil"},
-    ],
-    kenya_nature: [
-      {q:"What is the famous wildlife reserve in Kenya known for hosting the Great Migration?",a:"Maasai Mara",opts:["Maasai Mara","Amboseli","Tsavo"],diff:"fácil"},
-      {q:"Which large national park in Kenya is famous for its views of Mount Kilimanjaro with elephants?",a:"Amboseli",opts:["Amboseli","Tsavo","Aberdare"],diff:"fácil"},
-      {q:"The Maasai Mara is connected to which famous Tanzanian wildlife park, forming a single great ecosystem?",a:"Serengeti",opts:["Serengeti","Ngorongoro","Ruaha"],diff:"medio"},
-      {q:"Which endangered species of rhinoceros is protected at Kenya's Ol Pejeta Conservancy?",a:"Northern White Rhino",opts:["Northern White Rhino","Black Rhino","Southern White Rhino"],diff:"medio"},
-      {q:"The 'Big Five' animals of Africa include lion, elephant, leopard, buffalo and which fifth animal?",a:"Rhinoceros",opts:["Rhinoceros","Hippopotamus","Giraffe"],diff:"difícil"},
-      {q:"What is the name of the pink flamingo lake in Kenya's Rift Valley, a UNESCO World Heritage Site?",a:"Lake Nakuru",opts:["Lake Nakuru","Lake Naivasha","Lake Bogoria"],diff:"difícil"},
-    ],
-    kenya_history: [
-      {q:"Kenya gained independence in 1963 from which country?",a:"United Kingdom",opts:["United Kingdom","France","Portugal"],diff:"fácil"},
-      {q:"What is the name of the ancient coastal town in Kenya that is a UNESCO World Heritage Site?",a:"Lamu",opts:["Lamu","Malindi","Kilifi"],diff:"fácil"},
-      {q:"The Mau Mau uprising was a rebellion against British colonial rule in Kenya during which decade?",a:"1950s",opts:["1940s","1950s","1960s"],diff:"medio"},
-      {q:"Who was Kenya's first President after independence?",a:"Jomo Kenyatta",opts:["Jomo Kenyatta","Daniel arap Moi","Tom Mboya"],diff:"medio"},
-      {q:"In which year did Kenya become a republic after independence?",a:"1964",opts:["1963","1964","1967"],diff:"difícil"},
-      {q:"Which Kenyan activist and Nobel Peace Prize winner founded the Green Belt Movement?",a:"Wangari Maathai",opts:["Wangari Maathai","Grace Ogot","Charity Ngilu"],diff:"difícil"},
-    ],
-    kenya_culture: [
-      {q:"What are the two official languages of Kenya?",a:"Swahili and English",opts:["Swahili and English","French and Swahili","Arabic and English"],diff:"fácil"},
-      {q:"What is the currency of Kenya?",a:"Kenyan Shilling",opts:["Kenyan Shilling","Kenyan Pound","East African Franc"],diff:"fácil"},
-      {q:"Which Kenyan marathon runner, known as the greatest ever, won Olympic gold in 2016 and 2020?",a:"Eliud Kipchoge",opts:["Eliud Kipchoge","Geoffrey Kipkoech","Wilson Kipsang"],diff:"medio"},
-      {q:"Which Kenyan tea-growing region produces some of the finest tea in Africa?",a:"Kericho",opts:["Kericho","Nyeri","Kisii"],diff:"medio"},
-      {q:"What is the name of the traditional Maasai warrior jumping dance?",a:"Adumu",opts:["Adumu","Boma","Enkiama"],diff:"difícil"},
-      {q:"The Swahili word 'Harambee', Kenya's national motto, means what?",a:"Pulling together",opts:["Pulling together","Moving forward","Unity is strength"],diff:"difícil"},
-    ],
   };
 
   // ─── Estado compartido ────────────────────────────────────────────────────────
