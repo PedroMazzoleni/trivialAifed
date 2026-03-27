@@ -1,16 +1,14 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trivial — Juego vs IA</title>
+<title>Trivial — vs AI</title>
 <link rel="icon" type="image/png" href="images/logo.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/shared.css">
-<link rel="stylesheet" href="css/pages/ia-juego.css">
-<link rel="stylesheet" href="css/shared.css">
 <link rel="stylesheet" href="css/navbar.css">
-<link rel="stylesheet" href="css/pages/login.css">
+<link rel="stylesheet" href="css/pages/ia-juego.css">
 </head>
 <body>
 
@@ -21,7 +19,7 @@
     <div class="topbar-left">
       <button class="btn-exit" onclick="exitGame()">
         <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-        Log out
+        Exit
       </button>
       <span class="topbar-level" id="topbar-level">Easy</span>
     </div>
@@ -40,7 +38,7 @@
   <div class="game-inner">
     <div class="q-meta">
       <span class="q-counter" id="q-counter">Question 1 / 10</span>
-      <span class="q-category" id="q-category">Geografía</span>
+      <span class="q-category" id="q-category">Geography</span>
     </div>
 
     <div class="timer-wrap">
@@ -50,7 +48,7 @@
       <span class="timer-num" id="timer-num">20</span>
     </div>
 
-    <div class="question-text" id="question-text">Loading pregunta...</div>
+    <div class="question-text" id="question-text">Loading question...</div>
 
     <div class="options" id="options"></div>
 
@@ -76,34 +74,34 @@
       <div class="result-score-big">
         <span id="res-score">0</span><span>/10</span>
       </div>
-      <div class="result-msg" id="res-msg">Buen intento</div>
+      <div class="result-msg" id="res-msg">Good try</div>
     </div>
 
     <div class="stats-row">
       <div class="stat-box">
         <span class="stat-box-num" id="res-correct">0</span>
-        <span class="stat-box-label">Correctas</span>
+        <span class="stat-box-label">Correct</span>
       </div>
       <div class="stat-box">
         <span class="stat-box-num" id="res-wrong">0</span>
-        <span class="stat-box-label">Erróneas</span>
+        <span class="stat-box-label">Wrong</span>
       </div>
       <div class="stat-box">
         <span class="stat-box-num" id="res-time">0s</span>
-        <span class="stat-box-label">Tiempo medio</span>
+        <span class="stat-box-label">Avg. time</span>
       </div>
     </div>
 
     <div class="ia-row">
-      <span class="ia-label">Puntuación IA</span>
+      <span class="ia-label">AI Score</span>
       <span class="ia-score" id="ia-score-display">—</span>
       <span class="ia-verdict" id="ia-verdict">—</span>
     </div>
 
     <div class="result-btns">
-      <button class="btn btn-primary" onclick="restartGame()">Play de nuevo</button>
-      <button class="btn btn-ghost"   onclick="goToLevels()">Cambiar nivel</button>
-      <button class="btn btn-ghost"   onclick="goHome()">Back al inicio</button>
+      <button class="btn btn-primary" onclick="restartGame()">Play again</button>
+      <button class="btn btn-ghost"   onclick="goToLevels()">Change level</button>
+      <button class="btn btn-ghost"   onclick="goHome()">Home</button>
     </div>
 
   </div>
