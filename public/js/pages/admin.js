@@ -600,7 +600,7 @@ function connectAdminSocket() {
     const se = el(`ev-state-${eventId}`);
     if (pe) pe.textContent = `👥 ${players} en sala`;
     if (se) {
-      const labels = { waiting:'⏳ Esperando', spinning:`🎡 Ronda ${currentRound}/${totalRounds}`, question:`❓ Ronda ${currentRound}/${totalRounds}`, answer:`✅ Ronda ${currentRound}/${totalRounds}`, finished:'🏁 Terminado' };
+      const labels = { waiting:'⏳ Esperando jugadores', playing:'▶ En curso', spinning:`🎡 Ronda ${currentRound}/${totalRounds}`, question:`❓ Ronda ${currentRound}/${totalRounds}`, answer:`✅ Ronda ${currentRound}/${totalRounds}`, finished:'🏁 Terminado' };
       se.textContent = labels[state] || '';
     }
   });
