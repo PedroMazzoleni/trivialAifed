@@ -21,9 +21,9 @@
       <img class="logo-eu"   src="images/eu-logo.png"     alt="Co-funded by EU">
     </a>
     <ul class="navbar-links">
-      <li><a href="trivial-modos.html">Jugar</a></li>
+      <li><a href="trivial-modos.html">Play</a></li>
       <li><a href="trivial-ranking.html">Ranking</a></li>
-      <li><a href="trivial-eventos.html">Eventos</a></li>
+      <li><a href="trivial-eventos.html">Events</a></li>
 
       <li id="dd-admin" style="display:none">
         <button onclick="toggleDropdown('dd-admin')">
@@ -31,7 +31,7 @@
           <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <ul class="navbar-dropdown">
-          <li><a href="trivial-admin.html">📊 Panel Admin</a></li>
+          <li><a href="trivial-admin.html">📊 Admin Panel</a></li>
         </ul>
       </li>
     </ul>
@@ -42,13 +42,13 @@
   </div>
 </nav>
 <div class="navbar-mobile" id="navbar-mobile">
-  <a href="trivial-modos.html">Jugar</a>
+  <a href="trivial-modos.html">Play</a>
   <a href="trivial-ranking.html">Ranking</a>
-  <a href="trivial-eventos.html">Eventos</a>
+  <a href="trivial-eventos.html">Events</a>
 
   <div class="mobile-divider"></div>
-  <a href="trivial-login.html" id="mobile-login">Iniciar sesión</a>
-  <a href="trivial-admin.html" id="mobile-admin" style="display:none">Panel Admin</a>
+  <a href="trivial-login.html" id="mobile-login">Log in</a>
+  <a href="trivial-admin.html" id="mobile-admin" style="display:none">Admin Panel</a>
 </div>
 
 
@@ -63,11 +63,11 @@
       <span class="brand" style="margin-bottom:0">Trivial Travel</span>
     </div>
     <h1>Elige el modo<br>de juego</h1>
-    <p>¿Contra quién quieres competir hoy?</p>
+    <p>Who do you want to compete against today?</p>
     <div id="player-info" style="display:none">
       <span id="player-name-display" style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;color:rgba(255,255,255,0.7)"></span>
       <div id="wins-badge-modos" style="display:none">
-        🏆 <span id="wins-count-modos">0</span> victorias
+        🏆 <span id="wins-count-modos">0</span> wins
       </div>
     </div>
   </div>
@@ -87,13 +87,13 @@
         </svg>
       </div>
       <div>
-        <div class="mode-title">Jugar online</div>
-        <div class="mode-desc">Compite en tiempo real contra otros jugadores. Crea una sala o únete con un código.</div>
+        <div class="mode-title">Play online</div>
+        <div class="mode-desc">Compete in real time against other players. Create a room or join with a code.</div>
       </div>
       <div class="mode-tags">
-        <span class="tag">Hasta 6 jugadores</span>
-        <span class="tag">Tiempo real</span>
-        <span class="tag">Multijugador</span>
+        <span class="tag">Up to 6 players</span>
+        <span class="tag">Real time</span>
+        <span class="tag">Multiplayer</span>
       </div>
       <div class="mode-arrow">
         <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
@@ -112,13 +112,13 @@
         </svg>
       </div>
       <div>
-        <div class="mode-title">Jugar vs IA</div>
-        <div class="mode-desc">Entrena y pon a prueba tus conocimientos contra la inteligencia artificial.</div>
+        <div class="mode-title">Play vs AI</div>
+        <div class="mode-desc">Train and test your knowledge against artificial intelligence.</div>
       </div>
       <div class="mode-tags">
-        <span class="tag">1 jugador</span>
-        <span class="tag">3 dificultades</span>
-        <span class="tag">Sin espera</span>
+        <span class="tag">1 player</span>
+        <span class="tag">3 difficulty levels</span>
+        <span class="tag">No waiting</span>
       </div>
       <div class="mode-arrow">
         <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
@@ -136,8 +136,8 @@
           </svg>
         </div>
         <div>
-          <div class="mode-title" style="font-size:16px">Panel de administración</div>
-          <div class="mode-desc" style="font-size:12px">Gestiona categorías, preguntas y dificultades</div>
+          <div class="mode-title" style="font-size:16px">Admin panel</div>
+          <div class="mode-desc" style="font-size:12px">Manage categories, questions and difficulty levels</div>
         </div>
         <div class="mode-arrow" style="position:relative;bottom:auto;right:auto;opacity:1;transform:none;margin-left:auto">
           <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
