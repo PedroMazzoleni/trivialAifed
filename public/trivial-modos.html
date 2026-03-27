@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -135,23 +135,10 @@
       </div>
     </div>
 
-    <!-- RANKING -->
-    <div class="mode-card" onclick="selectMode('ranking')" style="grid-column:1/-1; padding:20px 28px;">
-      <div style="display:flex;align-items:center;gap:16px;width:100%">
-        <div class="icon-box">
-          <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:var(--blue);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round">
-            <polyline points="18 20 18 10"/><polyline points="12 20 12 4"/><polyline points="6 20 6 14"/>
-          </svg>
-        </div>
-        <div>
-          <div class="mode-title" style="font-size:16px">🏆 Ranking Global</div>
-          <div class="mode-desc" style="font-size:12px">Los mejores jugadores de todas las partidas</div>
-        </div>
-        <div class="mode-arrow" style="position:relative;bottom:auto;right:auto;opacity:1;transform:none;margin-left:auto">
-          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        </div>
-      </div>
-    </div>
+
+
+    <!-- EVENTO ACTIVO -->
+    <div id="event-banner" style="display:none;grid-column:1/-1"></div>
 
     <!-- ADMIN (only visible if admin) -->
     <div class="mode-card" id="admin-card" onclick="selectMode('admin')" style="grid-column:1/-1; padding:20px 28px; display:none;">
