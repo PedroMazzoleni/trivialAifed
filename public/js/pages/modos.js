@@ -55,7 +55,7 @@ async function loadActiveEvents() {
     if (!active.length) return;
 
     const banner = el('event-banner');
-    banner.style.display = 'block';
+    banner.innerHTML = '';
 
     // Cargar conteo de jugadores en cada evento
     banner.innerHTML = active.map(ev => {
