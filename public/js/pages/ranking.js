@@ -20,7 +20,7 @@ function render(players) {
   const list = el('ranking-list');
 
   if (!players.length) {
-    list.innerHTML = '<div class="empty">Aún no hay jugadores registrados.<br>¡Sé el primero en jugar y ganar!</div>';
+    list.innerHTML = '<div class="empty">Aún no hay players registrados.<br>¡Sé el primero en jugar y ganar!</div>';
     return;
   }
 
@@ -45,7 +45,7 @@ function render(players) {
           ${playerInitial(p.name)}
         </div>
         <div class="podium-name">${p.name}</div>
-        <div class="podium-wins">${p.wins} victoria${p.wins !== 1 ? 's' : ''}</div>
+        <div class="podium-wins">${p.wins} win${p.wins !== 1 ? 's' : ''}</div>
         <div class="podium-block ${tiers[i]}" style="height:${heights[i]}px">${i + 1}</div>
       </div>`;
   }).join('');
