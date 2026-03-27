@@ -13,7 +13,6 @@ const ALL_NORMAL_CATS = [
   { id: 'culture', name: 'Culture',   color: '#f5a623', emoji: '🎭' },
   { id: 'history', name: 'History',   color: '#e84545', emoji: '📜' },
   { id: 'eu',      name: 'EU',        color: '#a259ff', emoji: '🇪🇺' },
-  { id: 'kenya',   name: 'Kenya',     color: '#cc2200', emoji: '🦒' },
 ];
 
 const SPECIAL_CATS_LIST = [
