@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trivial — Ranking Global</title>
+<title>Trivial — Global Ranking</title>
 <link rel="icon" type="image/png" href="images/logo.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/shared.css">
@@ -21,17 +21,17 @@
       <img class="logo-eu"   src="images/eu-logo.png"     alt="Co-funded by EU">
     </a>
     <ul class="navbar-links">
-      <li><a href="trivial-modos.html">Jugar</a></li>
+      <li><a href="trivial-modos.html">Play</a></li>
       <li><a href="trivial-ranking.html">Ranking</a></li>
-      <li><a href="trivial-eventos.html">Eventos</a></li>
+      <li><a href="trivial-eventos.html">Events</a></li>
       <li id="dd-modos">
         <button onclick="toggleDropdown('dd-modos')">
-          Modos
+          Modes
           <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <ul class="navbar-dropdown">
-          <li><a href="trivial-lobby.html">🌐 Jugar Online</a></li>
-          <li><a href="trivial-ia-nivel.html">🤖 Jugar vs IA</a></li>
+          <li><a href="trivial-lobby.html">🌐 Play Online</a></li>
+          <li><a href="trivial-ia-nivel.html">🤖 Play vs AI</a></li>
         </ul>
       </li>
       <li id="dd-admin" style="display:none">
@@ -40,7 +40,7 @@
           <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <ul class="navbar-dropdown">
-          <li><a href="trivial-admin.html">📊 Panel Admin</a></li>
+          <li><a href="trivial-admin.html">📊 Admin Panel</a></li>
         </ul>
       </li>
     </ul>
@@ -51,21 +51,21 @@
   </div>
 </nav>
 <div class="navbar-mobile" id="navbar-mobile">
-  <a href="trivial-modos.html">Jugar</a>
+  <a href="trivial-modos.html">Play</a>
   <a href="trivial-ranking.html">Ranking</a>
-  <a href="trivial-eventos.html">Eventos</a>
+  <a href="trivial-eventos.html">Events</a>
   <a href="trivial-lobby.html" class="mobile-sub">🌐 Online</a>
   <a href="trivial-ia-nivel.html" class="mobile-sub">🤖 vs IA</a>
   <div class="mobile-divider"></div>
-  <a href="trivial-login.html" id="mobile-login">Iniciar sesión</a>
-  <a href="trivial-admin.html" id="mobile-admin" style="display:none">Panel Admin</a>
+  <a href="trivial-login.html" id="mobile-login">Log in</a>
+  <a href="trivial-admin.html" id="mobile-admin" style="display:none">Admin Panel</a>
 </div>
 
 
 
 <a class="btn-back" onclick="goBack()">
   <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-  Volver
+  Back
 </a>
 
 <div class="page">
@@ -73,7 +73,7 @@
   <div class="header">
     <span class="header-label">Trivial Travel</span>
     <h1>🏆 Ranking<br>Global</h1>
-    <p>Los mejores jugadores de todas las salas</p>
+    <p>Los mejores players de todas las salas</p>
   </div>
 
   <div class="podium" id="podium" style="display:none"></div>
@@ -93,7 +93,7 @@
     <div id="ranking-list">
       <div class="loading">
         <div class="dots"><span></span><span></span><span></span></div>
-        Cargando ranking...
+        Loading ranking...
       </div>
     </div>
   </div>
