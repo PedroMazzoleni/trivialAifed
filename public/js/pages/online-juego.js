@@ -8,7 +8,7 @@ const ROOM_CODE = params.get('room') || '';
 
 // Bloquear cambio de nombre por URL — usar sessionStorage como fuente de verdad
 const _sessionKey = 'room_player_' + ROOM_CODE;
-const _urlName    = params.get('player') || 'Jugador';
+const _urlName    = params.get('player') || 'Player';
 const _storedName = sessionStorage.getItem(_sessionKey);
 
 // Si ya hay un nombre guardado para esta sala, usarlo siempre (ignora la URL)
@@ -144,7 +144,7 @@ function connectSocket() {
   });
 
   socket.on('error', (data) => {
-    if (data && data.msg && data.msg.includes('Sala no encontrada')) {
+    if (data && data.msg && data.msg.includes('Room not found')) {
       setTimeout(() => { goTo('trivial-lobby.html'); }, 1500);
     }
   });
@@ -198,7 +198,7 @@ function showSpin(room) {
   showScreen('spin');
   const cp = room.players[room.currentPlayerIdx];
   document.getElementById('turn-name').textContent        = cp ? cp.name : '—';
-  document.getElementById('spin-round-badge').textContent = `Ronda ${room.currentRound||1} / ${room.totalRounds||6}`;
+  document.getElementById('spin-round-badge').textContent = `Round ${room.currentRound||1} / ${room.totalRounds||6}`;
   drawWheel(categories, spinAngle);
   document.getElementById('cat-reveal').classList.remove('show');
 
@@ -208,19 +208,19 @@ function showSpin(room) {
   const btnSpin  = document.getElementById('btn-spin');
 
   if (myTurn && !isSpinning) {
-    // Mi turno y la ruleta no está girando → mostrar botón
+    // Mi turno y la ruleta no is spinning → mostrar botón
     controls.style.display = 'flex';
     btnSpin.disabled = false;
     waitEl.classList.remove('show');
   } else if (myTurn && isSpinning) {
-    // Mi turno pero ya está girando (acabo de pulsar) → mantener oculto
+    // Mi turno pero ya is spinning (acabo de pulsar) → mantener oculto
     controls.style.display = 'none';
     waitEl.classList.remove('show');
   } else {
     // No es mi turno
     controls.style.display = 'none';
     waitEl.classList.add('show');
-    document.getElementById('spin-wait-text').textContent = `${cp ? cp.name : '—'} está girando...`;
+    document.getElementById('spin-wait-text').textContent = `${cp ? cp.name : '—'} is spinning...`;
   }
 
   renderMiniScores(room);
@@ -354,7 +354,7 @@ function showReveal(cat, diff, special) {
 
   let nameText = cat.name.toUpperCase();
   if (special) {
-    const specialNames = { doble:'⚡ x2 Puntos', robo:'💸 Robo', bomba:'💣 Bomba', skip:'⏭️ SKIP', suerte:'🍀 Suerte' };
+    const specialNames = { doble:'⚡ x2 Points', robo:'💸 Robo', bomba:'💣 Bomba', skip:'⏭️ SKIP', suerte:'🍀 Suerte' };
     nameText = specialNames[special] || cat.name.toUpperCase();
   }
   document.getElementById('cat-reveal-name').textContent = nameText;
@@ -368,12 +368,12 @@ function showReveal(cat, diff, special) {
   }
 
   if (special) {
-    const specialDesc = { doble:'Pregunta vale el doble', robo:'Si aciertas, robas puntos al líder', bomba:'Si fallas pierdes puntos', skip:'Turno perdido', suerte:'+6 puntos gratis 🎉' };
+    const specialDesc = { doble:'Question vale el doble', robo:'Si aciertas, robas puntos al líder', bomba:'Si fallas pierdes puntos', skip:'Turn perdido', suerte:'+6 puntos gratis 🎉' };
     badge.textContent = specialDesc[special] || '';
     badge.style.background = hexToRgba(cat.color, 0.2);
     badge.style.color = cat.color;
   } else {
-    const diffLabel = { easy:'Fácil +3', medium:'Medio +6', hard:'Difícil +12' }[diff] || '';
+    const diffLabel = { easy:'Easy +3', medium:'Medium +6', hard:'Hard +12' }[diff] || '';
     const diffColor = { easy:'#18c25a', medium:'#f5a623', hard:'#e84545' }[diff] || '#fff';
     badge.textContent      = diffLabel;
     badge.style.background = hexToRgba(diffColor, 0.2);
@@ -518,7 +518,7 @@ function showQuestion(room) {
 
   setCategoryBg(room.currentCategory);
 
-  document.getElementById('q-counter').textContent = `Ronda ${room.currentRound||1} / ${room.totalRounds||6}`;
+  document.getElementById('q-counter').textContent = `Round ${room.currentRound||1} / ${room.totalRounds||6}`;
 
   const catName = cat ? cat.name : '—';
   const specialBadges = { doble:'⚡ DOBLE PUNTOS', robo:'💸 ROBO', bomba:'💣 BOMBA' };
@@ -570,9 +570,9 @@ function showQuestion(room) {
     waitTxt.textContent  = '¡Es tu turno! Responde...';
     waitEl.className     = 'q-waiting';
   } else if (!myTurn) {
-    waitTxt.textContent  = `Turno de ${cp ? cp.name : '—'} — espera tu turno`;
+    waitTxt.textContent  = `Turn of ${cp ? cp.name : '—'} — espera tu turno`;
   } else {
-    waitTxt.textContent  = 'Respuesta enviada, esperando...';
+    waitTxt.textContent  = 'Answer submitted, waiting...';
   }
 
   clearInterval(timerInterval);
@@ -634,10 +634,10 @@ function showScoreboard(room) {
   const totalRounds  = room.totalRounds || 6;
   const remaining    = totalRounds - currentRound;
 
-  document.getElementById('sb-round').textContent = `Ronda ${currentRound} de ${totalRounds}`;
+  document.getElementById('sb-round').textContent = `Round ${currentRound} de ${totalRounds}`;
   document.getElementById('sb-sub').textContent   = remaining > 0
-    ? `Quedan ${remaining} ronda${remaining !== 1 ? 's' : ''}`
-    : 'Última ronda';
+    ? `Remaining ${remaining} ronda${remaining !== 1 ? 's' : ''}`
+    : 'Last round';
 
   const isSkip     = la && la.special === 'skip';
   const isCorrect  = la && la.correct && !isSkip;
@@ -650,7 +650,7 @@ function showScoreboard(room) {
   if (isSkip) {
     banner.className = 'sb-answer-banner wrong';
     document.getElementById('sb-icon').textContent          = '⏭️';
-    document.getElementById('sb-banner-title').textContent  = 'SKIP — Turno perdido';
+    document.getElementById('sb-banner-title').textContent  = 'SKIP — Turn perdido';
     document.getElementById('sb-banner-detail').textContent = `${cp ? cp.name : '—'} ha perdido su turno`;
     document.getElementById('sb-banner-pts').style.display  = 'none';
   } else if (isSuerte) {
@@ -664,8 +664,8 @@ function showScoreboard(room) {
     const roboSteal = isCorrect && room.specialEffect === 'robo';
     banner.className = `sb-answer-banner ${isCorrect ? 'correct' : 'wrong'}`;
     document.getElementById('sb-icon').textContent          = isCorrect ? (roboSteal ? '💸' : '+') : '—';
-    document.getElementById('sb-banner-title').textContent  = isCorrect ? (roboSteal ? '¡Robo! Puntos robados al líder' : 'Correcto') : 'Incorrecto';
-    document.getElementById('sb-banner-detail').textContent = q ? `Respuesta correcta: ${q.a}` : '—';
+    document.getElementById('sb-banner-title').textContent  = isCorrect ? (roboSteal ? '¡Robo! Points robados al líder' : 'Correct') : 'Wrong';
+    document.getElementById('sb-banner-detail').textContent = q ? `Correct answer: ${q.a}` : '—';
     document.getElementById('sb-banner-pts').textContent    = isCorrect ? `+${actualPts}` : '';
     document.getElementById('sb-banner-pts').style.display  = isCorrect ? 'block' : 'none';
   }
@@ -709,7 +709,7 @@ function showScoreboard(room) {
     t--;
     fill.style.transition = 'width 1s linear';
     fill.style.width      = `${(t / 5) * 100}%`;
-    cdText.textContent    = t > 0 ? `Siguiente en ${t}s...` : 'Cargando...';
+    cdText.textContent    = t > 0 ? `Next in ${t}s...` : 'Loading...';
     if (t <= 3 && t > 0) Audio.countdownTick();
     if (t <= 0) {
       clearInterval(sbCountdownInterval);
@@ -735,7 +735,7 @@ function showResults(room) {
   const winner = sorted[0];
 
   document.getElementById('res-title').innerHTML = `<span>${winner ? winner.score : 0}</span> pts`;
-  document.getElementById('res-msg').textContent = winner ? `${winner.name} gana la partida` : 'Partida terminada';
+  document.getElementById('res-msg').textContent = winner ? `${winner.name} wins the game` : 'Game over';
 
   document.getElementById('podium').innerHTML = sorted.map((p, i) => `
     <div class="podium-row">
@@ -753,7 +753,7 @@ function showResults(room) {
     if (panel) {
       panel.classList.remove('collapsed');
       _chatOpen = true;
-      addChatMsg('', '🏁 ¡Partida terminada! Chatea con tus rivales.', true);
+      addChatMsg('', '🏁 ¡Game over! Chatea con tus rivales.', true);
     }
   }, 800);
 }
