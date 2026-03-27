@@ -26,7 +26,6 @@ const categories = [
   { id:'culture', name:'Culture',   color:'#f5a623', emoji:'🎭' },
   { id:'history', name:'History',   color:'#e84545', emoji:'📜' },
   { id:'eu',      name:'EU',        color:'#a259ff', emoji:'🇪🇺' },
-  { id:'kenya',   name:'Kenya',     color:'#cc2200', emoji:'🦒' },
   { id:'mixed',   name:'Mixed',     color:'#9b59b6', emoji:'🎲' },
   { id:'doble',   name:'x2 Pts',    color:'#FFD700', emoji:'⚡', special:true },
   { id:'robo',    name:'Steal',     color:'#ff4dff', emoji:'💸', special:true },
@@ -35,7 +34,7 @@ const categories = [
   { id:'suerte',  name:'Lucky',     color:'#00ff88', emoji:'🍀', special:true },
 ];
 
-// Dynamic wheel categories — updated from room state so Kenya sub-cats etc. work
+// Dynamic wheel categories — updated from room state
 let wheelCats = [...categories];
 
 const CAT_BACKGROUNDS = {
@@ -112,6 +111,14 @@ function connectSocket() {
     }
   });
 
+  // ── Comodines privados ───────────────────────────────────────────────────
+  socket.on('event:privateWildcard', ({ wildcard, message }) => {
+    showPrivateWildcard(wildcard, message);
+  });
+  socket.on('event:wildcardResult', ({ message }) => {
+    showWildcardResult(message);
+  });
+
   // ── Ranking global ────────────────────────────────────────────────────────
   socket.on('event:globalRanking', ({ ranking }) => {
     showGlobalRanking(ranking);
@@ -128,7 +135,7 @@ function connectSocket() {
 
 // ── STATE MACHINE ─────────────────────────────────────────────────────────────
 function handleUpdate(room) {
-  // Sync wheel categories from server so event-specific sectors (kenya sub-cats etc.) work
+  // Sync wheel categories from server
   if (room.categories && room.categories.length) wheelCats = room.categories;
 
   // Update round progress bar
@@ -583,6 +590,44 @@ function hexToRgba(hex, alpha) {
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
 function goToEvents() { goTo('trivial-eventos.html'); }
 function goHome()     { goTo('trivial-modos.html'); }
+
+// ── COMODINES PRIVADOS ────────────────────────────────────────────────────────
+let _wcTimeout = null;
+
+function showPrivateWildcard(wildcard, message) {
+  clearTimeout(_wcTimeout);
+  const colors = { doble:'#FFD700', robo:'#ff4dff', bomba:'#ff6600', skip:'#00e5ff', suerte:'#00ff88' };
+  const color  = colors[wildcard] || '#fff';
+
+  let toast = document.getElementById('wc-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'wc-toast';
+    toast.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:999;padding:14px 22px;border-radius:10px;font-weight:800;font-size:15px;letter-spacing:1px;text-align:center;max-width:320px;box-shadow:0 4px 24px rgba(0,0,0,0.5);transition:opacity .3s;pointer-events:none';
+    document.body.appendChild(toast);
+  }
+
+  toast.style.background = color + '22';
+  toast.style.border     = `2px solid ${color}`;
+  toast.style.color      = color;
+  toast.textContent      = message;
+  toast.style.opacity    = '1';
+
+  _wcTimeout = setTimeout(() => { toast.style.opacity = '0'; }, 5000);
+}
+
+function showWildcardResult(message) {
+  let result = document.getElementById('wc-result');
+  if (!result) {
+    result = document.createElement('div');
+    result.id = 'wc-result';
+    result.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:999;padding:10px 20px;border-radius:8px;background:rgba(0,0,0,0.8);border:1px solid rgba(255,255,255,0.2);font-weight:700;font-size:14px;color:#e8eaf6;text-align:center;max-width:300px;pointer-events:none;transition:opacity .3s';
+    document.body.appendChild(result);
+  }
+  result.textContent  = message;
+  result.style.opacity = '1';
+  setTimeout(() => { result.style.opacity = '0'; }, 4000);
+}
 
 // ── RANKING GLOBAL ────────────────────────────────────────────────────────────
 function showGlobalRanking(ranking) {
