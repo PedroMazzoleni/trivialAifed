@@ -4,9 +4,26 @@
 // online-juego.js
 // SERVER viene de utils.js
 const params    = new URLSearchParams(window.location.search);
-const ROOM_CODE = params.get('room')   || '';
-const MY_NAME   = params.get('player') || 'Jugador';
-const IS_HOST   = params.get('host')   === 'true';
+const ROOM_CODE = params.get('room') || '';
+
+// Bloquear cambio de nombre por URL — usar sessionStorage como fuente de verdad
+const _sessionKey = 'room_player_' + ROOM_CODE;
+const _urlName    = params.get('player') || 'Jugador';
+const _storedName = sessionStorage.getItem(_sessionKey);
+
+// Si ya hay un nombre guardado para esta sala, usarlo siempre (ignora la URL)
+// Si no hay ninguno, guardar el de la URL
+if (!_storedName) sessionStorage.setItem(_sessionKey, _urlName);
+const MY_NAME = _storedName || _urlName;
+
+const IS_HOST = params.get('host') === 'true';
+
+// Si la URL tiene un nombre diferente al guardado, redirigir con el correcto
+if (_storedName && _urlName !== _storedName) {
+  const correctedUrl = new URL(window.location.href);
+  correctedUrl.searchParams.set('player', _storedName);
+  window.history.replaceState({}, '', correctedUrl.toString());
+}
 const LETTERS   = ['A','B','C','D'];
 const TIME_LIMIT = 15;
 
