@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -21,17 +21,17 @@
       <img class="logo-eu"   src="images/eu-logo.png"     alt="Co-funded by EU">
     </a>
     <ul class="navbar-links">
-      <li><a href="trivial-modos.html">Jugar</a></li>
+      <li><a href="trivial-modos.html">Play</a></li>
       <li><a href="trivial-ranking.html">Ranking</a></li>
-      <li><a href="trivial-eventos.html">Eventos</a></li>
+      <li><a href="trivial-eventos.html">Events</a></li>
       <li id="dd-modos">
         <button onclick="toggleDropdown('dd-modos')">
-          Modos
+          Modes
           <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <ul class="navbar-dropdown">
-          <li><a href="trivial-lobby.html">🌐 Jugar Online</a></li>
-          <li><a href="trivial-ia-nivel.html">🤖 Jugar vs IA</a></li>
+          <li><a href="trivial-lobby.html">🌐 Play Online</a></li>
+          <li><a href="trivial-ia-nivel.html">🤖 Play vs AI</a></li>
         </ul>
       </li>
       <li id="dd-admin" style="display:none">
@@ -40,7 +40,7 @@
           <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <ul class="navbar-dropdown">
-          <li><a href="trivial-admin.html">📊 Panel Admin</a></li>
+          <li><a href="trivial-admin.html">📊 Admin Panel</a></li>
         </ul>
       </li>
     </ul>
@@ -51,29 +51,29 @@
   </div>
 </nav>
 <div class="navbar-mobile" id="navbar-mobile">
-  <a href="trivial-modos.html">Jugar</a>
+  <a href="trivial-modos.html">Play</a>
   <a href="trivial-ranking.html">Ranking</a>
-  <a href="trivial-eventos.html">Eventos</a>
+  <a href="trivial-eventos.html">Events</a>
   <a href="trivial-lobby.html" class="mobile-sub">🌐 Online</a>
-  <a href="trivial-ia-nivel.html" class="mobile-sub">🤖 vs IA</a>
+  <a href="trivial-ia-nivel.html" class="mobile-sub">🤖 vs AI</a>
   <div class="mobile-divider"></div>
-  <a href="trivial-login.html" id="mobile-login">Iniciar sesión</a>
-  <a href="trivial-admin.html" id="mobile-admin" style="display:none">Panel Admin</a>
+  <a href="trivial-login.html" id="mobile-login">Log in</a>
+  <a href="trivial-admin.html" id="mobile-admin" style="display:none">Admin Panel</a>
 </div>
 
 
 
 <a class="btn-back" href="trivial-modos.html">
   <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-  Volver
+  Back
 </a>
 
 <div class="page">
 
   <div class="header">
-    <span class="brand-green">Trivial — vs IA</span>
-    <h1>Elige tu nivel</h1>
-    <p>Selecciona la dificultad con la que quieres jugar</p>
+    <span class="brand-green">Trivial — vs AI</span>
+    <h1>Choose your level</h1>
+    <p>Select the difficulty you want to play with</p>
   </div>
 
   <div class="levels">
@@ -83,8 +83,8 @@
       onclick="selectLevel('facil')">
       <div class="level-dot"></div>
       <div class="level-info">
-        <div class="level-name">Fácil</div>
-        <div class="level-desc">Preguntas básicas. Ideal para empezar o calentar motores.</div>
+        <div class="level-name">Easy</div>
+        <div class="level-desc">Basic questions. Ideal for beginners or warm-ups.</div>
       </div>
       <div class="level-pips">
         <div class="pip filled" style="--level-color:#18c25a"></div>
@@ -98,8 +98,8 @@
       onclick="selectLevel('medio')">
       <div class="level-dot"></div>
       <div class="level-info">
-        <div class="level-name">Medio</div>
-        <div class="level-desc">Preguntas con algo más de dificultad. Para jugadores con soltura.</div>
+        <div class="level-name">Medium</div>
+        <div class="level-desc">Slightly harder questions. For players with some experience.</div>
       </div>
       <div class="level-pips">
         <div class="pip filled" style="--level-color:#f5a623"></div>
@@ -113,8 +113,8 @@
       onclick="selectLevel('dificil')">
       <div class="level-dot"></div>
       <div class="level-info">
-        <div class="level-name">Difícil</div>
-        <div class="level-desc">Preguntas exigentes. Solo para los que de verdad saben.</div>
+        <div class="level-name">Hard</div>
+        <div class="level-desc">Challenging questions. Only for those who truly know their stuff.</div>
       </div>
       <div class="level-pips">
         <div class="pip filled" style="--level-color:#e84545"></div>
@@ -127,7 +127,7 @@
 
   <div class="btn-start-wrap">
     <button class="btn-start" id="btn-start" onclick="startGame()">
-      Empezar partida
+      Start game
     </button>
   </div>
 
