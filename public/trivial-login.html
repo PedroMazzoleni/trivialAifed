@@ -627,8 +627,60 @@ function handleGuest() {
   setTimeout(() => { window.location.href = 'trivial-modos.html'; }, 600);
 }
 
+// ── Recuperación de contraseña ──────────────────────────────────────────────
+function showForgotModal() {
+  document.getElementById('forgot-modal').style.display = 'flex';
+  document.getElementById('forgot-secret').value = '';
+  document.getElementById('forgot-newpass').value = '';
+  document.getElementById('forgot-msg').textContent = '';
+  document.getElementById('forgot-msg').className = 'forgot-modal-msg';
+}
+
+function hideForgotModal() {
+  document.getElementById('forgot-modal').style.display = 'none';
+}
+
+async function handleResetPassword() {
+  const secretKey   = document.getElementById('forgot-secret').value.trim();
+  const newPassword = document.getElementById('forgot-newpass').value;
+  const msgEl       = document.getElementById('forgot-msg');
+  const btn         = document.getElementById('btn-reset');
+
+  msgEl.textContent = '';
+  if (!secretKey)             { msgEl.textContent = 'Introduce la clave secreta'; return; }
+  if (!newPassword)           { msgEl.textContent = 'Introduce la nueva contraseña'; return; }
+  if (newPassword.length < 6) { msgEl.textContent = 'Mínimo 6 caracteres'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Actualizando...';
+
+  try {
+    const res  = await fetch(`${SERVER}/api/admin/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secretKey, newPassword }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      msgEl.className = 'forgot-modal-msg success';
+      msgEl.textContent = '✅ Contraseña actualizada. Ya puedes iniciar sesión.';
+      setTimeout(hideForgotModal, 2000);
+    } else {
+      msgEl.className = 'forgot-modal-msg error';
+      msgEl.textContent = data.msg || 'Error al actualizar';
+    }
+  } catch {
+    msgEl.className = 'forgot-modal-msg error';
+    msgEl.textContent = 'Error de conexión';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Actualizar contraseña';
+}
+
 document.addEventListener('keydown', e => {
   if (e.key !== 'Enter') return;
+  if (document.getElementById('forgot-modal').style.display === 'flex') { handleResetPassword(); return; }
   const loginVisible = document.getElementById('form-login').style.display !== 'none';
   if (loginVisible) handleLogin(); else handleRegister();
 });
