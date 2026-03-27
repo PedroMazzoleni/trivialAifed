@@ -153,6 +153,28 @@ function registerAuthRoutes(app) {
     } catch(e) { res.json([]); }
   });
 
+  // ── Reset contraseña admin con clave secreta ──────────────────────────────
+  app.post('/api/admin/reset-password', async (req, res) => {
+    const { secretKey, newPassword } = req.body;
+    if (!secretKey || !newPassword) return res.json({ ok: false, msg: 'Faltan campos' });
+    if (!db) return res.json({ ok: false, msg: 'Base de datos no disponible' });
+
+    const RESET_KEY = process.env.ADMIN_RESET_KEY || 'trivial-reset-2024';
+    if (secretKey !== RESET_KEY) return res.json({ ok: false, msg: 'Clave secreta incorrecta' });
+    if (newPassword.length < 6) return res.json({ ok: false, msg: 'La contraseña debe tener al menos 6 caracteres' });
+
+    try {
+      const r = await db.query(
+        "UPDATE users SET password = $1 WHERE role = 'admin' RETURNING email",
+        [newPassword]
+      );
+      if (!r.rowCount) return res.json({ ok: false, msg: 'No se encontró la cuenta admin' });
+      res.json({ ok: true, msg: 'Contraseña actualizada correctamente' });
+    } catch(e) {
+      res.json({ ok: false, msg: 'Error al actualizar' });
+    }
+  });
+
   app.get('/api/wins/:name', async (req, res) => {
     if (!db) return res.json({ wins: 0 });
     try {
