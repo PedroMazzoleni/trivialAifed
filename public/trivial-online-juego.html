@@ -38,8 +38,8 @@
 <div class="screen" id="screen-spin">
 
   <div class="spin-top">
-    <div class="turn-banner">Turno de <strong id="turn-name">—</strong></div>
-    <div class="round-badge" id="spin-round-badge">Ronda 1 / 6</div>
+    <div class="turn-banner">Turn of <strong id="turn-name">—</strong></div>
+    <div class="round-badge" id="spin-round-badge">Round 1 / 6</div>
   </div>
 
   <div class="wheel-wrap">
@@ -48,12 +48,12 @@
   </div>
 
   <div class="cat-reveal" id="cat-reveal">
-    <span class="cat-reveal-label">Categoría</span>
+    <span class="cat-reveal-label">Category</span>
     <span class="cat-reveal-name" id="cat-reveal-name">—</span>
   </div>
 
   <div class="spin-controls" id="spin-controls">
-    <button class="btn-main" id="btn-spin" onclick="spinWheel()">Girar ruleta</button>
+    <button class="btn-main" id="btn-spin" onclick="spinWheel()">Spin wheel</button>
   </div>
 
   <div class="spin-waiting" id="spin-wait">
@@ -69,7 +69,7 @@
 
   <div class="q-hud">
     <div class="q-hud-left">
-      <span class="q-hud-counter" id="q-counter">Ronda 1/10</span>
+      <span class="q-hud-counter" id="q-counter">Round 1/10</span>
       <span class="q-hud-cat" id="q-cat">—</span>
     </div>
     <div class="q-hud-right">
@@ -86,10 +86,10 @@
     <div class="q-options" id="q-options"></div>
     <div class="q-feedback" id="q-feedback">
       <div>
-        <span class="fb-title" id="fb-title">Correcto</span>
+        <span class="fb-title" id="fb-title">Correct</span>
         <span id="fb-detail"></span>
       </div>
-      <button class="btn-next" id="btn-next" onclick="proceedNextTurn()">Siguiente →</button>
+      <button class="btn-next" id="btn-next" onclick="proceedNextTurn()">Next →</button>
     </div>
     <div class="q-waiting" id="q-waiting">
       <div class="dots"><span></span><span></span><span></span></div>
@@ -104,14 +104,14 @@
 
     <div class="sb-header">
       <span class="sb-label">Marcador</span>
-      <div class="sb-round" id="sb-round">Ronda 1</div>
-      <div class="sb-sub" id="sb-sub">Quedan 9 preguntas</div>
+      <div class="sb-round" id="sb-round">Round 1</div>
+      <div class="sb-sub" id="sb-sub">Remaining 9 preguntas</div>
     </div>
 
     <div class="sb-answer-banner" id="sb-banner">
       <div class="sb-banner-icon" id="sb-icon">+</div>
       <div class="sb-banner-text">
-        <span class="sb-banner-title" id="sb-banner-title">Correcto</span>
+        <span class="sb-banner-title" id="sb-banner-title">Correct</span>
         <span class="sb-banner-detail" id="sb-banner-detail">—</span>
       </div>
       <span class="sb-banner-pts" id="sb-banner-pts"></span>
@@ -119,7 +119,7 @@
 
     <div class="sb-title-row">
       <span class="sb-col-label">Jugador</span>
-      <span class="sb-col-label">Puntos</span>
+      <span class="sb-col-label">Points</span>
     </div>
 
     <div class="sb-list" id="sb-list"></div>
@@ -128,7 +128,7 @@
       <div class="sb-countdown-bar">
         <div class="sb-countdown-fill" id="sb-fill" style="width:100%"></div>
       </div>
-      <div class="sb-countdown-text" id="sb-countdown-text">Siguiente en 5s...</div>
+      <div class="sb-countdown-text" id="sb-countdown-text">Next in 5s...</div>
       <button class="sb-btn-next" id="sb-btn-next" onclick="proceedNextTurn()">
         Continuar →
       </button>
@@ -141,14 +141,14 @@
 <div class="screen" id="screen-results">
   <div class="results-inner">
     <div class="res-header">
-      <span class="res-brand">Partida terminada</span>
+      <span class="res-brand">Game over</span>
       <div class="res-title" id="res-title">Fin</div>
       <div class="res-msg" id="res-msg">—</div>
     </div>
     <div class="podium" id="podium"></div>
     <div class="res-btns">
-      <button class="btn btn-primary" onclick="playAgain()">Jugar de nuevo</button>
-      <button class="btn btn-ghost"   onclick="goHome()">Volver al inicio</button>
+      <button class="btn btn-primary" onclick="playAgain()">Play de nuevo</button>
+      <button class="btn btn-ghost"   onclick="goHome()">Back al inicio</button>
     </div>
   </div>
 </div>
