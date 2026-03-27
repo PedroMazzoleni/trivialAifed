@@ -413,10 +413,9 @@ html, body {
 <div class="page">
   <div class="card">
 
-    <div class="card-header">
-      <div class="brand">Trivial</div>
-      <h1 id="form-title">Acceder</h1>
-      <p id="form-subtitle">Introduce tus datos para continuar</p>
+    <div class="card-header" style="text-align:center">
+      <img src="images/logometaversing.png" alt="Metaversing" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin-bottom:16px;border:2px solid rgba(45,125,210,0.3)">
+      <div class="brand">Trivial Travel</div>
     </div>
 
     <div class="tabs">
@@ -485,15 +484,9 @@ html, body {
 
     </div>
 
-    <div class="card-footer" id="form-footer">
-      ¿No tienes cuenta? <a onclick="switchTab('register')">Regístrate</a>
-    </div>
+    <div class="card-footer" id="form-footer" style="display:none"></div>
 
-    <div style="text-align:center;padding:12px 0 0;border-top:1px solid #1e2d50;margin-top:4px">
-      <a href="trivial-ranking.html" style="font-size:12px;color:#8892b0;text-decoration:none;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
-        🏆 Ver Ranking Global
-      </a>
-    </div>
+
 
   </div>
 </div>
@@ -507,7 +500,7 @@ function switchTab(tab) {
   document.getElementById('tab-register').classList.toggle('active', !login);
   document.getElementById('form-login').style.display    = login ? 'block' : 'none';
   document.getElementById('form-register').style.display = login ? 'none'  : 'block';
-  document.getElementById('form-title').textContent      = login ? 'Acceder' : 'Crear cuenta';
+  // titulo oculto
   document.getElementById('form-subtitle').textContent   = login ? 'Introduce tus datos para continuar' : 'Rellena el formulario para registrarte';
   document.getElementById('form-footer').innerHTML       = login
     ? '¿No tienes cuenta? <a onclick="switchTab(\'register\')">Regístrate</a>'
