@@ -359,18 +359,18 @@ html, body {
     </a>
 
     <ul class="navbar-links">
-      <li><a href="trivial-modos.html">Jugar</a></li>
+      <li><a href="trivial-modos.html">Play</a></li>
       <li><a href="trivial-ranking.html">Ranking</a></li>
-      <li><a href="trivial-eventos.html">Eventos</a></li>
+      <li><a href="trivial-eventos.html">Events</a></li>
 
       <li id="dd-modos">
         <button onclick="toggleDropdown('dd-modos')">
-          Modos
+          Modes
           <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <ul class="navbar-dropdown">
-          <li><a href="trivial-lobby.html">&#127760; Jugar Online</a></li>
-          <li><a href="trivial-ia-nivel.html">&#129302; Jugar vs IA</a></li>
+          <li><a href="trivial-lobby.html">&#127760; Play Online</a></li>
+          <li><a href="trivial-ia-nivel.html">&#129302; Play vs AI</a></li>
         </ul>
       </li>
 
@@ -380,7 +380,7 @@ html, body {
           <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <ul class="navbar-dropdown">
-          <li><a href="trivial-admin.html">&#128202; Panel Admin</a></li>
+          <li><a href="trivial-admin.html">&#128202; Admin Panel</a></li>
         </ul>
       </li>
     </ul>
@@ -399,14 +399,14 @@ html, body {
 </nav>
 
 <div class="navbar-mobile" id="navbar-mobile">
-  <a href="trivial-modos.html">Jugar</a>
+  <a href="trivial-modos.html">Play</a>
   <a href="trivial-ranking.html">Ranking</a>
-  <a href="trivial-eventos.html">Eventos</a>
+  <a href="trivial-eventos.html">Events</a>
   <a href="trivial-lobby.html" class="mobile-sub">&#127760; Online</a>
   <a href="trivial-ia-nivel.html" class="mobile-sub">&#129302; vs IA</a>
   <div class="mobile-divider"></div>
   <a href="trivial-login.html" id="mobile-login">Iniciar sesi&#243;n</a>
-  <a href="trivial-admin.html" id="mobile-admin" style="display:none">Panel Admin</a>
+  <a href="trivial-admin.html" id="mobile-admin" style="display:none">Admin Panel</a>
 </div>
 
 
@@ -419,8 +419,8 @@ html, body {
     </div>
 
     <div class="tabs">
-      <button class="tab active" id="tab-login"    onclick="switchTab('login')">Iniciar sesión</button>
-      <button class="tab"        id="tab-register" onclick="switchTab('register')">Registrarse</button>
+      <button class="tab active" id="tab-login"    onclick="switchTab('login')">Log in</button>
+      <button class="tab"        id="tab-register" onclick="switchTab('register')">Sign up</button>
     </div>
 
     <div class="card-body">
@@ -430,54 +430,54 @@ html, body {
       <!-- LOGIN -->
       <div id="form-login">
         <div class="field">
-          <label>Correo electrónico</label>
-          <input type="text" id="login-email" placeholder="tu@correo.com o usuario" autocomplete="email">
+          <label>Email address</label>
+          <input type="text" id="login-email" placeholder="your@email.com or username" autocomplete="email">
         </div>
         <div class="field">
-          <label>Contraseña</label>
-          <input type="password" id="login-pass" placeholder="Contraseña" autocomplete="current-password">
+          <label>Password</label>
+          <input type="password" id="login-pass" placeholder="Password" autocomplete="current-password">
         </div>
 
         <div class="form-extras">
           <label class="remember">
             <input type="checkbox" id="remember-me">
-            <span>Recordarme</span>
+            <span>Remember me</span>
           </label>
-          <a class="forgot" href="#" onclick="showForgotModal(); return false;">¿Olvidaste la contraseña?</a>
+          <a class="forgot" href="#" onclick="showForgotModal(); return false;">Forgot your password?</a>
         </div>
 
         <button class="btn btn-primary" id="btn-login" onclick="handleLogin()">
-          <span class="btn-label">Entrar</span>
+          <span class="btn-label">Enter</span>
           <div class="spinner"></div>
         </button>
 
         <div class="divider"><hr><span>o</span><hr></div>
 
         <button class="btn btn-secondary" onclick="handleGuest()" style="background:rgba(45,125,210,0.15);border:1.5px solid rgba(45,125,210,0.6);color:#7ab4e8;font-weight:700;letter-spacing:1px;box-shadow:0 0 16px rgba(45,125,210,0.2);transition:all .2s" onmouseover="this.style.background='rgba(45,125,210,0.28)';this.style.boxShadow='0 0 28px rgba(45,125,210,0.45)';this.style.color='#e8eaf6'" onmouseout="this.style.background='rgba(45,125,210,0.15)';this.style.boxShadow='0 0 16px rgba(45,125,210,0.2)';this.style.color='#7ab4e8'">
-          Entrar como invitado
+          Enter como invitado
         </button>
       </div>
 
       <!-- REGISTER -->
       <div id="form-register" style="display:none">
         <div class="field">
-          <label>Nombre de usuario</label>
-          <input type="text" id="reg-name" placeholder="Tu nombre en el juego" maxlength="20">
+          <label>Username</label>
+          <input type="text" id="reg-name" placeholder="Your in-game name" maxlength="20">
         </div>
         <div class="field">
-          <label>Correo electrónico</label>
-          <input type="email" id="reg-email" placeholder="tu@correo.com">
+          <label>Email address</label>
+          <input type="email" id="reg-email" placeholder="your@email.com">
         </div>
         <div class="field">
-          <label>Contraseña</label>
-          <input type="password" id="reg-pass" placeholder="Mínimo 6 caracteres" oninput="checkStrength(this.value)">
+          <label>Password</label>
+          <input type="password" id="reg-pass" placeholder="At least 6 characters" oninput="checkStrength(this.value)">
           <div class="strength-bar" id="strength-bar">
             <div class="strength-fill" id="strength-fill" style="width:0%"></div>
           </div>
         </div>
 
         <button class="btn btn-primary" id="btn-register" onclick="handleRegister()">
-          <span class="btn-label">Crear cuenta</span>
+          <span class="btn-label">Create account</span>
           <div class="spinner"></div>
         </button>
       </div>
@@ -503,8 +503,8 @@ function switchTab(tab) {
   // titulo oculto
   document.getElementById('form-subtitle').textContent   = login ? 'Introduce tus datos para continuar' : 'Rellena el formulario para registrarte';
   document.getElementById('form-footer').innerHTML       = login
-    ? '¿No tienes cuenta? <a onclick="switchTab(\'register\')">Regístrate</a>'
-    : '¿Ya tienes cuenta? <a onclick="switchTab(\'login\')">Inicia sesión</a>';
+    ? 'Don't have an account? <a onclick="switchTab(\'register\')">Sign up</a>'
+    : 'Already have an account? <a onclick="switchTab(\'login\')">Log in</a>';
   hideMsg();
 }
 
@@ -547,7 +547,7 @@ async function handleLogin() {
   const email = document.getElementById('login-email').value.trim();
   const pass  = document.getElementById('login-pass').value;
   hideMsg();
-  if (!email) return showMsg('Introduce tu correo o usuario');
+  if (!email) return showMsg('Enter your email or username');
   if (!pass)  return showMsg('Introduce tu contraseña');
 
   setLoading('btn-login', true);
@@ -560,14 +560,14 @@ async function handleLogin() {
     const data = await r.json();
     setLoading('btn-login', false);
 
-    if (!data.ok) return showMsg(data.msg || 'Error al iniciar sesión');
+    if (!data.ok) return showMsg(data.msg || 'Login failed');
 
     // Save session
     sessionStorage.setItem('player_name', data.name);
     sessionStorage.setItem('player_role', data.role);
     sessionStorage.setItem('player_email', email);
 
-    showMsg('Sesión iniciada. Redirigiendo...', 'success');
+    showMsg('Logged in. Redirecting...', 'success');
     setTimeout(() => {
       if (data.role === 'admin') {
         window.location.href = 'trivial-admin.html';
@@ -577,7 +577,7 @@ async function handleLogin() {
     }, 800);
   } catch {
     setLoading('btn-login', false);
-    showMsg('No se puede conectar al servidor');
+    showMsg('Cannot connect to server');
   }
 }
 
@@ -586,12 +586,12 @@ async function handleRegister() {
   const email = document.getElementById('reg-email').value.trim();
   const pass  = document.getElementById('reg-pass').value;
   hideMsg();
-  if (!name)                return showMsg('Elige un nombre de usuario');
-  if (name.length < 3)      return showMsg('El nombre debe tener al menos 3 caracteres');
-  if (!email)               return showMsg('Introduce tu correo electrónico');
-  if (!email.includes('@')) return showMsg('Correo electrónico no válido');
-  if (!pass)                return showMsg('Crea una contraseña');
-  if (pass.length < 6)      return showMsg('La contraseña debe tener al menos 6 caracteres');
+  if (!name)                return showMsg('Choose a username');
+  if (name.length < 3)      return showMsg('Name must be at least 3 characters');
+  if (!email)               return showMsg('Enter your email address');
+  if (!email.includes('@')) return showMsg('Email address no válido');
+  if (!pass)                return showMsg('Create a password');
+  if (pass.length < 6)      return showMsg('Password must be at least 6 characters');
 
   setLoading('btn-register', true);
   try {
@@ -603,20 +603,20 @@ async function handleRegister() {
     const data = await r.json();
     setLoading('btn-register', false);
 
-    if (!data.ok) return showMsg(data.msg || 'Error al registrarse');
+    if (!data.ok) return showMsg(data.msg || 'Registration failedse');
 
-    showMsg('Cuenta creada. Bienvenido, ' + name, 'success');
+    showMsg('Account created. Welcome, ' + name, 'success');
     setTimeout(() => switchTab('login'), 1500);
   } catch {
     setLoading('btn-register', false);
-    showMsg('No se puede conectar al servidor');
+    showMsg('Cannot connect to server');
   }
 }
 
 function handleGuest() {
   sessionStorage.setItem('player_name', 'Invitado');
   sessionStorage.setItem('player_role', 'guest');
-  showMsg('Entrando como invitado...', 'success');
+  showMsg('Continuing as guest...', 'success');
   setTimeout(() => { window.location.href = 'trivial-modos.html'; }, 600);
 }
 
@@ -640,9 +640,9 @@ async function handleResetPassword() {
   const btn         = document.getElementById('btn-reset');
 
   msgEl.textContent = '';
-  if (!secretKey)             { msgEl.textContent = 'Introduce la clave secreta'; return; }
-  if (!newPassword)           { msgEl.textContent = 'Introduce la nueva contraseña'; return; }
-  if (newPassword.length < 6) { msgEl.textContent = 'Mínimo 6 caracteres'; return; }
+  if (!secretKey)             { msgEl.textContent = 'Enter the secret key'; return; }
+  if (!newPassword)           { msgEl.textContent = 'Enter new password'; return; }
+  if (newPassword.length < 6) { msgEl.textContent = 'At least 6 characters'; return; }
 
   btn.disabled = true;
   btn.textContent = 'Actualizando...';
@@ -656,11 +656,11 @@ async function handleResetPassword() {
     const data = await res.json();
     if (data.ok) {
       msgEl.className = 'forgot-modal-msg success';
-      msgEl.textContent = '✅ Contraseña actualizada. Ya puedes iniciar sesión.';
+      msgEl.textContent = '✅ Password actualizada. You can now log in.';
       setTimeout(hideForgotModal, 2000);
     } else {
       msgEl.className = 'forgot-modal-msg error';
-      msgEl.textContent = data.msg || 'Error al actualizar';
+      msgEl.textContent = data.msg || 'Update failed';
     }
   } catch {
     msgEl.className = 'forgot-modal-msg error';
@@ -668,7 +668,7 @@ async function handleResetPassword() {
   }
 
   btn.disabled = false;
-  btn.textContent = 'Actualizar contraseña';
+  btn.textContent = 'Update password';
 }
 
 document.addEventListener('keydown', e => {
@@ -682,26 +682,26 @@ document.addEventListener('keydown', e => {
 <script src="js/utils.js"></script>
 <script src="js/navbar.js"></script>
 
-<!-- ── MODAL RECUPERAR CONTRASEÑA ─────────────────────────────────────────── -->
+<!-- ── MODAL RECUPERAR PASSWORD ─────────────────────────────────────────── -->
 <div id="forgot-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;padding:16px">
   <div style="background:#0d1535;border:1px solid #1e2d50;border-radius:12px;padding:28px;width:100%;max-width:380px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;letter-spacing:2px;text-transform:uppercase">🔑 Recuperar contraseña</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;letter-spacing:2px;text-transform:uppercase">🔑 Reset password</div>
       <button onclick="hideForgotModal()" style="background:none;border:none;color:#8892b0;font-size:20px;cursor:pointer;line-height:1">✕</button>
     </div>
 
-    <p style="font-size:13px;color:#8892b0;margin-bottom:20px">Introduce la clave secreta y tu nueva contraseña. La clave secreta la configura el administrador del servidor en Railway (<code style="color:#a259ff">ADMIN_RESET_KEY</code>).</p>
+    <p style="font-size:13px;color:#8892b0;margin-bottom:20px">Enter the secret key y tu nueva contraseña. La clave secreta la configura el administrador del servidor en Railway (<code style="color:#a259ff">ADMIN_RESET_KEY</code>).</p>
 
     <div style="margin-bottom:12px">
-      <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8892b0;display:block;margin-bottom:6px">Clave secreta</label>
-      <input id="forgot-secret" type="password" placeholder="Clave secreta del servidor"
+      <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8892b0;display:block;margin-bottom:6px">Secret key</label>
+      <input id="forgot-secret" type="password" placeholder="Server secret key"
         style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1.5px solid #1e2d50;border-radius:6px;color:#e8eaf6;font-size:14px;outline:none;box-sizing:border-box"
         onkeydown="if(event.key==='Enter') handleResetPassword()">
     </div>
 
     <div style="margin-bottom:16px">
-      <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8892b0;display:block;margin-bottom:6px">Nueva contraseña</label>
-      <input id="forgot-newpass" type="password" placeholder="Mínimo 6 caracteres"
+      <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8892b0;display:block;margin-bottom:6px">New password</label>
+      <input id="forgot-newpass" type="password" placeholder="At least 6 characters"
         style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1.5px solid #1e2d50;border-radius:6px;color:#e8eaf6;font-size:14px;outline:none;box-sizing:border-box"
         onkeydown="if(event.key==='Enter') handleResetPassword()">
     </div>
@@ -710,7 +710,7 @@ document.addEventListener('keydown', e => {
 
     <button id="btn-reset" onclick="handleResetPassword()"
       style="width:100%;padding:12px;background:#2d7dd2;border:none;border-radius:6px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;text-transform:uppercase;cursor:pointer">
-      Actualizar contraseña
+      Update password
     </button>
   </div>
 </div>
