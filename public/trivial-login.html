@@ -405,7 +405,7 @@ html, body {
   <a href="trivial-lobby.html" class="mobile-sub">&#127760; Online</a>
   <a href="trivial-ia-nivel.html" class="mobile-sub">&#129302; vs IA</a>
   <div class="mobile-divider"></div>
-  <a href="trivial-login.html" id="mobile-login">Iniciar sesi&#243;n</a>
+  <a href="trivial-login.html" id="mobile-login">Log in</a>
   <a href="trivial-admin.html" id="mobile-admin" style="display:none">Admin Panel</a>
 </div>
 
@@ -501,7 +501,7 @@ function switchTab(tab) {
   document.getElementById('form-login').style.display    = login ? 'block' : 'none';
   document.getElementById('form-register').style.display = login ? 'none'  : 'block';
   // titulo oculto
-  document.getElementById('form-subtitle').textContent   = login ? 'Introduce tus datos para continuar' : 'Rellena el formulario para registrarte';
+  document.getElementById('form-subtitle').textContent   = login ? 'Enter your details to continue' : 'Fill in the form to sign up';
   document.getElementById('form-footer').innerHTML       = login
     ? 'Don't have an account? <a onclick="switchTab(\'register\')">Sign up</a>'
     : 'Already have an account? <a onclick="switchTab(\'login\')">Log in</a>';
