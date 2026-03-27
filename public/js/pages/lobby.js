@@ -233,9 +233,13 @@ function showCountdown(total) {
 }
 
 function updateStartBtn(room) {
-  el('btn-start').classList.toggle('ready', room.players.length >= 1);
+  const enough = room.players.length >= 2;
+  el('btn-start').classList.toggle('ready', enough);
   const note = el('min-note');
-  if (note) note.style.display = 'none';
+  if (note) {
+    note.style.display = enough ? 'none' : 'block';
+    note.textContent = `Se necesitan mínimo 2 jugadores (${room.players.length}/2)`;
+  }
 }
 
 function toggleCodePanel() {
