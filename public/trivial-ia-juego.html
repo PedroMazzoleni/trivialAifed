@@ -21,13 +21,13 @@
     <div class="topbar-left">
       <button class="btn-exit" onclick="exitGame()">
         <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-        Salir
+        Log out
       </button>
-      <span class="topbar-level" id="topbar-level">Fácil</span>
+      <span class="topbar-level" id="topbar-level">Easy</span>
     </div>
     <div class="topbar-right">
       <div class="score-display">
-        <span class="score-label">Puntos</span>
+        <span class="score-label">Points</span>
         <span class="score-val" id="score-display">0</span>
       </div>
     </div>
@@ -39,7 +39,7 @@
 
   <div class="game-inner">
     <div class="q-meta">
-      <span class="q-counter" id="q-counter">Pregunta 1 / 10</span>
+      <span class="q-counter" id="q-counter">Question 1 / 10</span>
       <span class="q-category" id="q-category">Geografía</span>
     </div>
 
@@ -50,17 +50,17 @@
       <span class="timer-num" id="timer-num">20</span>
     </div>
 
-    <div class="question-text" id="question-text">Cargando pregunta...</div>
+    <div class="question-text" id="question-text">Loading pregunta...</div>
 
     <div class="options" id="options"></div>
 
     <div class="feedback" id="feedback">
       <div>
-        <span class="feedback-title" id="feedback-title">Correcto</span>
+        <span class="feedback-title" id="feedback-title">Correct</span>
         <span id="feedback-detail"></span>
       </div>
       <button class="btn-next" id="btn-next" onclick="nextQuestion()">
-        Siguiente →
+        Next →
       </button>
     </div>
   </div>
@@ -72,7 +72,7 @@
   <div class="results-inner">
 
     <div class="result-header">
-      <span class="result-title">Partida terminada</span>
+      <span class="result-title">Game over</span>
       <div class="result-score-big">
         <span id="res-score">0</span><span>/10</span>
       </div>
@@ -101,9 +101,9 @@
     </div>
 
     <div class="result-btns">
-      <button class="btn btn-primary" onclick="restartGame()">Jugar de nuevo</button>
+      <button class="btn btn-primary" onclick="restartGame()">Play de nuevo</button>
       <button class="btn btn-ghost"   onclick="goToLevels()">Cambiar nivel</button>
-      <button class="btn btn-ghost"   onclick="goHome()">Volver al inicio</button>
+      <button class="btn btn-ghost"   onclick="goHome()">Back al inicio</button>
     </div>
 
   </div>
