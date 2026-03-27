@@ -27,13 +27,20 @@ const io     = new Server(server, {
 
 app.use(express.json());
 
-// 1. React SPA (dist/ generado por Vite)
-app.use(express.static(path.join(__dirname, 'dist')));
+// 1. Rutas específicas PRIMERO — antes del static para que no las intercepte React
+app.get('/login',    (req, res) => res.sendFile(path.join(__dirname, 'public', 'trivial-login.html')));
+app.get('/lobby',    (req, res) => res.sendFile(path.join(__dirname, 'public', 'trivial-lobby.html')));
+app.get('/modos',    (req, res) => res.sendFile(path.join(__dirname, 'public', 'trivial-modos.html')));
+app.get('/ranking',  (req, res) => res.sendFile(path.join(__dirname, 'public', 'trivial-ranking.html')));
+app.get('/eventos',  (req, res) => res.sendFile(path.join(__dirname, 'public', 'trivial-eventos.html')));
 
 // 2. Páginas vanilla y assets estáticos
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 3. Fallback SPA: cualquier ruta sin extensión de archivo sirve el index de React
+// 3. React SPA (dist/ generado por Vite)
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// 4. Fallback SPA: cualquier ruta sin extensión de archivo sirve el index de React
 app.get('*', (req, res, next) => {
   if (path.extname(req.path)) return next();
   if (req.path.startsWith('/api/')) return next();
