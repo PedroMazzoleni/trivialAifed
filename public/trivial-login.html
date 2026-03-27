@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -444,7 +444,7 @@ html, body {
             <input type="checkbox" id="remember-me">
             <span>Recordarme</span>
           </label>
-          <a class="forgot" href="#">¿Olvidaste la contraseña?</a>
+          <a class="forgot" href="#" onclick="showForgotModal(); return false;">¿Olvidaste la contraseña?</a>
         </div>
 
         <button class="btn btn-primary" id="btn-login" onclick="handleLogin()">
@@ -636,5 +636,45 @@ document.addEventListener('keydown', e => {
 
 <script src="js/utils.js"></script>
 <script src="js/navbar.js"></script>
+
+<!-- ── MODAL RECUPERAR CONTRASEÑA ─────────────────────────────────────────── -->
+<div id="forgot-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#0d1535;border:1px solid #1e2d50;border-radius:12px;padding:28px;width:100%;max-width:380px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;letter-spacing:2px;text-transform:uppercase">🔑 Recuperar contraseña</div>
+      <button onclick="hideForgotModal()" style="background:none;border:none;color:#8892b0;font-size:20px;cursor:pointer;line-height:1">✕</button>
+    </div>
+
+    <p style="font-size:13px;color:#8892b0;margin-bottom:20px">Introduce la clave secreta y tu nueva contraseña. La clave secreta la configura el administrador del servidor en Railway (<code style="color:#a259ff">ADMIN_RESET_KEY</code>).</p>
+
+    <div style="margin-bottom:12px">
+      <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8892b0;display:block;margin-bottom:6px">Clave secreta</label>
+      <input id="forgot-secret" type="password" placeholder="Clave secreta del servidor"
+        style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1.5px solid #1e2d50;border-radius:6px;color:#e8eaf6;font-size:14px;outline:none;box-sizing:border-box"
+        onkeydown="if(event.key==='Enter') handleResetPassword()">
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#8892b0;display:block;margin-bottom:6px">Nueva contraseña</label>
+      <input id="forgot-newpass" type="password" placeholder="Mínimo 6 caracteres"
+        style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1.5px solid #1e2d50;border-radius:6px;color:#e8eaf6;font-size:14px;outline:none;box-sizing:border-box"
+        onkeydown="if(event.key==='Enter') handleResetPassword()">
+    </div>
+
+    <div id="forgot-msg" class="forgot-modal-msg" style="min-height:20px;font-size:13px;margin-bottom:14px"></div>
+
+    <button id="btn-reset" onclick="handleResetPassword()"
+      style="width:100%;padding:12px;background:#2d7dd2;border:none;border-radius:6px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;text-transform:uppercase;cursor:pointer">
+      Actualizar contraseña
+    </button>
+  </div>
+</div>
+
+<style>
+.forgot-modal-msg { color: #e84545; }
+.forgot-modal-msg.success { color: #18c25a; }
+.forgot-modal-msg.error   { color: #e84545; }
+</style>
+
 </body>
 </html>
