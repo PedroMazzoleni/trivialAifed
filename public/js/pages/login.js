@@ -7,11 +7,11 @@ function switchTab(tab) {
   el('tab-register').classList.toggle('active', !isLogin);
   el('form-login').style.display    = isLogin ? 'block' : 'none';
   el('form-register').style.display = isLogin ? 'none'  : 'block';
-  setText('form-title',    isLogin ? 'Acceder' : 'Crear cuenta');
-  setText('form-subtitle', isLogin ? 'Introduce tus datos para continuar' : 'Rellena el formulario para registrarte');
+  setText('form-title',    isLogin ? 'Acceder' : 'Create account');
+  setText('form-subtitle', isLogin ? 'Enter your details to continue' : 'Fill in the form to sign up');
   el('form-footer').innerHTML = isLogin
-    ? '¿No tienes cuenta? <a onclick="switchTab(\'register\')">Regístrate</a>'
-    : '¿Ya tienes cuenta? <a onclick="switchTab(\'login\')">Inicia sesión</a>';
+    ? 'Don\'t have an account? <a onclick="switchTab(\'register\')">Sign up</a>'
+    : 'Already have an account? <a onclick="switchTab(\'login\')">Log in</a>';
   hideMsg();
 }
 
@@ -40,24 +40,24 @@ async function handleLogin() {
   const email = el('login-email').value.trim();
   const pass  = el('login-pass').value;
   hideMsg();
-  if (!email) return showMsg('Introduce tu correo o usuario');
+  if (!email) return showMsg('Enter your email or username');
   if (!pass)  return showMsg('Introduce tu contraseña');
 
   setLoading('btn-login', true);
   try {
     const data = await apiPost('/api/login', { email, password: pass });
     setLoading('btn-login', false);
-    if (!data.ok) return showMsg(data.msg || 'Error al iniciar sesión');
+    if (!data.ok) return showMsg(data.msg || 'Login failed');
 
     Session.set('player_name', data.name);
     Session.set('player_role', data.role);
     Session.set('player_email', email);
 
-    showMsg('Sesión iniciada. Redirigiendo...', 'success');
+    showMsg('Logged in. Redirecting...', 'success');
     setTimeout(() => goTo(Session.isAdmin() ? 'trivial-admin.html' : 'trivial-modos.html'), 800);
   } catch {
     setLoading('btn-login', false);
-    showMsg('No se puede conectar al servidor');
+    showMsg('Cannot connect to server');
   }
 }
 
@@ -66,31 +66,31 @@ async function handleRegister() {
   const email = el('reg-email').value.trim();
   const pass  = el('reg-pass').value;
   hideMsg();
-  if (!name)                return showMsg('Elige un nombre de usuario');
-  if (name.length < 3)      return showMsg('El nombre debe tener al menos 3 caracteres');
-  if (!email)               return showMsg('Introduce tu correo electrónico');
-  if (!email.includes('@')) return showMsg('Correo electrónico no válido');
-  if (!pass)                return showMsg('Crea una contraseña');
-  if (pass.length < 6)      return showMsg('La contraseña debe tener al menos 6 caracteres');
+  if (!name)                return showMsg('Choose a username');
+  if (name.length < 3)      return showMsg('Name must be at least 3 characters');
+  if (!email)               return showMsg('Enter your email address');
+  if (!email.includes('@')) return showMsg('Email address no válido');
+  if (!pass)                return showMsg('Create a password');
+  if (pass.length < 6)      return showMsg('Password must be at least 6 characters');
 
   setLoading('btn-register', true);
   try {
     const data = await apiPost('/api/register', { name, email, password: pass });
     setLoading('btn-register', false);
-    if (!data.ok) return showMsg(data.msg || 'Error al registrarse');
+    if (!data.ok) return showMsg(data.msg || 'Registration failedse');
 
-    showMsg('Cuenta creada. Bienvenido, ' + name, 'success');
+    showMsg('Account created. Welcome, ' + name, 'success');
     setTimeout(() => switchTab('login'), 1500);
   } catch {
     setLoading('btn-register', false);
-    showMsg('No se puede conectar al servidor');
+    showMsg('Cannot connect to server');
   }
 }
 
 function handleGuest() {
   Session.set('player_name', 'Invitado');
   Session.set('player_role', 'guest');
-  showMsg('Entrando como invitado...', 'success');
+  showMsg('Continuing as guest...', 'success');
   setTimeout(() => goTo('trivial-modos.html'), 600);
 }
 
@@ -113,9 +113,9 @@ async function handleResetPassword() {
   const msgEl       = el('forgot-msg');
 
   msgEl.textContent = '';
-  if (!secretKey)              { msgEl.textContent = 'Introduce la clave secreta'; return; }
-  if (!newPassword)            { msgEl.textContent = 'Introduce la nueva contraseña'; return; }
-  if (newPassword.length < 6)  { msgEl.textContent = 'Mínimo 6 caracteres'; return; }
+  if (!secretKey)              { msgEl.textContent = 'Enter the secret key'; return; }
+  if (!newPassword)            { msgEl.textContent = 'Enter new password'; return; }
+  if (newPassword.length < 6)  { msgEl.textContent = 'At least 6 characters'; return; }
 
   const btn = el('btn-reset');
   btn.disabled = true;
@@ -125,11 +125,11 @@ async function handleResetPassword() {
     const data = await apiPost('/api/admin/reset-password', { secretKey, newPassword });
     if (data.ok) {
       msgEl.className = 'forgot-modal-msg success';
-      msgEl.textContent = '✅ Contraseña actualizada. Ya puedes iniciar sesión.';
+      msgEl.textContent = '✅ Password actualizada. You can now log in.';
       setTimeout(hideForgotModal, 2000);
     } else {
       msgEl.className = 'forgot-modal-msg error';
-      msgEl.textContent = data.msg || 'Error al actualizar';
+      msgEl.textContent = data.msg || 'Update failed';
     }
   } catch {
     msgEl.className = 'forgot-modal-msg error';
@@ -137,7 +137,7 @@ async function handleResetPassword() {
   }
 
   btn.disabled = false;
-  btn.textContent = 'Actualizar contraseña';
+  btn.textContent = 'Update password';
 }
 
 document.addEventListener('keydown', e => {
