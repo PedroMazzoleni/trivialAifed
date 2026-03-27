@@ -94,6 +94,57 @@ function switchTab(tab) {
     setTimeout(() => goTo('trivial-modos.html'), 600);
   }
   
+  // ── Recuperación de contraseña ─────────────────────────────────────────────
+  function showForgotModal() {
+    el('forgot-modal').style.display = 'flex';
+    el('forgot-secret').value = '';
+    el('forgot-newpass').value = '';
+    el('forgot-msg').textContent = '';
+    el('forgot-msg').className = 'forgot-modal-msg';
+  }
+
+  function hideForgotModal() {
+    el('forgot-modal').style.display = 'none';
+  }
+
+  async function handleResetPassword() {
+    const secretKey   = el('forgot-secret').value.trim();
+    const newPassword = el('forgot-newpass').value;
+    const msgEl       = el('forgot-msg');
+
+    msgEl.textContent = '';
+    if (!secretKey)   { msgEl.textContent = 'Introduce la clave secreta'; return; }
+    if (!newPassword) { msgEl.textContent = 'Introduce la nueva contraseña'; return; }
+    if (newPassword.length < 6) { msgEl.textContent = 'Mínimo 6 caracteres'; return; }
+
+    const btn = el('btn-reset');
+    btn.disabled = true;
+    btn.textContent = 'Actualizando...';
+
+    try {
+      const data = await apiPost('/api/admin/reset-password', { secretKey, newPassword });
+      if (data.ok) {
+        msgEl.className = 'forgot-modal-msg success';
+        msgEl.textContent = '✅ Contraseña actualizada. Ya puedes iniciar sesión.';
+        setTimeout(hideForgotModal, 2000);
+      } else {
+        msgEl.className = 'forgot-modal-msg error';
+        msgEl.textContent = data.msg || 'Error al actualizar';
+      }
+    } catch {
+      msgEl.className = 'forgot-modal-msg error';
+      msgEl.textContent = 'Error de conexión';
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Actualizar contraseña';
+  }
+
+  // Exponer al HTML
+  window.showForgotModal  = showForgotModal;
+  window.hideForgotModal  = hideForgotModal;
+  window.handleResetPassword = handleResetPassword;
+
   document.addEventListener('keydown', e => {
     if (e.key !== 'Enter') return;
     const loginVisible = el('form-login').style.display !== 'none';
