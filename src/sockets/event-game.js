@@ -230,17 +230,50 @@ function registerEventGameHandlers(io, socket) {
     const player = room.players.find(p => p.id === socket.id);
     if (!player || room.allAnswers.find(a => a.playerId === socket.id)) return;
 
-    const correct = answer.trim().toLowerCase() === room.currentQuestion.a.trim().toLowerCase();
-    const diffPts = { easy: 3, medium: 6, hard: 12 };
+    const correct  = answer.trim().toLowerCase() === room.currentQuestion.a.trim().toLowerCase();
+    const diffPts  = { easy: 3, medium: 6, hard: 12 };
+    const basePts  = diffPts[room.currentDifficulty] || 6;
+    const myWc     = (room.privateWildcards || {})[socket.id] || null;
+    let resultMsg  = null;
 
-    if (correct) {
-      let pts = diffPts[room.currentDifficulty] || 6;
-      if (room.specialEffect === 'doble') pts *= 2;
+    if (myWc === 'suerte') {
+      // Suerte: siempre +basePts sin importar la respuesta
+      room.scores[socket.id] = (room.scores[socket.id] || 0) + basePts;
+      player.score = room.scores[socket.id];
+      resultMsg = `🍀 ¡Suerte! +${basePts} pts garantizados. Total: ${player.score} pts`;
+    } else if (myWc === 'skip') {
+      // Skip: sin cambio de puntos
+      resultMsg = `⏭️ SKIP activado — sin cambios esta ronda.`;
+    } else if (correct) {
+      let pts = basePts;
+      if (myWc === 'doble') pts *= 2;
+      if (myWc === 'robo') {
+        // Robar al líder
+        const leader = [...room.players].sort((a,b) => b.score - a.score).find(p => p.id !== socket.id);
+        const stolen = leader ? Math.min(pts, leader.score) : 0;
+        if (leader && stolen > 0) {
+          leader.score = leader.score - stolen;
+          room.scores[leader.id] = leader.score;
+          pts = stolen;
+          resultMsg = `💸 ¡Robo exitoso! +${stolen} pts robados. Total: ${(room.scores[socket.id]||0) + pts} pts`;
+        }
+      }
       room.scores[socket.id] = (room.scores[socket.id] || 0) + pts;
       player.score = room.scores[socket.id];
-    } else if (room.specialEffect === 'bomba') {
-      room.scores[socket.id] = Math.max(0, (room.scores[socket.id] || 0) - (diffPts[room.currentDifficulty] || 6));
-      player.score = room.scores[socket.id];
+      if (!resultMsg && myWc === 'doble') resultMsg = `⚡ ¡x2 activado! +${pts} pts. Total: ${player.score} pts`;
+    } else {
+      // Falló
+      if (myWc === 'bomba') {
+        room.scores[socket.id] = Math.max(0, (room.scores[socket.id] || 0) - basePts);
+        player.score = room.scores[socket.id];
+        resultMsg = `💣 ¡Bomba! Fallaste y pierdes ${basePts} pts. Total: ${player.score} pts`;
+      }
+    }
+
+    // Enviar resultado del comodín solo al jugador afectado
+    if (resultMsg) {
+      const sock = io.sockets.sockets.get(socket.id);
+      if (sock) sock.emit('event:wildcardResult', { message: resultMsg });
     }
 
     room.allAnswers.push({ playerId: socket.id, playerName: player.name, answer, correct });
@@ -338,6 +371,35 @@ function _doSpin(io, room) {
   setTimeout(() => _loadQuestion(io, room, cat.id, diff), 6500);
 }
 
+function _assignPrivateWildcards(io, room) {
+  const WILDCARDS = ['doble', 'robo', 'bomba', 'skip', 'suerte'];
+  const players   = [...room.players];
+  if (!players.length) return;
+
+  // Entre 1 y 3 jugadores al azar (sin repetir)
+  const count = Math.min(1 + Math.floor(Math.random() * 3), players.length);
+  const shuffled = players.sort(() => Math.random() - 0.5).slice(0, count);
+
+  room.privateWildcards = {}; // socketId -> wildcardId
+
+  shuffled.forEach(player => {
+    const wc = WILDCARDS[Math.floor(Math.random() * WILDCARDS.length)];
+    room.privateWildcards[player.id] = wc;
+
+    // Notificación privada solo a ese jugador
+    const labels = {
+      doble:  '⚡ ¡Te ha tocado x2! Si aciertas, ganas el doble de puntos.',
+      robo:   '💸 ¡Te ha tocado Robo! Si aciertas, robas puntos al líder.',
+      bomba:  '💣 ¡Te ha tocado Bomba! Si fallas, perderás puntos extra.',
+      skip:   '⏭️ ¡Te ha tocado SKIP! Esta ronda no suma ni resta nada.',
+      suerte: '🍀 ¡Te ha tocado Suerte! Aciertes o no, ganas puntos gratis.',
+    };
+
+    const sock = io.sockets.sockets.get(player.id);
+    if (sock) sock.emit('event:privateWildcard', { wildcard: wc, message: labels[wc] });
+  });
+}
+
 function _loadQuestion(io, room, categoryId, difficulty) {
   let q = null;
   if (room.eventQuestions && room.eventQuestions.length > 0) {
@@ -350,6 +412,8 @@ function _loadQuestion(io, room, categoryId, difficulty) {
   room.currentCategory = categoryId; room.currentDifficulty = difficulty;
   room.currentQuestion = q; room.specialEffect = null;
   room.state = 'question'; room.allAnswers = [];
+  room.privateWildcards = {};
+  _assignPrivateWildcards(io, room);
   broadcastGroup(io, room.groupKey);
 
   clearTimeout(room._questionTimer);
