@@ -156,7 +156,7 @@ function registerGameHandlers(io, socket) {
     const code = socket.data.roomCode;
     const room = rooms[code];
     if (!room || room.host !== socket.id) return;
-    if (room.players.length < 1) return;
+    if (room.players.length < 2) return socket.emit('error', { msg: 'Se necesitan mínimo 2 jugadores para empezar' });
     startGameRoom(io, code, rounds);
   });
 
