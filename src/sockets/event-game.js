@@ -212,6 +212,11 @@ function registerEventGameHandlers(io, socket) {
 
     io.to('event:' + eid).emit('event:lobbyUpdate', { players: lobby.players, totalPlayers: lobby.players.length });
     io.to('event:' + eid).emit('chat:system', { message: `${playerName} se ha unido (${lobby.players.length} jugadores)` });
+    // Notificar al admin cuántos jugadores hay en el lobby
+    io.to('admin:events').emit('admin:eventStatus', {
+      eventId: eid, players: lobby.players.length,
+      state: 'waiting', currentRound: 0, totalRounds: lobby.eventData?.rounds || 6,
+    });
   });
 
   socket.on('event:start', async () => {
@@ -347,6 +352,10 @@ function registerEventGameHandlers(io, socket) {
     if (eid && eventLobbies[eid] && !eventLobbies[eid].started) {
       eventLobbies[eid].players = eventLobbies[eid].players.filter(p => p.id !== socket.id);
       io.to('event:' + eid).emit('event:lobbyUpdate', { players: eventLobbies[eid].players, totalPlayers: eventLobbies[eid].players.length });
+      io.to('admin:events').emit('admin:eventStatus', {
+        eventId: eid, players: eventLobbies[eid].players.length,
+        state: 'waiting', currentRound: 0, totalRounds: eventLobbies[eid].eventData?.rounds || 6,
+      });
     }
     if (groupKey && eventRooms[groupKey]) {
       const room = eventRooms[groupKey];
