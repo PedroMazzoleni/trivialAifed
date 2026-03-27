@@ -76,9 +76,11 @@ function connectSocket() {
     });
   });
 
-  socket.on('event:joined', ({ isHost: host, player }) => {
+  socket.on('event:joined', ({ isHost: host, player, totalPlayers }) => {
     isHost   = host;
     myPlayer = player;
+    showScreen('lobby');
+    el('ev-players-count').textContent = totalPlayers || 1;
     renderLobbyControls();
   });
 
@@ -101,13 +103,16 @@ function connectSocket() {
   });
 
   socket.on('event:lobbyUpdate', ({ players, totalPlayers }) => {
-    if (roomState && roomState.state === 'waiting') {
+    if (!roomState || roomState.state === 'waiting') {
       el('ev-players-count').textContent = totalPlayers;
-      el('ev-player-list').innerHTML = players.map(p => `
-        <div class="ev-player-row">
-          <span class="ev-player-name">${p.name}</span>
-          ${p.name === MY_NAME ? '<span class="player-you">You</span>' : ''}
-        </div>`).join('');
+      el('ev-player-list').innerHTML = players.length
+        ? players.map(p => `
+          <div class="ev-player-row">
+            <div class="ev-player-dot" style="background:${p.color || '#3B9EFF'}"></div>
+            <span class="ev-player-name">${p.name}</span>
+            ${p.name === MY_NAME ? '<span class="player-you">Tú</span>' : ''}
+          </div>`).join('')
+        : '<div style="padding:16px;color:var(--muted);font-size:13px;text-align:center">Esperando jugadores...</div>';
     }
   });
 
