@@ -21,17 +21,17 @@
       <img class="logo-eu"   src="images/eu-logo.png"     alt="Co-funded by EU">
     </a>
     <ul class="navbar-links">
-      <li><a href="trivial-modos.html">Jugar</a></li>
+      <li><a href="trivial-modos.html">Play</a></li>
       <li><a href="trivial-ranking.html">Ranking</a></li>
-      <li><a href="trivial-eventos.html">Eventos</a></li>
+      <li><a href="trivial-eventos.html">Events</a></li>
       <li id="dd-modos">
         <button onclick="toggleDropdown('dd-modos')">
-          Modos
+          Modes
           <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <ul class="navbar-dropdown">
-          <li><a href="trivial-lobby.html">🌐 Jugar Online</a></li>
-          <li><a href="trivial-ia-nivel.html">🤖 Jugar vs IA</a></li>
+          <li><a href="trivial-lobby.html">🌐 Play Online</a></li>
+          <li><a href="trivial-ia-nivel.html">🤖 Play vs AI</a></li>
         </ul>
       </li>
       <li id="dd-admin" style="display:none">
@@ -40,7 +40,7 @@
           <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <ul class="navbar-dropdown">
-          <li><a href="trivial-admin.html">📊 Panel Admin</a></li>
+          <li><a href="trivial-admin.html">📊 Admin Panel</a></li>
         </ul>
       </li>
     </ul>
@@ -51,21 +51,21 @@
   </div>
 </nav>
 <div class="navbar-mobile" id="navbar-mobile">
-  <a href="trivial-modos.html">Jugar</a>
+  <a href="trivial-modos.html">Play</a>
   <a href="trivial-ranking.html">Ranking</a>
-  <a href="trivial-eventos.html">Eventos</a>
+  <a href="trivial-eventos.html">Events</a>
   <a href="trivial-lobby.html" class="mobile-sub">🌐 Online</a>
   <a href="trivial-ia-nivel.html" class="mobile-sub">🤖 vs IA</a>
   <div class="mobile-divider"></div>
-  <a href="trivial-login.html" id="mobile-login">Iniciar sesión</a>
-  <a href="trivial-admin.html" id="mobile-admin" style="display:none">Panel Admin</a>
+  <a href="trivial-login.html" id="mobile-login">Log in</a>
+  <a href="trivial-admin.html" id="mobile-admin" style="display:none">Admin Panel</a>
 </div>
 
 
 
 <a class="btn-back" href="trivial-modos.html">
   <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-  Volver
+  Back
 </a>
 
 <div class="page">
@@ -78,8 +78,8 @@
         <img src="images/logo.png" alt="Logo" style="width:36px;height:36px;border-radius:50%;object-fit:cover">
         <span class="brand" style="margin-bottom:0">Trivial Travel</span>
       </div>
-      <h1>Jugar Online</h1>
-      <p>Únete a una sala o crea una nueva · 6 jugadores por partida</p>
+      <h1>Play Online</h1>
+      <p>Únete a una sala o crea una nueva · 6 players por partida</p>
       <div id="wins-badge" style="display:none">
         🏆 <span id="wins-count">0</span> partidas ganadas
       </div>
@@ -102,11 +102,11 @@
     <!-- Nombre del jugador -->
     <div class="rooms-section">
       <div class="rooms-header">
-        <span class="rooms-title">Tu nombre</span>
+        <span class="rooms-title">Your name</span>
       </div>
       <div class="card">
         <div class="card-body" style="padding:12px 14px">
-          <input type="text" id="player-name" placeholder="¿Cómo te llaman?" maxlength="20" style="margin-bottom:0;background:rgba(255,255,255,0.05);border:1.5px solid #1e2d50;border-radius:4px;padding:10px 14px;color:#e8eaf6;font-size:15px;width:100%;outline:none;font-family:'Barlow',sans-serif;" onfocus="this.style.borderColor='#2d7dd2'" onblur="this.style.borderColor='#1e2d50'">
+          <input type="text" id="player-name" placeholder="What's your name?" maxlength="20" style="margin-bottom:0;background:rgba(255,255,255,0.05);border:1.5px solid #1e2d50;border-radius:4px;padding:10px 14px;color:#e8eaf6;font-size:15px;width:100%;outline:none;font-family:'Barlow',sans-serif;" onfocus="this.style.borderColor='#2d7dd2'" onblur="this.style.borderColor='#1e2d50'">
         </div>
       </div>
     </div>
@@ -114,7 +114,7 @@
     <!-- Browser de salas -->
     <div class="rooms-section">
       <div class="rooms-header">
-        <span class="rooms-title">Salas disponibles</span>
+        <span class="rooms-title">Available rooms</span>
         <span class="rooms-live"><span class="live-dot"></span>En directo</span>
       </div>
       <div id="rooms-list">
@@ -127,19 +127,19 @@
 
     <div class="msg" id="msg"></div>
 
-    <!-- Crear sala -->
+    <!-- Create room -->
     <button class="btn btn-primary btn-full" id="btn-create" onclick="createRoom()" style="margin-bottom:10px">
-      <span class="btn-label" id="btn-create-label">+ Crear sala pública</span>
+      <span class="btn-label" id="btn-create-label">+ Create room pública</span>
       <div class="spinner"></div>
     </button>
 
-    <!-- Unirse con código -->
+    <!-- Join con código -->
     <button class="btn-code-toggle" onclick="toggleCodePanel()">Tengo un código de sala</button>
     <div class="code-panel" id="code-panel">
       <div>
         <input type="text" id="join-code" class="code-input" placeholder="XXXXXX" maxlength="6">
         <button class="btn btn-secondary" id="btn-join" onclick="joinByCode()">
-          <span class="btn-label">Unirse</span>
+          <span class="btn-label">Join</span>
           <div class="spinner"></div>
         </button>
       </div>
@@ -151,30 +151,30 @@
   <div class="screen" id="screen-room">
 
     <div class="room-header">
-      <span class="room-code-label">Código de sala</span>
+      <span class="room-code-label">Room code</span>
       <div class="room-code" id="room-code-display">——</div>
       <div id="room-private-badge" class="room-private-badge" style="display:none">🔒 Sala privada</div>
       <button class="copy-btn" onclick="copyCode()" style="margin-top:8px">
         <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        Copiar código
+        Copy code
       </button>
     </div>
 
     <div class="status-bar">
       <div class="status-dot"></div>
-      <span class="status-text" id="status-text">Conectado al servidor</span>
+      <span class="status-text" id="status-text">Connected al servidor</span>
       <span class="status-connected" id="status-conn">EN LÍNEA</span>
     </div>
 
     <div class="players-section">
       <div class="players-header">
-        <span class="players-title">Jugadores en la sala</span>
+        <span class="players-title">Players en la sala</span>
         <span class="players-count" id="players-count">1 / 6</span>
       </div>
       <div class="players-list" id="players-list">
         <div class="waiting-row">
           <div class="dots"><span></span><span></span><span></span></div>
-          Esperando jugadores...
+          Waiting for players...
         </div>
       </div>
     </div>
@@ -182,7 +182,7 @@
     <!-- Host controls -->
     <div class="host-controls" id="host-controls">
       <div class="round-selector">
-        <span class="round-label">Número de rondas</span>
+        <span class="round-label">Number of rounds</span>
         <div class="round-btns">
           <button class="round-btn" onclick="selectRounds(4)">4</button>
           <button class="round-btn selected" onclick="selectRounds(6)">6</button>
@@ -204,7 +204,7 @@
 
     <button class="btn-leave" onclick="leaveRoom()">Abandonar sala</button>
 
-    <!-- Cuenta atrás auto-inicio (6 jugadores) -->
+    <!-- Cuenta atrás auto-inicio (6 players) -->
     <div class="countdown-overlay" id="countdown-overlay">
       <div class="countdown-box">
         <div class="countdown-title">¡Sala completa!</div>
