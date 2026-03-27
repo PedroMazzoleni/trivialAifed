@@ -129,7 +129,7 @@ const QUESTIONS = {
   ],
 };
 
-const LEVELS_LABEL = { facil: 'Fácil', medio: 'Medio', dificil: 'Difícil' };
+const LEVELS_LABEL = { facil: 'Easy', medio: 'Medium', dificil: 'Hard' };
 const TOTAL_Q      = 10;
 const TIME_LIMIT   = { facil: 20, medio: 15, dificil: 10 };
 const LETTERS      = ['A', 'B', 'C', 'D'];
@@ -178,7 +178,7 @@ function loadQuestion() {
   const q       = questions[currentIdx];
   const timeMax = TIME_LIMIT[level];
 
-  document.getElementById('q-counter').textContent    = `Pregunta ${currentIdx + 1} / ${TOTAL_Q}`;
+  document.getElementById('q-counter').textContent    = `Question ${currentIdx + 1} / ${TOTAL_Q}`;
   document.getElementById('q-category').textContent   = q.cat;
   document.getElementById('question-text').textContent = q.q;
   document.getElementById('progress-fill').style.width = `${(currentIdx / TOTAL_Q) * 100}%`;
@@ -277,20 +277,20 @@ function showFeedback(isCorrect, correct_a, timeout = false) {
 
   if (timeout) {
     fb.className      = 'feedback wrong-fb show';
-    title.textContent  = 'Tiempo agotado';
-    detail.textContent = `La respuesta correcta era: ${correct_a}`;
+    title.textContent  = "Time's up";
+    detail.textContent = `The correct answer was: ${correct_a}`;
   } else if (isCorrect) {
     fb.className      = 'feedback correct-fb show';
-    title.textContent  = 'Correcto';
-    detail.textContent = '+1 punto';
+    title.textContent  = 'Correct';
+    detail.textContent = '+1 point';
   } else {
     fb.className      = 'feedback wrong-fb show';
-    title.textContent  = 'Incorrecto';
-    detail.textContent = `La respuesta correcta era: ${correct_a}`;
+    title.textContent  = 'Wrong';
+    detail.textContent = `The correct answer was: ${correct_a}`;
   }
 
   document.getElementById('btn-next').textContent =
-    currentIdx + 1 >= TOTAL_Q ? 'Ver resultados →' : 'Siguiente →';
+    currentIdx + 1 >= TOTAL_Q ? 'View results →' : 'Next →';
 }
 
 function nextQuestion() {
@@ -313,16 +313,16 @@ function showResults() {
   document.getElementById('ia-score-display').textContent   = `${iaScore} / ${TOTAL_Q}`;
 
   const verdict = document.getElementById('ia-verdict');
-  if      (score > iaScore) { verdict.textContent = 'Ganaste'; verdict.className = 'ia-verdict verdict-win'; }
-  else if (score < iaScore) { verdict.textContent = 'Perdiste'; verdict.className = 'ia-verdict verdict-loss'; }
-  else                      { verdict.textContent = 'Empate';   verdict.className = 'ia-verdict verdict-draw'; }
+  if      (score > iaScore) { verdict.textContent = 'You won'; verdict.className = 'ia-verdict verdict-win'; }
+  else if (score < iaScore) { verdict.textContent = 'You lost'; verdict.className = 'ia-verdict verdict-loss'; }
+  else                      { verdict.textContent = 'Draw';   verdict.className = 'ia-verdict verdict-draw'; }
 
   const pct = score / TOTAL_Q;
   document.getElementById('res-msg').textContent =
-    pct === 1   ? 'Perfecto. No falla ni una.' :
-    pct >= 0.8  ? 'Muy bien, gran resultado.' :
-    pct >= 0.6  ? 'Bien, pero hay margen de mejora.' :
-    pct >= 0.4  ? 'Puedes hacerlo mejor.' : 'Sigue practicando.';
+    pct === 1   ? 'Perfect score!' :
+    pct >= 0.8  ? 'Great job, excellent result!' :
+    pct >= 0.6  ? 'Good, but there is room to improve.' :
+    pct >= 0.4  ? 'You can do better.' : 'Keep practicing.';
 
   showScreen('results');
 }
@@ -337,4 +337,4 @@ function _showScreen_unused(id) {
 function restartGame()  { startGame(); }
 function goToLevels()   { goTo('trivial-ia-nivel.html'); }
 function goHome()       { goTo('trivial-modos.html'); }
-function exitGame()     { clearInterval(timerInterval); goHome(); } 
+function exitGame()     { clearInterval(timerInterval); goHome(); }
