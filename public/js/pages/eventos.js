@@ -3,7 +3,7 @@
 
 const CAT_COLORS = {
     sports: '#18c25a', geo: '#3B9EFF', culture: '#f5a623',
-    history: '#e84545', eu: '#a259ff', kenya: '#cc2200', mixed: '#9b59b6',
+    history: '#e84545', eu: '#a259ff', mixed: '#9b59b6',
   };
   
   const LETTERS = ['A','B','C','D'];
