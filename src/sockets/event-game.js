@@ -372,29 +372,31 @@ function _doSpin(io, room) {
 }
 
 function _assignPrivateWildcards(io, room) {
+  room.privateWildcards = {};
+
+  // 35% de probabilidad de que haya comodines esta ronda
+  if (Math.random() > 0.35) return;
+
   const WILDCARDS = ['doble', 'robo', 'bomba', 'skip', 'suerte'];
   const players   = [...room.players];
   if (!players.length) return;
 
-  // Entre 1 y 3 jugadores al azar (sin repetir)
-  const count = Math.min(1 + Math.floor(Math.random() * 3), players.length);
-  const shuffled = players.sort(() => Math.random() - 0.5).slice(0, count);
+  // Máximo 1 jugador si hay menos de 5, sino máximo 2, nunca más del 20% de la sala
+  const maxAffected = Math.max(1, Math.min(2, Math.floor(players.length * 0.2)));
+  const count       = Math.min(1 + Math.floor(Math.random() * maxAffected), players.length);
+  const shuffled    = players.sort(() => Math.random() - 0.5).slice(0, count);
 
-  room.privateWildcards = {}; // socketId -> wildcardId
+  const labels = {
+    doble:  '⚡ ¡Te ha tocado x2! Si aciertas, ganas el doble de puntos.',
+    robo:   '💸 ¡Te ha tocado Robo! Si aciertas, robas puntos al líder.',
+    bomba:  '💣 ¡Te ha tocado Bomba! Si fallas, perderás puntos extra.',
+    skip:   '⏭️ ¡Te ha tocado SKIP! Esta ronda no suma ni resta nada.',
+    suerte: '🍀 ¡Te ha tocado Suerte! Aciertes o no, ganas puntos gratis.',
+  };
 
   shuffled.forEach(player => {
     const wc = WILDCARDS[Math.floor(Math.random() * WILDCARDS.length)];
     room.privateWildcards[player.id] = wc;
-
-    // Notificación privada solo a ese jugador
-    const labels = {
-      doble:  '⚡ ¡Te ha tocado x2! Si aciertas, ganas el doble de puntos.',
-      robo:   '💸 ¡Te ha tocado Robo! Si aciertas, robas puntos al líder.',
-      bomba:  '💣 ¡Te ha tocado Bomba! Si fallas, perderás puntos extra.',
-      skip:   '⏭️ ¡Te ha tocado SKIP! Esta ronda no suma ni resta nada.',
-      suerte: '🍀 ¡Te ha tocado Suerte! Aciertes o no, ganas puntos gratis.',
-    };
-
     const sock = io.sockets.sockets.get(player.id);
     if (sock) sock.emit('event:privateWildcard', { wildcard: wc, message: labels[wc] });
   });
