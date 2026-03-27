@@ -11,7 +11,6 @@ const CAT_META = {
   culture: { name:'Culture',   color:'#f5a623' },
   history: { name:'History',   color:'#e84545' },
   eu:      { name:'Europa',     color:'#a259ff' },
-  kenya:   { name:'Kenya',     color:'#cc2200' },
   mixed:   { name:'Mixed',     color:'#9b59b6' },
 };
 
@@ -488,7 +487,6 @@ function addEventQuestion(existing = null) {
       <option value="culture">🎭 Culture</option>
       <option value="history">📜 History</option>
       <option value="eu">🇪🇺 Europa</option>
-      <option value="kenya">🦒 Kenya</option>
       </select>
     </div>
     <div class="field" style="margin-bottom:0">
