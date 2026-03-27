@@ -175,6 +175,28 @@ function registerAuthRoutes(app) {
     }
   });
 
+  // ── Borrar usuario ────────────────────────────────────────────────────────
+  app.delete('/api/admin/users/:email', async (req, res) => {
+    if (!db) return res.json({ ok: false, msg: 'No database' });
+    try {
+      const r = await db.query("DELETE FROM users WHERE email = $1 AND role != 'admin' RETURNING email", [req.params.email]);
+      if (!r.rowCount) return res.json({ ok: false, msg: 'Usuario no encontrado o es admin' });
+      res.json({ ok: true });
+    } catch(e) { res.json({ ok: false, msg: e.message }); }
+  });
+
+  // ── Resetear contraseña de usuario (admin lo pone a null/vacío para forzar cambio) ──
+  app.post('/api/admin/users/:email/reset-password', async (req, res) => {
+    if (!db) return res.json({ ok: false, msg: 'No database' });
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) return res.json({ ok: false, msg: 'Mínimo 6 caracteres' });
+    try {
+      const r = await db.query("UPDATE users SET password = $1 WHERE email = $2 AND role != 'admin' RETURNING email", [newPassword, req.params.email]);
+      if (!r.rowCount) return res.json({ ok: false, msg: 'Usuario no encontrado' });
+      res.json({ ok: true });
+    } catch(e) { res.json({ ok: false, msg: e.message }); }
+  });
+
   app.get('/api/wins/:name', async (req, res) => {
     if (!db) return res.json({ wins: 0 });
     try {
