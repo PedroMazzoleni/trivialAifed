@@ -31,7 +31,7 @@ function initSocket(callback) {
   socket = io(SERVER, { transports: ['polling'], reconnection: true, timeout: 8000 });
 
   socket.on('connect', () => {
-    setStatus('Conectado al servidor', true);
+    setStatus('Connected al servidor', true);
     socket.emit('rooms:list');
     callback();
   });
@@ -41,7 +41,7 @@ function initSocket(callback) {
     setStatus('Sin conexión al servidor', false);
     setLoading('btn-create', false);
     setLoading('btn-join',   false);
-    showMsg('No se puede conectar al servidor.', 'error');
+    showMsg('Cannot connect to server.', 'error');
   });
 
   socket.on('error',      ({ msg }) => showMsg(msg, 'error'));
@@ -68,7 +68,7 @@ function initSocket(callback) {
     updateStartBtn(room);
   });
 
-  // Cuenta atrás cuando llegan 6 jugadores
+  // Countdown cuando llegan 6 players
   socket.on('game:countdown', ({ seconds }) => showCountdown(seconds));
 
   socket.on('game:start', ({ roomCode: rc }) => {
@@ -81,7 +81,7 @@ function initSocket(callback) {
 function connectReadonly() {
   if (socket && socket.connected) return;
   socket = io(SERVER, { transports: ['polling'], reconnection: true, timeout: 8000 });
-  socket.on('connect',       ()     => { setStatus('Conectado al servidor', true); socket.emit('rooms:list'); });
+  socket.on('connect',       ()     => { setStatus('Connected al servidor', true); socket.emit('rooms:list'); });
   socket.on('disconnect',    ()     => setStatus('Reconectando...', false));
   socket.on('connect_error', ()     => setStatus('Sin conexión al servidor', false));
   socket.on('rooms:list',    (list) => renderRoomsList(list));
@@ -100,13 +100,13 @@ function selectCreateTab(mode) {
   createTabMode = mode;
   el('tab-public').classList.toggle('active', mode === 'public');
   el('tab-private').classList.toggle('active', mode === 'private');
-  el('btn-create-label').textContent = mode === 'private' ? '🔒 Crear sala privada' : '+ Crear sala pública';
+  el('btn-create-label').textContent = mode === 'private' ? '🔒 Create room privada' : '+ Create room pública';
 }
 
 function createRoom() {
   const name      = el('player-name').value.trim();
   const isPrivate = createTabMode === 'private';
-  if (!name) return showMsg('Introduce tu nombre');
+  if (!name) return showMsg('Enter your name');
   hideMsg();
   setLoading('btn-create', true);
   initSocket(() => socket.emit('room:create', { playerName: name, tenantId: 'default', isPrivate }));
@@ -123,7 +123,7 @@ function joinRoomByCard(code) {
 function joinByCode() {
   const name = el('player-name').value.trim();
   const code = el('join-code').value.trim().toUpperCase();
-  if (!name)                    return showMsg('Introduce tu nombre');
+  if (!name)                    return showMsg('Enter your name');
   if (!code || code.length < 4) return showMsg('Introduce el código de sala');
   hideMsg();
   setLoading('btn-join', true);
@@ -180,7 +180,7 @@ function renderPlayers(room) {
   if (room.players.length < 6) {
     const waiting = document.createElement('div');
     waiting.className = 'waiting-row';
-    waiting.innerHTML = `<div class="dots"><span></span><span></span><span></span></div> Esperando jugadores (${room.players.length}/6)...`;
+    waiting.innerHTML = `<div class="dots"><span></span><span></span><span></span></div> Waiting for players (${room.players.length}/6)...`;
     list.appendChild(waiting);
   }
 }
@@ -205,12 +205,12 @@ function renderRoomsList(list) {
       <div class="room-card ${full ? 'room-full' : ''}">
         <div class="room-card-info">
           <span class="room-card-code">${r.code}</span>
-          <span class="room-card-count">${r.players}/6 jugadores</span>
+          <span class="room-card-count">${r.players}/6 players</span>
           <div class="room-card-bar"><div class="room-card-fill" style="width:${pct}%"></div></div>
         </div>
         ${full
           ? '<span class="room-card-label-full">Llena</span>'
-          : `<button class="btn-join-card" onclick="joinRoomByCard('${r.code}')">Unirse →</button>`
+          : `<button class="btn-join-card" onclick="joinRoomByCard('${r.code}')">Join →</button>`
         }
       </div>`;
   }).join('');
@@ -238,7 +238,7 @@ function updateStartBtn(room) {
   const note = el('min-note');
   if (note) {
     note.style.display = enough ? 'none' : 'block';
-    note.textContent = `Se necesitan mínimo 2 jugadores (${room.players.length}/2)`;
+    note.textContent = `At least 2 players required (${room.players.length}/2)`;
   }
 }
 
@@ -260,7 +260,7 @@ function copyCode() {
   navigator.clipboard.writeText(roomCode || '').then(() => {
     const btn  = qs('.copy-btn');
     const orig = btn.innerHTML;
-    btn.innerHTML   = '<svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg> Copiado';
+    btn.innerHTML   = '<svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg> Copied';
     btn.style.color = 'var(--green)';
     setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 2000);
   });
