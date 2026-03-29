@@ -7,7 +7,7 @@ function switchTab(tab) {
   el('tab-register').classList.toggle('active', !isLogin);
   el('form-login').style.display    = isLogin ? 'block' : 'none';
   el('form-register').style.display = isLogin ? 'none'  : 'block';
-  setText('form-title',    isLogin ? 'Acceder' : 'Create account');
+  setText('form-title',    isLogin ? 'Log in' : 'Create account');
   setText('form-subtitle', isLogin ? 'Enter your details to continue' : 'Fill in the form to sign up');
   el('form-footer').innerHTML = isLogin
     ? 'Don\'t have an account? <a onclick="switchTab(\'register\')">Sign up</a>'
@@ -41,7 +41,7 @@ async function handleLogin() {
   const pass  = el('login-pass').value;
   hideMsg();
   if (!email) return showMsg('Enter your email or username');
-  if (!pass)  return showMsg('Introduce tu contraseña');
+  if (!pass)  return showMsg('password');
 
   setLoading('btn-login', true);
   try {
@@ -69,7 +69,7 @@ async function handleRegister() {
   if (!name)                return showMsg('Choose a username');
   if (name.length < 3)      return showMsg('Name must be at least 3 characters');
   if (!email)               return showMsg('Enter your email address');
-  if (!email.includes('@')) return showMsg('Email address no válido');
+  if (!email.includes('@')) return showMsg('email not valid');
   if (!pass)                return showMsg('Create a password');
   if (pass.length < 6)      return showMsg('Password must be at least 6 characters');
 
@@ -125,7 +125,7 @@ async function handleResetPassword() {
     const data = await apiPost('/api/admin/reset-password', { secretKey, newPassword });
     if (data.ok) {
       msgEl.className = 'forgot-modal-msg success';
-      msgEl.textContent = '✅ Password actualizada. You can now log in.';
+      msgEl.textContent = '✅ new password. You can now log in.';
       setTimeout(hideForgotModal, 2000);
     } else {
       msgEl.className = 'forgot-modal-msg error';
