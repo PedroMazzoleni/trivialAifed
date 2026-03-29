@@ -143,7 +143,7 @@ function createGroups(io, eventId, lobby) {
     setTimeout(() => _doSpin(io, eventRooms[groupKey]), 2000);
   });
 
-  console.log(`✅ Evento ${eventId}: ${groups.length} grupos, ${players.length} jugadores`);
+  console.log(`✅ Evento ${eventId}: ${groups.length} groups, ${players.length} players`);
 }
 
 function computeGlobalRanking(lobby) {
@@ -171,7 +171,7 @@ function emitGlobalRanking(io, eventId) {
   ranking.forEach((p, i) => updateUserStats(p.name, p.score, i === 0));
   (lobby.groups || []).forEach(gk => io.to('group:' + gk).emit('event:globalRanking', { ranking, top10 }));
   io.to('event:' + eventId).emit('event:globalRanking', { ranking, top10 });
-  console.log(`🏆 Ranking global emitido — evento ${eventId}, ${ranking.length} jugadores`);
+  console.log(`🏆 Ranking global emitido — event ${eventId}, ${ranking.length} players`);
 }
 
 function checkAllGroupsDone(io, eventId) {
@@ -193,7 +193,7 @@ function registerEventGameHandlers(io, socket) {
       };
     }
     const lobby = eventLobbies[eid];
-    if (lobby.started) { socket.emit('event:error', { msg: 'El evento ya ha comenzado' }); return; }
+    if (lobby.started) { socket.emit('event:error', { msg: 'Event has already started' }); return; }
 
     let existing = lobby.players.find(p => p.name === playerName);
     if (existing) { existing.id = socket.id; }
@@ -211,7 +211,7 @@ function registerEventGameHandlers(io, socket) {
     });
 
     io.to('event:' + eid).emit('event:lobbyUpdate', { players: lobby.players, totalPlayers: lobby.players.length });
-    io.to('event:' + eid).emit('chat:system', { message: `${playerName} se ha unido (${lobby.players.length} jugadores)` });
+    io.to('event:' + eid).emit('chat:system', { message: `${playerName} joined (${lobby.players.length} players)` });
     // Notificar al admin cuántos jugadores hay en el lobby
     io.to('admin:events').emit('admin:eventStatus', {
       eventId: eid, players: lobby.players.length,
@@ -317,9 +317,9 @@ function registerEventGameHandlers(io, socket) {
   socket.on('admin:startEvent', async ({ eventId }) => {
     const eid   = String(eventId);
     const lobby = eventLobbies[eid];
-    if (!lobby) { socket.emit('error', { msg: 'No hay jugadores en la sala todavía.' }); return; }
-    if (lobby.started) { socket.emit('error', { msg: 'El evento ya está en curso' }); return; }
-    if (!lobby.players.length) { socket.emit('error', { msg: 'No hay jugadores' }); return; }
+    if (!lobby) { socket.emit('error', { msg: 'No players in the room yet.' }); return; }
+    if (lobby.started) { socket.emit('error', { msg: 'Event already in progress' }); return; }
+    if (!lobby.players.length) { socket.emit('error', { msg: 'No players' }); return; }
     lobby.started = true;
     if (!lobby.eventQuestions?.length) lobby.eventQuestions = await loadEventQuestions(eid);
     createGroups(io, eid, lobby);
