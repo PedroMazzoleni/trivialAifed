@@ -149,7 +149,15 @@ function handleUpdate(room) {
 
   switch (room.state) {
     case 'waiting': showScreen('lobby'); renderLobby(room); break;
-    case 'spinning': showScreen('spin');  renderSpin(room);  break;
+    case 'spinning':
+      // Si el jugador ya respondió y está viendo el feedback, esperar 4s antes de ir a la ruleta
+      if (iAnswered) {
+        clearTimeout(_spinDelay);
+        _spinDelay = setTimeout(() => { showScreen('spin'); renderSpin(room); }, 4000);
+      } else {
+        showScreen('spin'); renderSpin(room);
+      }
+      break;
     case 'question': showScreen('question'); renderQuestion(room); break;
     case 'answer':   showScreen('scoreboard'); renderScoreboard(room); break;
     case 'finished': showScreen('results');    renderResults(room);   break;
