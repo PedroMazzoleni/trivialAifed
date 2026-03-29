@@ -70,7 +70,7 @@ async function loadActiveEvents() {
               <div class="event-live-badge">🔴 LIVE</div>
               <div class="event-live-title">${ev.title}</div>
               <div class="event-live-meta">${ev.category} · ${ev.rounds} rounds</div>
-              <div class="event-live-players" id="ev-live-players-${ev.id}">👥 cargando...</div>
+              <div class="event-live-players" id="ev-live-players-${ev.id}">👥 loading...</div>
             </div>
             <div class="event-live-arrow">
               <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
