@@ -345,7 +345,7 @@ function renderEventsList(events) {
             <span id="ev-state-${ev.id}" style="font-size:12px;color:var(--muted);margin-left:12px"></span>
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
-            ${!isActive ? `<button onclick="adminOpenEvent(${ev.id})" style="padding:5px 12px;background:rgba(45,125,210,0.15);border:1px solid rgba(45,125,210,0.3);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--blue);cursor:pointer">🔓 Abrir</button>` : ''}
+            ${!isActive ? `<button onclick="adminOpenEvent(${ev.id})" style="padding:5px 12px;background:rgba(45,125,210,0.15);border:1px solid rgba(45,125,210,0.3);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--blue);cursor:pointer">🔓 Open</button>` : ''}
             ${isActive ? `
               <button onclick="adminStartEvent(${ev.id})" style="padding:5px 12px;background:rgba(24,194,90,0.15);border:1px solid rgba(24,194,90,0.3);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#18c25a;cursor:pointer">▶ Start</button>
               <button onclick="adminStopEvent(${ev.id})" style="padding:5px 12px;background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#f5a623;cursor:pointer">⏸ Parar</button>
@@ -403,9 +403,9 @@ function renderEventForm(ev) {
       <div class="field">
         <label>Initial status</label>
         <select id="ev-status">
-          <option value="upcoming" ${ev.status === 'upcoming' ? 'selected' : ''}>📅 Próximo (oculto)</option>
-          <option value="active"   ${ev.status === 'active'   ? 'selected' : ''}>🔓 Abierto (visible)</option>
-          <option value="finished" ${ev.status === 'finished' ? 'selected' : ''}>⏹ Finalizado</option>
+          <option value="upcoming" ${ev.status === 'upcoming' ? 'selected' : ''}>📅 Upcoming (hidden)</option>
+          <option value="active"   ${ev.status === 'active'   ? 'selected' : ''}>🔓 Open (visible)</option>
+          <option value="finished" ${ev.status === 'finished' ? 'selected' : ''}>⏹ Finished</option>
         </select>
       </div>
     </div>
@@ -437,7 +437,7 @@ function renderEventForm(ev) {
       </div>
       <div id="ev-questions-list" style="display:flex;flex-direction:column;gap:10px"></div>
       <div id="ev-no-questions" style="text-align:center;padding:20px;color:var(--muted);font-size:13px">
-        No questions. Pulsa "+ Add question".
+        No questions. Click "+ Add question".
       </div>
     </div>
   `);
@@ -445,7 +445,7 @@ function renderEventForm(ev) {
   setHTML('modal-event-footer', `
     <button class="btn btn-ghost" onclick="closeEventModal()">Cancel</button>
     <button class="btn btn-primary" onclick="saveEvent()">
-      ${editingEventId ? 'Save changes' : 'Create evento'}
+      ${editingEventId ? 'Save changes' : 'Create event'}
     </button>
   `);
 }
@@ -499,14 +499,14 @@ function addEventQuestion(existing = null) {
       </select>
     </div>
     <div class="field" style="margin-bottom:0">
-      <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;display:block;margin-bottom:4px">Options (mínimo 2)</label>
+      <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;display:block;margin-bottom:4px">Options (minimum 2)</label>
       <div id="evq-opts-${qId}" style="display:flex;gap:6px;flex-wrap:wrap">
         ${opts.map((opt, i) => `<input type="text" id="evq-opt-${qId}-${i}" value="${(opt||'').replace(/"/g,'&quot;')}" placeholder="Option ${i+1}" style="flex:1;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:13px;outline:none;min-width:100px">`).join('')}
-        <button type="button" onclick="addEvQOpt(${qId})" style="padding:8px 10px;background:rgba(255,255,255,0.05);border:1px dashed var(--border);border-radius:3px;color:var(--muted);cursor:pointer;font-size:12px">+ opción</button>
+        <button type="button" onclick="addEvQOpt(${qId})" style="padding:8px 10px;background:rgba(255,255,255,0.05);border:1px dashed var(--border);border-radius:3px;color:var(--muted);cursor:pointer;font-size:12px">+ option</button>
       </div>
     </div>`;
   list.appendChild(div);
-  // Setear categoría si existe
+  // Set category if exists
   if (existingCat) {
     const catSel = el(`evq-cat-${qId}`);
     if (catSel) catSel.value = existingCat;
@@ -554,11 +554,11 @@ async function saveEvent() {
   const starts_at = el('ev-starts').value || null;
   const ends_at   = el('ev-ends').value   || null;
 
-  if (!title)    return alert('El evento necesita un título');
+  if (!title)    return alert('The event needs a title');
   if (!category) return alert('Please select a category');
 
   const questions = collectEvQuestions();
-  if (!questions.length) return alert('Añade al menos una pregunta al evento');
+  if (!questions.length) return alert('Add at least one question to the event');
 
   const payload = { title, description:desc, category, difficulty:'medio', status, rounds, starts_at, ends_at, questions };
 
@@ -573,9 +573,9 @@ async function saveEvent() {
     }
     if (res.ok) {
       closeEventModal();
-      flashMsg(editingEventId ? `Evento actualizado (${questions.length} preguntas)` : `Evento creado con ${questions.length} preguntas`, 'success', 'msg-events');
+      flashMsg(editingEventId ? `Event updated (${questions.length} questions)` : `Event created with ${questions.length} questions`, 'success', 'msg-events');
       loadEvents();
-    } else { alert(res.msg || 'Error al guardar'); }
+    } else { alert(res.msg || 'Error saving'); }
   } catch(e) { alert('Error de conexión: ' + e.message); }
 }
 
