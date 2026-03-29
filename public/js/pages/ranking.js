@@ -12,7 +12,7 @@ async function loadRanking() {
     const players = await apiGet('/api/ranking');
     render(players);
   } catch {
-    setHTML('ranking-list', '<div class="empty">No se pudo cargar el ranking.<br>Comprueba la conexión.</div>');
+    setHTML('ranking-list', '<div class="empty">Could not load ranking.<br>Check your connection.</div>');
   }
 }
 
@@ -20,7 +20,7 @@ function render(players) {
   const list = el('ranking-list');
 
   if (!players.length) {
-    list.innerHTML = '<div class="empty">Aún no hay players registrados.<br>¡Sé el primero en jugar y ganar!</div>';
+    list.innerHTML = '<div class="empty">No players registered yet.<br>Be the first to play and win!</div>';
     return;
   }
 
@@ -68,7 +68,7 @@ function render(players) {
         <div class="rank-player">
           <div class="rank-avatar" style="background:${col}">${playerInitial(p.name)}</div>
           <span class="rank-name">${p.name}</span>
-          ${isMe ? '<span class="rank-me">Tú</span>' : ''}
+          ${isMe ? '<span class="rank-me">You</span>' : ''}
         </div>
         <div class="rank-stat rank-wins">${p.wins}</div>
         <div class="rank-stat rank-pts">${p.totalPoints}</div>
