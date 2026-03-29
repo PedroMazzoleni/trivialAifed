@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Globe, Bot, BarChart3, ChevronDown, Menu } from 'lucide-react'
 import { Session } from '../utils/session'
@@ -45,7 +45,7 @@ export default function Navbar() {
           </Link>
 
           <ul className="navbar-links">
-            <li><Link to="/modos" className={active('/modos')}>Jugar</Link></li>
+            <li><Link to="/modos" className={active('/modos')}>Play</Link></li>
             <li><a href="/trivial-ranking.html">Ranking</a></li>
             <li><a href="/trivial-eventos.html">Eventos</a></li>
 
@@ -67,26 +67,26 @@ export default function Navbar() {
           </ul>
 
           <div className="navbar-right">
-            {name && name !== 'Invitado' ? (
+            {name && name !== 'Guest' ? (
               <>
                 <div className="navbar-user-info">
                   <div className="navbar-avatar">{name.charAt(0).toUpperCase()}</div>
                   <span>{name}</span>
                 </div>
-                <button className="navbar-btn navbar-btn-ghost" onClick={logout}>Salir</button>
+                <button className="navbar-btn navbar-btn-ghost" onClick={logout}>Log out</button>
               </>
-            ) : name === 'Invitado' ? (
+            ) : name === 'Guest' ? (
               <>
                 <div className="navbar-user-info">
                   <div className="navbar-avatar" style={{ background: '#8892b0' }}>?</div>
-                  <span>Invitado</span>
+                  <span>Guest</span>
                 </div>
-                <Link className="navbar-btn navbar-btn-primary" to="/login">Registrarse</Link>
+                <Link className="navbar-btn navbar-btn-primary" to="/login">Sign up</Link>
               </>
             ) : (
               <>
-                <Link className="navbar-btn navbar-btn-ghost"   to="/login">Iniciar sesión</Link>
-                <Link className="navbar-btn navbar-btn-primary" to="/login">Registrarse</Link>
+                <Link className="navbar-btn navbar-btn-ghost"   to="/login">Log in</Link>
+                <Link className="navbar-btn navbar-btn-primary" to="/login">Sign up</Link>
               </>
             )}
           </div>
@@ -98,16 +98,16 @@ export default function Navbar() {
       </nav>
 
       <div className={`navbar-mobile${mobileOpen ? ' open' : ''}`}>
-        <Link to="/modos">Jugar</Link>
+        <Link to="/modos">Play</Link>
         <a href="/trivial-ranking.html">Ranking</a>
-        <a href="/trivial-eventos.html">Eventos</a>
+        <a href="/trivial-eventos.html">Events</a>
         <Link to="/lobby" className="mobile-sub"><Globe size={13} /> Online</Link>
         <a href="/trivial-ia-nivel.html" className="mobile-sub"><Bot size={13} /> vs IA</a>
         <div className="mobile-divider" />
         {name ? (
-          <button onClick={logout}>Cerrar sesión ({name})</button>
+          <button onClick={logout}>Log out ({name})</button>
         ) : (
-          <Link to="/login">Iniciar sesión</Link>
+          <Link to="/login">Log in</Link>
         )}
         {role === 'admin' && (
           <a href="/trivial-admin.html">Panel Admin</a>
