@@ -36,9 +36,9 @@ function initSocket(callback) {
     callback();
   });
 
-  socket.on('disconnect',    ()    => setStatus('Reconectando...', false));
+  socket.on('disconnect',    ()    => setStatus('Reconnecting...', false));
   socket.on('connect_error', ()    => {
-    setStatus('Sin conexión al servidor', false);
+    setStatus('No connection to server', false);
     setLoading('btn-create', false);
     setLoading('btn-join',   false);
     showMsg('Cannot connect to server.', 'error');
@@ -46,7 +46,7 @@ function initSocket(callback) {
 
   socket.on('error',      ({ msg }) => showMsg(msg, 'error'));
 
-  // Lista de salas en tiempo real
+  // Real-time room list
   socket.on('rooms:list', (list) => renderRoomsList(list));
 
   socket.on('room:created', ({ code, player, isPrivate }) => {
@@ -77,13 +77,13 @@ function initSocket(callback) {
   });
 }
 
-// Conectar en modo solo-lectura para ver salas (sin entrar a ninguna aún)
+// Connect in read-only mode to see rooms
 function connectReadonly() {
   if (socket && socket.connected) return;
   socket = io(SERVER, { transports: ['polling'], reconnection: true, timeout: 8000 });
   socket.on('connect',       ()     => { setStatus('Connected al servidor', true); socket.emit('rooms:list'); });
-  socket.on('disconnect',    ()     => setStatus('Reconectando...', false));
-  socket.on('connect_error', ()     => setStatus('Sin conexión al servidor', false));
+  socket.on('disconnect',    ()     => setStatus('Reconnecting...', false));
+  socket.on('connect_error', ()     => setStatus('No connection to server', false));
   socket.on('rooms:list',    (list) => renderRoomsList(list));
   socket.on('room:created', ({ code, player, isPrivate }) => { myPlayer = player; roomCode = code; isHost = true; roomIsPrivate = !!isPrivate; setLoading('btn-create', false); showRoom(code); });
   socket.on('room:joined',  ({ code, player }) => { myPlayer = player; roomCode = code; isHost = false; roomIsPrivate = false; setLoading('btn-join', false); setLoading('btn-create', false); showRoom(code); });
@@ -100,7 +100,7 @@ function selectCreateTab(mode) {
   createTabMode = mode;
   el('tab-public').classList.toggle('active', mode === 'public');
   el('tab-private').classList.toggle('active', mode === 'private');
-  el('btn-create-label').textContent = mode === 'private' ? '🔒 Create room privada' : '+ Create room pública';
+  el('btn-create-label').textContent = mode === 'private' ? '🔒 Create private room' : '+ Create public room';
 }
 
 function createRoom() {
@@ -114,7 +114,7 @@ function createRoom() {
 
 function joinRoomByCard(code) {
   const name = el('player-name').value.trim();
-  if (!name) return showMsg('Introduce tu nombre primero');
+  if (!name) return showMsg('Enter your name first');
   hideMsg();
   setLoading('btn-create', true);
   initSocket(() => socket.emit('room:join', { code, playerName: name, tenantId: 'default' }));
@@ -124,7 +124,7 @@ function joinByCode() {
   const name = el('player-name').value.trim();
   const code = el('join-code').value.trim().toUpperCase();
   if (!name)                    return showMsg('Enter your name');
-  if (!code || code.length < 4) return showMsg('Introduce el código de sala');
+  if (!code || code.length < 4) return showMsg('Enter the room code');
   hideMsg();
   setLoading('btn-join', true);
   initSocket(() => socket.emit('room:join', { code, playerName: name, tenantId: 'default' }));
@@ -172,7 +172,7 @@ function renderPlayers(room) {
       <div class="player-dot" style="background:${p.color}"></div>
       <span class="player-name">${p.name}</span>
       ${isMe       ? '<span class="player-you">Tú</span>'         : ''}
-      ${isRoomHost ? '<span class="player-host">Anfitrión</span>' : ''}
+      ${isRoomHost ? '<span class="player-host">Host</span>' : ''}
     `;
     list.appendChild(row);
   });
@@ -192,7 +192,7 @@ function renderRoomsList(list) {
   if (!list || list.length === 0) {
     container.innerHTML = `
       <div class="rooms-empty">
-        <span>No hay salas abiertas</span>
+        <span>No open rooms</span>
         <small>Crea una nueva para empezar</small>
       </div>`;
     return;
@@ -250,7 +250,7 @@ function toggleCodePanel() {
 function setStatus(text, online) {
   setText('status-text', text);
   const conn = el('status-conn');
-  conn.textContent = online ? 'EN LÍNEA' : 'DESCONECTADO';
+  conn.textContent = online ? 'ONLINE' : 'OFFLINE';
   conn.style.color = online ? 'var(--blue)' : '#e84545';
   const dot = qs('.status-dot');
   if (dot) dot.style.background = online ? 'var(--blue)' : '#e84545';
@@ -266,7 +266,7 @@ function copyCode() {
   });
 }
 
-// Auto uppercase en código
+// Auto uppercase for code
 window.addEventListener('DOMContentLoaded', () => {
   const jc = el('join-code');
   if (jc) jc.addEventListener('input', function () {
