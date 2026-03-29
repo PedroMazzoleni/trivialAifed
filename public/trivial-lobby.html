@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -55,7 +55,7 @@
   <a href="trivial-ranking.html">Ranking</a>
   <a href="trivial-eventos.html">Events</a>
   <a href="trivial-lobby.html" class="mobile-sub">🌐 Online</a>
-  <a href="trivial-ia-nivel.html" class="mobile-sub">🤖 vs IA</a>
+  <a href="trivial-ia-nivel.html" class="mobile-sub">🤖 vs AI</a>
   <div class="mobile-divider"></div>
   <a href="trivial-login.html" id="mobile-login">Log in</a>
   <a href="trivial-admin.html" id="mobile-admin" style="display:none">Admin Panel</a>
@@ -79,23 +79,23 @@
         <span class="brand" style="margin-bottom:0">Trivial Travel</span>
       </div>
       <h1>Play Online</h1>
-      <p>Únete a una sala o crea una nueva · 6 players por partida</p>
+      <p>Join a room or create a new one · 6 players per game</p>
       <div id="wins-badge" style="display:none">
-        🏆 <span id="wins-count">0</span> partidas ganadas
+        🏆 <span id="wins-count">0</span> wins
       </div>
     </div>
 
-    <!-- Tabs pública / privada -->
+    <!-- Public / private tabs -->
     <div class="create-tabs">
       <button class="create-tab active" id="tab-public" onclick="selectCreateTab('public')">
         <span class="create-tab-icon">🌐</span>
-        <span class="create-tab-title">Pública</span>
-        <span class="create-tab-note">Visible para todos</span>
+        <span class="create-tab-title">Public</span>
+        <span class="create-tab-note">Visible to everyone</span>
       </button>
       <button class="create-tab" id="tab-private" onclick="selectCreateTab('private')">
         <span class="create-tab-icon">🔒</span>
-        <span class="create-tab-title">Privada</span>
-        <span class="create-tab-note">Solo por código</span>
+        <span class="create-tab-title">Private</span>
+        <span class="create-tab-note">Code only</span>
       </button>
     </div>
 
@@ -111,16 +111,16 @@
       </div>
     </div>
 
-    <!-- Browser de salas -->
+    <!-- Room browser -->
     <div class="rooms-section">
       <div class="rooms-header">
         <span class="rooms-title">Available rooms</span>
-        <span class="rooms-live"><span class="live-dot"></span>En directo</span>
+        <span class="rooms-live"><span class="live-dot"></span>Live</span>
       </div>
       <div id="rooms-list">
         <div class="rooms-empty">
-          <span>No hay salas abiertas</span>
-          <small>Crea una nueva para empezar</small>
+          <span>No open rooms</span>
+          <small>Create one to get started</small>
         </div>
       </div>
     </div>
@@ -129,12 +129,12 @@
 
     <!-- Create room -->
     <button class="btn btn-primary btn-full" id="btn-create" onclick="createRoom()" style="margin-bottom:10px">
-      <span class="btn-label" id="btn-create-label">+ Create room pública</span>
+      <span class="btn-label" id="btn-create-label">+ Create public room</span>
       <div class="spinner"></div>
     </button>
 
     <!-- Join con código -->
-    <button class="btn-code-toggle" onclick="toggleCodePanel()">Tengo un código de sala</button>
+    <button class="btn-code-toggle" onclick="toggleCodePanel()">I have a room code</button>
     <div class="code-panel" id="code-panel">
       <div>
         <input type="text" id="join-code" class="code-input" placeholder="XXXXXX" maxlength="6">
@@ -153,7 +153,7 @@
     <div class="room-header">
       <span class="room-code-label">Room code</span>
       <div class="room-code" id="room-code-display">——</div>
-      <div id="room-private-badge" class="room-private-badge" style="display:none">🔒 Sala privada</div>
+      <div id="room-private-badge" class="room-private-badge" style="display:none">🔒 Private room</div>
       <button class="copy-btn" onclick="copyCode()" style="margin-top:8px">
         <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
         Copy code
@@ -162,13 +162,13 @@
 
     <div class="status-bar">
       <div class="status-dot"></div>
-      <span class="status-text" id="status-text">Connected al servidor</span>
-      <span class="status-connected" id="status-conn">EN LÍNEA</span>
+      <span class="status-text" id="status-text">Connected to server</span>
+      <span class="status-connected" id="status-conn">ONLINE</span>
     </div>
 
     <div class="players-section">
       <div class="players-header">
-        <span class="players-title">Players en la sala</span>
+        <span class="players-title">Players in room</span>
         <span class="players-count" id="players-count">1 / 6</span>
       </div>
       <div class="players-list" id="players-list">
@@ -202,14 +202,14 @@
       Waiting for the host to start the game...
     </div>
 
-    <button class="btn-leave" onclick="leaveRoom()">Abandonar sala</button>
+    <button class="btn-leave" onclick="leaveRoom()">Leave room</button>
 
     <!-- Auto-start countdown (6 players) -->
     <div class="countdown-overlay" id="countdown-overlay">
       <div class="countdown-box">
-        <div class="countdown-title">¡Sala completa!</div>
+        <div class="countdown-title">Room full!</div>
         <div class="countdown-num" id="countdown-num">3</div>
-        <div class="countdown-sub">Comenzando partida...</div>
+        <div class="countdown-sub">Starting game...</div>
       </div>
     </div>
 
