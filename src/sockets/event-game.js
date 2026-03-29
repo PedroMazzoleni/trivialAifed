@@ -290,7 +290,7 @@ function registerEventGameHandlers(io, socket) {
       room._questionTimer = null;
       room.state = 'answer';
       broadcastGroup(io, groupKey);
-      room._autoAdvanceTimer = setTimeout(() => _advanceRound(io, room), 8000);
+      room._autoAdvanceTimer = setTimeout(() => _advanceRound(io, room), 5000);
     }
   });
 
@@ -382,6 +382,7 @@ function _doSpin(io, room) {
 
 function _assignPrivateWildcards(io, room) {
   room.privateWildcards = {};
+  return; // Wildcards disabled
 
   // 35% de probabilidad de que haya comodines esta ronda
   if (Math.random() > 0.35) return;
@@ -433,7 +434,7 @@ function _loadQuestion(io, room, categoryId, difficulty) {
     clearTimeout(room._autoAdvanceTimer);
     room.state = 'answer';
     broadcastGroup(io, room.groupKey);
-    room._autoAdvanceTimer = setTimeout(() => _advanceRound(io, room), 8000);
+    room._autoAdvanceTimer = setTimeout(() => _advanceRound(io, room), 5000);
   }, 15000);
 }
 
