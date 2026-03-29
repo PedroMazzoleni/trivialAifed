@@ -117,9 +117,7 @@ function connectSocket() {
   });
 
   // ── Comodines privados ───────────────────────────────────────────────────
-  socket.on('event:privateWildcard', ({ wildcard, message }) => {
-    showPrivateWildcard(wildcard, message);
-  });
+  socket.on('event:privateWildcard', () => { /* wildcards disabled */ });
   socket.on('event:wildcardResult', ({ message }) => {
     showWildcardResult(message);
   });
