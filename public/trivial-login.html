@@ -503,8 +503,8 @@ function switchTab(tab) {
   // titulo oculto
   document.getElementById('form-subtitle').textContent   = login ? 'Enter your details to continue' : 'Fill in the form to sign up';
   document.getElementById('form-footer').innerHTML       = login
-    ? 'Don't have an account? <a onclick="switchTab(\'register\')">Sign up</a>'
-    : 'Already have an account? <a onclick="switchTab(\'login\')">Log in</a>';
+    ? "Don't have an account? <a onclick='switchTab(\"register\")'>Sign up</a>"
+    : "Already have an account? <a onclick='switchTab(\"login\")'>Log in</a>";
   hideMsg();
 }
 
