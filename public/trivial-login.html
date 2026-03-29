@@ -548,7 +548,7 @@ async function handleLogin() {
   const pass  = document.getElementById('login-pass').value;
   hideMsg();
   if (!email) return showMsg('Enter your email or username');
-  if (!pass)  return showMsg('Introduce tu contraseña');
+  if (!pass)  return showMsg('Enter your password');
 
   setLoading('btn-login', true);
   try {
@@ -589,7 +589,7 @@ async function handleRegister() {
   if (!name)                return showMsg('Choose a username');
   if (name.length < 3)      return showMsg('Name must be at least 3 characters');
   if (!email)               return showMsg('Enter your email address');
-  if (!email.includes('@')) return showMsg('Email address no válido');
+  if (!email.includes('@')) return showMsg('Invalid email address');
   if (!pass)                return showMsg('Create a password');
   if (pass.length < 6)      return showMsg('Password must be at least 6 characters');
 
@@ -603,7 +603,7 @@ async function handleRegister() {
     const data = await r.json();
     setLoading('btn-register', false);
 
-    if (!data.ok) return showMsg(data.msg || 'Registration failedse');
+    if (!data.ok) return showMsg(data.msg || 'Registration failed');
 
     showMsg('Account created. Welcome, ' + name, 'success');
     setTimeout(() => switchTab('login'), 1500);
@@ -614,7 +614,7 @@ async function handleRegister() {
 }
 
 function handleGuest() {
-  sessionStorage.setItem('player_name', 'Invitado');
+  sessionStorage.setItem('player_name', 'Guest');
   sessionStorage.setItem('player_role', 'guest');
   showMsg('Continuing as guest...', 'success');
   setTimeout(() => { window.location.href = 'trivial-modos.html'; }, 600);
