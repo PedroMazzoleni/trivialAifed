@@ -78,7 +78,7 @@ function registerGameHandlers(io, socket) {
   socket.on('room:join', ({ code, playerName, tenantId = 'default' }) => {
     const room = rooms[code];
     if (!room)                     return socket.emit('error', { msg: 'Sala no encontrada' });
-    if (room.state !== 'lobby')    return socket.emit('error', { msg: 'La partida ya ha comenzado' });
+    if (room.state !== 'lobby')    return socket.emit('error', { msg: 'Game already started' });
     if (room.players.length >= 6)  return socket.emit('error', { msg: 'Sala llena (máx. 6)' });
 
     const colors = ['#E84545','#3B9EFF','#F5A623','#A259FF','#2ECC71','#FF6B6B'];
@@ -91,7 +91,7 @@ function registerGameHandlers(io, socket) {
     broadcastRoom(io, code);
     broadcastRoomsList(io);
 
-    // Auto-arrancar cuando la sala llega a 6 jugadores
+    // Auto-start when room reaches 6 players
     if (room.players.length === 6) {
       io.to(code).emit('game:countdown', { seconds: 3 });
       setTimeout(() => startGameRoom(io, code, 6), 3000);
@@ -156,7 +156,7 @@ function registerGameHandlers(io, socket) {
     const code = socket.data.roomCode;
     const room = rooms[code];
     if (!room || room.host !== socket.id) return;
-    if (room.players.length < 2) return socket.emit('error', { msg: 'Se necesitan mínimo 2 jugadores para empezar' });
+    if (room.players.length < 2) return socket.emit('error', { msg: 'At least 2 players required to start' });
     startGameRoom(io, code, rounds);
   });
 
