@@ -290,7 +290,7 @@ function registerEventGameHandlers(io, socket) {
       room._questionTimer = null;
       room.state = 'answer';
       broadcastGroup(io, groupKey);
-      room._autoAdvanceTimer = setTimeout(() => _advanceRound(io, room), 5000);
+      room._autoAdvanceTimer = setTimeout(() => _advanceRound(io, room), 8000);
     }
   });
 
@@ -433,7 +433,7 @@ function _loadQuestion(io, room, categoryId, difficulty) {
     clearTimeout(room._autoAdvanceTimer);
     room.state = 'answer';
     broadcastGroup(io, room.groupKey);
-    room._autoAdvanceTimer = setTimeout(() => _advanceRound(io, room), 5000);
+    room._autoAdvanceTimer = setTimeout(() => _advanceRound(io, room), 8000);
   }, 15000);
 }
 
