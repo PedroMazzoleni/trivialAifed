@@ -18,7 +18,7 @@ let sbCountdown   = null;
 let spinAngle     = 0;
 let isSpinning    = false;
 let iAnswered     = false;
-let _shuffledOpts = null; // orden fijo de opciones para la ronda actual
+let _shuffledOpts = null; // fixed option order for current round
 
 const categories = [
   { id:'sports',  name:'Sports',    color:'#18c25a', emoji:'⚽' },
@@ -99,7 +99,7 @@ function connectSocket() {
 
   // ── Groups ────────────────────────────────────────────────────────────────
   socket.on('event:groupAssigned', ({ groupKey, groupNumber, totalGroups, players }) => {
-    addChatMsg('', `⚡ You have been assigned to Group ${groupNumber} de ${totalGroups} (${players.length} players)`, true);
+    addChatMsg('', `⚡ You have been assigned to Group ${groupNumber} of ${totalGroups} (${players.length} players)`, true);
   });
 
   socket.on('event:lobbyUpdate', ({ players, totalPlayers }) => {
@@ -149,15 +149,7 @@ function handleUpdate(room) {
 
   switch (room.state) {
     case 'waiting': showScreen('lobby'); renderLobby(room); break;
-    case 'spinning':
-      // Si el jugador ya respondió y está viendo el feedback, esperar 4s antes de ir a la ruleta
-      if (iAnswered) {
-        clearTimeout(_spinDelay);
-        _spinDelay = setTimeout(() => { showScreen('spin'); renderSpin(room); }, 4000);
-      } else {
-        showScreen('spin'); renderSpin(room);
-      }
-      break;
+    case 'spinning': showScreen('spin');  renderSpin(room);  break;
     case 'question': showScreen('question'); renderQuestion(room); break;
     case 'answer':   showScreen('scoreboard'); renderScoreboard(room); break;
     case 'finished': showScreen('results');    renderResults(room);   break;
@@ -412,9 +404,9 @@ function renderScoreboard(room) {
   const maxScore = sorted[0] ? sorted[0].score : 1;
 
   // Round info
-  el('sb-round').textContent = `Round ${room.currentRound} de ${room.totalRounds}`;
+  el('sb-round').textContent = `Round ${room.currentRound} of ${room.totalRounds}`;
   const remaining = room.totalRounds - room.currentRound;
-  el('sb-sub').textContent   = remaining > 0 ? `Remaining ${remaining} ronda${remaining !== 1 ? 's' : ''}` : 'Last round';
+  el('sb-sub').textContent   = remaining > 0 ? `${remaining} round${remaining !== 1 ? 's' : ''} remaining` : 'Last round';
 
   // Banner: show correct answer
   const banner = el('sb-banner');
@@ -754,7 +746,7 @@ function addChatMsg(playerName, message, isSystem = false) {
   } else {
     div.className = `chat-msg${isMe ? ' is-me' : ''}`;
     div.innerHTML = `
-      <span class="chat-msg-name${isMe ? ' me' : ''}">${isMe ? 'Tú' : playerName}</span>
+      <span class="chat-msg-name${isMe ? ' me' : ''}">${isMe ? 'You' : playerName}</span>
       <span class="chat-msg-text">${message}</span>`;
   }
 
