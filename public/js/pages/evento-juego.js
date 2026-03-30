@@ -99,6 +99,7 @@ function connectSocket() {
   });
 
   socket.on('event:doSpin', ({ catId, diff, extra }) => {
+    isSpinning = false; // reset por si quedó bloqueado
     doSpin(catId, diff, extra);
   });
 
@@ -156,7 +157,7 @@ function handleUpdate(room) {
   switch (room.state) {
     case 'waiting': showScreen('lobby'); renderLobby(room); break;
     case 'spinning': showScreen('spin');  renderSpin(room);  break;
-    case 'question': showScreen('question'); renderQuestion(room); break;
+    case 'question': iAnswered = false; showScreen('question'); renderQuestion(room); break;
     case 'answer':   showScreen('scoreboard'); renderScoreboard(room); break;
     case 'finished': showScreen('results');    renderResults(room);   break;
   }
