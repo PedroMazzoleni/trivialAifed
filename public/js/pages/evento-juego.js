@@ -112,17 +112,16 @@ function connectSocket() {
   });
 
   socket.on('event:lobbyUpdate', ({ players, totalPlayers }) => {
-    if (!roomState || roomState.state === 'waiting') {
-      el('ev-players-count').textContent = totalPlayers;
-      el('ev-player-list').innerHTML = players.length
-        ? players.map(p => `
-          <div class="ev-player-row">
-            <div class="ev-player-dot" style="background:${p.color || '#3B9EFF'}"></div>
-            <span class="ev-player-name">${p.name}</span>
-            ${p.name === MY_NAME ? '<span class="player-you">Tú</span>' : ''}
-          </div>`).join('')
-        : '<div style="padding:16px;color:var(--muted);font-size:13px;text-align:center">Waiting for players...</div>';
-    }
+    // Always update lobby — whether roomState exists or not
+    el('ev-players-count').textContent = totalPlayers;
+    el('ev-player-list').innerHTML = players.length
+      ? players.map(p => `
+        <div class="ev-player-row">
+          <div class="ev-player-dot" style="background:${p.color || '#3B9EFF'}"></div>
+          <span class="ev-player-name">${p.name}</span>
+          ${p.name === MY_NAME ? '<span class="player-you">You</span>' : ''}
+        </div>`).join('')
+      : '<div style="padding:16px;color:var(--muted);font-size:13px;text-align:center">Waiting for players...</div>';
   });
 
   // ── Comodines privados ───────────────────────────────────────────────────
