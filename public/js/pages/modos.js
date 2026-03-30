@@ -83,3 +83,5 @@ async function loadActiveEvents() {
 }
 
 loadActiveEvents();
+// Auto-refresh banner each 10s to detect when admin opens an event
+setInterval(loadActiveEvents, 10000);
