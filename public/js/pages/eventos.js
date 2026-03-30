@@ -12,7 +12,11 @@ const CAT_COLORS = {
   let currentFilter = 'all';
   
   // ── INIT ─────────────────────────────────────────────────────────────────────
-  window.addEventListener('DOMContentLoaded', loadEvents);
+  window.addEventListener('DOMContentLoaded', () => {
+    loadEvents();
+    // Auto-refresh cada 10s para detectar cuando el admin abre un evento
+    setInterval(loadEvents, 10000);
+  });
   
   async function loadEvents() {
     try {
