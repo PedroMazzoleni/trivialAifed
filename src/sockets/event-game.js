@@ -197,7 +197,7 @@ function registerEventGameHandlers(io, socket) {
 
     let existing = lobby.players.find(p => p.name === playerName);
     if (existing) { existing.id = socket.id; }
-    else { lobby.players.push({ id: socket.id, name: playerName, score: 0 }); }
+    else { lobby.players.push({ id: socket.id, name: playerName, score: 0, color: COLORS[lobby.players.length % COLORS.length] }); }
 
     socket.join('event:' + eid);
     socket.data.eventId  = eid;
@@ -208,6 +208,7 @@ function registerEventGameHandlers(io, socket) {
       isHost: lobby.players[0]?.name === playerName,
       player: lobby.players.find(p => p.name === playerName),
       totalPlayers: lobby.players.length,
+      players: lobby.players,
     });
 
     io.to('event:' + eid).emit('event:lobbyUpdate', { players: lobby.players, totalPlayers: lobby.players.length });
