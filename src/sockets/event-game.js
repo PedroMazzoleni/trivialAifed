@@ -326,15 +326,46 @@ function registerEventGameHandlers(io, socket) {
     createGroups(io, eid, lobby);
   });
 
+  socket.on('admin:resetLobby', async ({ eventId }) => {
+    const eid = String(eventId);
+    const prevData = eventLobbies[eid]?.eventData || {};
+    const prevQuestions = eventLobbies[eid]?.eventQuestions || [];
+    const questions = prevQuestions.length ? prevQuestions : await loadEventQuestions(eid);
+    eventLobbies[eid] = {
+      eventId: eid, eventData: prevData, players: [],
+      started: false, groups: [], doneGroups: 0, globalScores: {}, eventQuestions: questions,
+    };
+    io.to('event:' + eid).emit('event:lobbyUpdate', { players: [], totalPlayers: 0 });
+    console.log(`🔄 Lobby reset by admin — event ${eid}`);
+  });
+
   socket.on('admin:stopEvent', ({ eventId }) => {
     const eid   = String(eventId);
     const lobby = eventLobbies[eid];
     if (!lobby) return;
+
+    // Stop all running groups
     (lobby.groups || []).forEach(gk => {
       const room = eventRooms[gk];
       if (room) { clearTimeout(room._questionTimer); clearTimeout(room._autoAdvanceTimer); room.state = 'finished'; broadcastGroup(io, gk); }
     });
     setTimeout(() => emitGlobalRanking(io, eid), 1000);
+
+    // Reset lobby so it can be reopened cleanly
+    setTimeout(() => {
+      eventLobbies[eid] = {
+        eventId: eid,
+        eventData: lobby.eventData || {},
+        players: [],
+        started: false,
+        groups: [],
+        doneGroups: 0,
+        globalScores: {},
+        eventQuestions: lobby.eventQuestions || [],
+      };
+      io.to('event:' + eid).emit('event:lobbyUpdate', { players: [], totalPlayers: 0 });
+      console.log(`🔄 Event ${eid} lobby reset — ready for new session`);
+    }, 3000);
   });
 
   socket.on('chat:send', ({ message, playerName }) => {
