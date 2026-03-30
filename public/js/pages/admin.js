@@ -652,7 +652,14 @@ async function toggleEventStatus(id, newStatus) {
     const res = await fetch(`${SERVER}/api/events/${id}`, {
       method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
     }).then(r=>r.json());
-    if (res.ok) { flashMsg('Status updated', 'success', 'msg-events'); loadEvents(); }
+    if (res.ok) {
+      flashMsg('Status updated', 'success', 'msg-events');
+      // If opening the event, reset the lobby so players can join fresh
+      if (newStatus === 'active' && adminSocket) {
+        adminSocket.emit('admin:resetLobby', { eventId: String(id) });
+      }
+      loadEvents();
+    }
     else alert(res.msg || 'Error');
   } catch(e) { alert('Error: ' + e.message); }
 }
