@@ -76,11 +76,20 @@ function connectSocket() {
     });
   });
 
-  socket.on('event:joined', ({ isHost: host, player, totalPlayers }) => {
+  socket.on('event:joined', ({ isHost: host, player, totalPlayers, players }) => {
     isHost   = host;
     myPlayer = player;
     showScreen('lobby');
     el('ev-players-count').textContent = totalPlayers || 1;
+    // Render player list if players data included
+    if (players && players.length) {
+      el('ev-player-list').innerHTML = players.map(p => `
+        <div class="ev-player-row">
+          <div class="ev-player-dot" style="background:${p.color || '#3B9EFF'}"></div>
+          <span class="ev-player-name">${p.name}</span>
+          ${p.name === MY_NAME ? '<span class="player-you">You</span>' : ''}
+        </div>`).join('');
+    }
     renderLobbyControls();
   });
 
