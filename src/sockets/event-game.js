@@ -467,7 +467,7 @@ function _loadQuestion(io, room, categoryId, difficulty) {
     room.state = 'answer';
     broadcastGroup(io, room.groupKey);
     room._autoAdvanceTimer = setTimeout(() => _advanceRound(io, room), 5000);
-  }, 15000);
+  }, 20000);
 }
 
 function _advanceRound(io, room) {
