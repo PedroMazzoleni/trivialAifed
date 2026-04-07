@@ -1,740 +1,822 @@
-// pages/admin.js
-// Requires: utils.js
+// js/pages/evento-juego.js
+// Event Game client — unlimited players, all answer same question, podium at end
+// Requires: utils.js, socket.io
 
-if (!Session.isAdmin()) goTo('trivial-login.html');
+const params     = new URLSearchParams(window.location.search);
+const EVENT_ID   = params.get('event')  || '';
+const MY_NAME    = params.get('player') || 'Player';
+const EVENT_TITLE   = decodeURIComponent(params.get('title')    || 'Event');
+const EVENT_CAT     = params.get('cat')      || 'mixed';
+const EVENT_ROUNDS  = parseInt(params.get('rounds') || '6');
 
-const TENANT = 'default';
+const LETTERS    = ['A','B','C','D'];
+const TIME_LIMIT = 20;
 
-const CAT_META = {
-  sports:  { name:'Sports',    color:'#18c25a' },
-  geo:     { name:'Geography', color:'#3B9EFF' },
-  culture: { name:'Culture',   color:'#f5a623' },
-  history: { name:'History',   color:'#e84545' },
-  eu:      { name:'Europa',     color:'#a259ff' },
-  mixed:   { name:'Mixed',     color:'#9b59b6' },
+// ── SECURITY: lock player name — cannot be changed via URL ──────────────────
+(function enforceAuth() {
+  const sessionName   = Session.playerName();
+  const isGuest       = Session.playerRole() === 'guest';
+  const displayName   = sessionStorage.getItem('event_display_name'); // set by confirmJoin
+
+  if (!sessionName) {
+    // Not logged in at all — go to login
+    sessionStorage.setItem('redirect_after_login', 'trivial-eventos.html');
+    goTo('trivial-login.html');
+    return;
+  }
+
+  if (isGuest) {
+    // Guest: the name locked is whatever they chose in the modal
+    if (!displayName || displayName === 'Invitado' || displayName === 'Guest') {
+      // No valid name chosen — back to events to pick one
+      goTo('trivial-eventos.html');
+      return;
+    }
+    // If URL was tampered, silently correct to the locked name
+    if (MY_NAME !== displayName) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('player', displayName);
+      window.location.replace(url.toString());
+    }
+  } else {
+    // Registered user: lock to session name
+    if (MY_NAME && sessionName.toLowerCase() !== MY_NAME.toLowerCase()) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('player', sessionName);
+      window.location.replace(url.toString());
+    }
+  }
+})();
+
+let socket, myPlayer, isHost = false, roomState = null;
+let timerInterval = null;
+let sbCountdown   = null;
+let spinAngle     = 0;
+let isSpinning    = false;
+let iAnswered     = false;
+let _shuffledOpts = null; // fixed option order for current round
+
+const categories = [
+  { id:'sports',  name:'Sports',    color:'#18c25a', emoji:'⚽' },
+  { id:'geo',     name:'Geography', color:'#3B9EFF', emoji:'🌍' },
+  { id:'culture', name:'Culture',   color:'#f5a623', emoji:'🎭' },
+  { id:'history', name:'History',   color:'#e84545', emoji:'📜' },
+  { id:'eu',      name:'EU',        color:'#a259ff', emoji:'🇪🇺' },
+  { id:'mixed',   name:'Mixed',     color:'#9b59b6', emoji:'🎲' },
+];
+
+// Dynamic wheel categories — updated from room state
+let wheelCats = [...categories];
+
+const CAT_BACKGROUNDS = {
+  sports:  'images/bg-sport.jpg',
+  geo:     'images/bg-geography.jpg',
+  culture: 'images/bg-culture.jpg',
+  history: 'images/bg-history.jpg',
+  eu:      'images/bg-eu.jpg',
+  kenya:   'images/bg-kenya.jpg',
 };
 
-let data       = { categories: [], questions: {} };
-let currentCat = null;
-let editingQ   = null;
+// ── INIT ──────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  // Set lobby header
+  el('ev-title-display').textContent = EVENT_TITLE;
+  el('ev-meta').innerHTML = `
+    <span class="ev-meta-chip">🎡 ${EVENT_CAT === 'mixed' ? 'Mixed' : EVENT_CAT}</span>
+    <span class="ev-meta-chip">${EVENT_ROUNDS} rounds</span>
+    <span class="ev-meta-chip">Unlimited players</span>
+  `;
 
-// ════════════════════════════════════
-//  QUESTION BANK
-// ════════════════════════════════════
+  drawWheel(categories, 0);
+  connectSocket();
+});
 
-async function loadData() {
-  try {
-    const raw = await apiGet(`/api/tenant/${TENANT}`);
-    data.categories = raw.categories?.length
-      ? raw.categories
-      : Object.entries(CAT_META).map(([id, m]) => ({ id, ...m }));
-    data.questions = Object.keys(raw.questions || {}).length ? raw.questions : {};
-    data.categories.forEach(c => { if (!data.questions[c.id]) data.questions[c.id] = []; });
-  } catch {
-    data.categories = Object.entries(CAT_META).map(([id, m]) => ({ id, ...m }));
-    data.questions  = {};
-    data.categories.forEach(c => { data.questions[c.id] = []; });
-  }
-  renderSidebar();
-  renderDashboard();
-  renderFilterSelects();
-  renderQuestions();
-}
+// ── SOCKET ─────────────────────────────────────────────────────────────────────
+function connectSocket() {
+  socket = io(SERVER, { transports: ['polling'], reconnection: true, timeout: 8000 });
 
-function renderSidebar() {
-  setHTML('sidebar-cats', data.categories.map(cat => {
-    const count = (data.questions[cat.id] || []).length;
-    const color = cat.color || CAT_META[cat.id]?.color || '#888';
-    return `
-      <div class="nav-item ${currentCat === cat.id ? 'active' : ''}" onclick="filterByCat('${cat.id}')">
-        <div class="nav-dot" style="background:${color}"></div>
-        ${cat.name}
-        <span class="nav-count">${count}</span>
-      </div>`;
-  }).join(''));
-}
-
-function filterByCat(catId) {
-  currentCat = catId;
-  el('filter-cat').value = catId;
-  renderSidebar();
-  renderQuestions();
-  showPage('questions');
-}
-
-function renderDashboard() {
-  const allQ   = Object.values(data.questions).flat();
-  const total  = allQ.length;
-  const easy   = allQ.filter(q => q.diff === 'easy').length;
-  const medium = allQ.filter(q => q.diff === 'medio').length;
-  const hard   = allQ.filter(q => q.diff === 'hard').length;
-
-  setHTML('stats-grid', `
-    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Total Questions</div></div>
-    <div class="stat-card"><div class="stat-num" style="color:#18c25a">${easy}</div><div class="stat-label">Easy</div></div>
-    <div class="stat-card"><div class="stat-num" style="color:#f5a623">${medium}</div><div class="stat-label">Medium</div></div>
-    <div class="stat-card"><div class="stat-num" style="color:#e84545">${hard}</div><div class="stat-label">Hard</div></div>
-  `);
-
-  const rows = data.categories.map(cat => {
-    const qs = data.questions[cat.id] || [];
-    const e = qs.filter(q => q.diff === 'easy').length;
-    const m = qs.filter(q => q.diff === 'medio').length;
-    const h = qs.filter(q => q.diff === 'hard').length;
-    const color = cat.color || CAT_META[cat.id]?.color || '#888';
-    return `<tr>
-      <td style="padding:10px 14px;display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0"></div>${cat.name}</td>
-      <td style="padding:10px 14px;text-align:center;color:#18c25a;font-weight:600">${e}</td>
-      <td style="padding:10px 14px;text-align:center;color:#f5a623;font-weight:600">${m}</td>
-      <td style="padding:10px 14px;text-align:center;color:#e84545;font-weight:600">${h}</td>
-      <td style="padding:10px 14px;text-align:center;font-weight:700">${qs.length}</td>
-    </tr>`;
-  }).join('');
-
-  setHTML('distribution-table', `
-    <table style="width:100%;border-collapse:collapse;font-size:13px">
-      <thead><tr style="border-bottom:1px solid var(--border)">
-        <th style="padding:8px 14px;text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700">Category</th>
-        <th style="padding:8px 14px;text-align:center;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#18c25a;font-weight:700">Easy</th>
-        <th style="padding:8px 14px;text-align:center;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#f5a623;font-weight:700">Medium</th>
-        <th style="padding:8px 14px;text-align:center;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#e84545;font-weight:700">Hard</th>
-        <th style="padding:8px 14px;text-align:center;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700">Total</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`);
-}
-
-function renderFilterSelects() {
-  el('filter-cat').innerHTML = '<option value="">All categories</option>' +
-    data.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-}
-
-function renderQuestions() {
-  const search = el('search-input').value.toLowerCase();
-  const catF   = el('filter-cat').value;
-  const diffF  = el('filter-diff').value;
-  const cat    = catF ? data.categories.find(c => c.id === catF) : null;
-
-  setText('questions-title', cat ? cat.name : 'Questions');
-  setText('questions-sub', cat ? `${(data.questions[catF]||[]).length} questions` : 'All categories');
-
-  let items = [];
-  Object.entries(data.questions).forEach(([catId, qs]) => {
-    if (catF && catId !== catF) return;
-    qs.forEach((q, idx) => {
-      if (diffF && q.diff !== diffF) return;
-      if (search && !q.q.toLowerCase().includes(search) && !q.a.toLowerCase().includes(search)) return;
-      items.push({ catId, idx, q });
+  socket.on('connect', () => {
+    socket.emit('event:join', {
+      eventId: EVENT_ID,
+      playerName: MY_NAME,
+      eventData: {
+        title:    EVENT_TITLE,
+        category: EVENT_CAT,
+        rounds:   EVENT_ROUNDS,
+      }
     });
   });
 
-  const list = el('questions-list');
-  if (!items.length) {
-    list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);font-size:14px">No questions match the current filters</div>`;
+  socket.on('event:joined', ({ isHost: host, player, totalPlayers, players }) => {
+    isHost   = host;
+    myPlayer = player;
+    showScreen('lobby');
+    el('ev-players-count').textContent = totalPlayers || 1;
+    // Render player list if players data included
+    if (players && players.length) {
+      el('ev-player-list').innerHTML = players.map(p => `
+        <div class="ev-player-row">
+          <div class="ev-player-dot" style="background:${p.color || '#3B9EFF'}"></div>
+          <span class="ev-player-name">${p.name}</span>
+          ${p.name === MY_NAME ? '<span class="player-you">You</span>' : ''}
+        </div>`).join('');
+    }
+    renderLobbyControls();
+  });
+
+  socket.on('event:update', (room) => {
+    roomState = room;
+    handleUpdate(room);
+  });
+
+  socket.on('event:doSpin', ({ catId, diff, extra }) => {
+    isSpinning = false; // reset por si quedó bloqueado
+    doSpin(catId, diff, extra);
+  });
+
+  socket.on('event:backToLobby', () => {
+    // Admin finalizó la partida — resetear estado local y volver al lobby
+    clearInterval(timerInterval);
+    clearInterval(sbCountdown);
+    isSpinning    = false;
+    iAnswered     = false;
+    roomState     = null;
+    spinAngle     = 0;
+    _shuffledOpts = null;
+    // Rejoin the event lobby with fresh state
+    socket.emit('event:join', {
+      eventId:    EVENT_ID,
+      playerName: MY_NAME,
+      eventData:  { title: EVENT_TITLE, rounds: EVENT_ROUNDS },
+    });
+    showScreen('lobby');
+    addChatMsg('', '🔄 Partida finalizada — espera a que el admin lance la siguiente sesión.', true);
+  });
+
+  socket.on('connect_error', () => {
+    el('ev-title-display').textContent = 'Connection error. Please refresh.';
+  });
+
+  // ── Groups ────────────────────────────────────────────────────────────────
+  socket.on('event:groupAssigned', ({ groupKey, groupNumber, totalGroups, players }) => {
+    addChatMsg('', `⚡ You have been assigned to Group ${groupNumber} of ${totalGroups} (${players.length} players)`, true);
+  });
+
+  socket.on('event:lobbyUpdate', ({ players, totalPlayers }) => {
+    // Always update lobby — whether roomState exists or not
+    el('ev-players-count').textContent = totalPlayers;
+    el('ev-player-list').innerHTML = players.length
+      ? players.map(p => `
+        <div class="ev-player-row">
+          <div class="ev-player-dot" style="background:${p.color || '#3B9EFF'}"></div>
+          <span class="ev-player-name">${p.name}</span>
+          ${p.name === MY_NAME ? '<span class="player-you">You</span>' : ''}
+        </div>`).join('')
+      : '<div style="padding:16px;color:var(--muted);font-size:13px;text-align:center">Waiting for players...</div>';
+  });
+
+  // ── Comodines privados ───────────────────────────────────────────────────
+  socket.on('event:privateWildcard', () => { /* wildcards disabled */ });
+  socket.on('event:wildcardResult', ({ message }) => {
+    showWildcardResult(message);
+  });
+
+  // ── Ranking global ────────────────────────────────────────────────────────
+  socket.on('event:globalRanking', ({ ranking }) => {
+    showGlobalRanking(ranking);
+  });
+
+  // ── Chat listeners ────────────────────────────────────────────────────────
+  socket.on('chat:message', ({ playerName, message }) => {
+    addChatMsg(playerName, message, false);
+  });
+  socket.on('chat:system', ({ message }) => {
+    addChatMsg('', message, true);
+  });
+}
+
+// ── STATE MACHINE ─────────────────────────────────────────────────────────────
+function handleUpdate(room) {
+  // Sync wheel categories from server
+  if (room.categories && room.categories.length) wheelCats = room.categories;
+
+  // Update round progress bar
+  const pct = ((room.currentRound - 1) / room.totalRounds) * 100;
+  el('ev-progress-fill').style.width = pct + '%';
+
+  switch (room.state) {
+    case 'waiting': showScreen('lobby'); renderLobby(room); break;
+    case 'spinning': showScreen('spin');  renderSpin(room);  break;
+    case 'question': iAnswered = false; showScreen('question'); renderQuestion(room); break;
+    case 'answer':   showScreen('scoreboard'); renderScoreboard(room); break;
+    case 'finished': showScreen('results');    renderResults(room);   break;
+  }
+
+  el('ev-progress-bar').style.display = room.state !== 'waiting' ? 'block' : 'none';
+}
+
+// ── LOBBY ─────────────────────────────────────────────────────────────────────
+function renderLobby(room) {
+  const players = room.players || [];
+  el('ev-players-count').textContent = players.length;
+  el('ev-player-list').innerHTML = players.map(p => `
+    <div class="ev-player-row">
+      <div class="ev-player-dot" style="background:${p.color}"></div>
+      <span class="ev-player-name">${p.name}</span>
+      ${p.name === MY_NAME ? '<span class="player-you">You</span>' : ''}
+      ${p.id === room.host ? '<span class="player-host" style="font-size:10px;color:var(--muted);font-family:var(--font-cond);font-weight:700;letter-spacing:1px;text-transform:uppercase">Host</span>' : ''}
+    </div>
+  `).join('');
+  renderLobbyControls();
+}
+
+function renderLobbyControls() {
+  // Start button removed — admin controls game start from admin panel
+  el('btn-ev-start').style.display  = 'none';
+  el('ev-guest-wait').style.display = 'block';
+  el('ev-guest-wait').innerHTML = `
+    <div class="dots"><span></span><span></span><span></span></div>
+    Waiting for the admin to start the event...
+  `;
+}
+
+function startEventGame() {
+  if (socket) socket.emit('event:start');
+}
+
+// ── SPIN ──────────────────────────────────────────────────────────────────────
+function renderSpin(room) {
+  el('ev-spin-round').textContent = `Round ${room.currentRound} / ${room.totalRounds}`;
+  renderMiniScores(room, 'mini-scores-spin');
+  drawWheel(wheelCats, spinAngle);
+  el('cat-reveal').classList.remove('show');
+}
+
+function doSpin(catId, diff, extra) {
+  if (isSpinning) return;
+  isSpinning = true;
+  iAnswered     = false;
+  _shuffledOpts = null;
+
+  const cat    = wheelCats.find(c => c.id === catId);
+  if (!cat) { isSpinning = false; return; }
+
+  const n      = wheelCats.length;
+  const catIdx = wheelCats.findIndex(c => c.id === catId);
+  const slice  = (2 * Math.PI) / n;
+
+  const targetOffset = Math.PI / 2 - catIdx * slice - slice / 2;
+  const tgtMod = ((targetOffset % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+  const curMod = ((spinAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+  const residual = ((tgtMod - curMod) + Math.PI * 2) % (Math.PI * 2);
+  const safeResidual = residual < 0.01 ? Math.PI * 2 : residual;
+  const totalDelta = Math.floor(extra || 6) * Math.PI * 2 + safeResidual;
+  const finalAngle = spinAngle + totalDelta;
+
+  const DUR      = 5500;
+  const startAng = spinAngle;
+  const startTime = performance.now();
+  const ease = t => 1 - Math.pow(1 - t, 5);
+  let lastSector = -1;
+
+  function frame(now) {
+    const t     = Math.min((now - startTime) / DUR, 1);
+    spinAngle   = startAng + totalDelta * ease(t);
+    const mod   = ((spinAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    const sec   = Math.floor(mod / slice) % n;
+    if (sec !== lastSector) { lastSector = sec; }
+    drawWheel(wheelCats, spinAngle);
+    if (t < 1) { requestAnimationFrame(frame); return; }
+    isSpinning = false;
+    drawWheel(wheelCats, spinAngle, catId);
+    _bounceReveal(catId, cat);
+  }
+  requestAnimationFrame(frame);
+}
+
+function _bounceReveal(catId, cat) {
+  const BOUNCE_ANGLE = 0.035;
+  const BOUNCE_DUR   = 400;
+  const baseAngle    = spinAngle;
+  const bounceStart  = performance.now();
+
+  function bounceFrame(now) {
+    const t   = Math.min((now - bounceStart) / BOUNCE_DUR, 1);
+    const osc = Math.sin(t * Math.PI) * BOUNCE_ANGLE * (1 - t * 0.6);
+    drawWheel(wheelCats, baseAngle - osc, catId);
+    if (t < 1) { requestAnimationFrame(bounceFrame); return; }
+    drawWheel(wheelCats, baseAngle, catId);
+    // Show reveal
+    const reveal = el('cat-reveal');
+    reveal.style.background  = hexToRgba(cat.color, 0.15);
+    reveal.style.borderColor = hexToRgba(cat.color, 0.6);
+    reveal.style.color       = cat.color;
+    el('cat-reveal-name').textContent = cat.name.toUpperCase();
+    reveal.classList.add('show');
+    setTimeout(() => reveal.classList.remove('show'), 2200);
+  }
+  requestAnimationFrame(bounceFrame);
+}
+
+// ── QUESTION ──────────────────────────────────────────────────────────────────
+function renderQuestion(room) {
+  const q   = room.currentQuestion;
+  const cat = wheelCats.find(c => c.id === room.currentCategory);
+
+  // Background
+  const bgEl = el('screen-question');
+  // Use question's custom image URL if set, otherwise fall back to category image
+  const bg = (room.currentQuestion && room.currentQuestion.image_url)
+    ? room.currentQuestion.image_url
+    : (CAT_BACKGROUNDS[room.currentCategory] || 'images/bg-ia.png');
+  bgEl.style.backgroundImage    = `url('${bg}')`;
+  bgEl.style.backgroundSize     = 'cover';
+  bgEl.style.backgroundPosition = 'center';
+
+  el('q-counter').textContent = `Round ${room.currentRound} / ${room.totalRounds}`;
+  el('q-cat').textContent     = cat ? cat.name : '—';
+  el('q-text').textContent    = q ? q.q : '—';
+
+  const me = room.players.find(p => p.name === MY_NAME);
+  el('my-score-hud').textContent = `${me ? me.score : 0} pts`;
+
+  // Si ya respondí, solo actualizar los dots — no tocar botones ni feedback
+  if (iAnswered) {
+    renderAnsweredDots(room);
     return;
   }
 
-  const byCat = {};
-  items.forEach(item => { if (!byCat[item.catId]) byCat[item.catId] = []; byCat[item.catId].push(item); });
+  // Options
+  const alreadyAnswered = room.allAnswers && room.allAnswers.find(a => a.playerName === MY_NAME);
+  const grid = el('q-options');
+  grid.innerHTML = '';
 
-  list.innerHTML = Object.entries(byCat).map(([catId, qItems]) => {
-    const catMeta = data.categories.find(c => c.id === catId) || CAT_META[catId] || {};
-    return `
-      <div class="card">
-        <div class="card-header">
-          <div style="display:flex;align-items:center;gap:8px">
-            <div style="width:10px;height:10px;border-radius:50%;background:${catMeta.color||'#888'}"></div>
-            <span class="card-title">${catMeta.name||catId}</span>
-            <span style="font-size:11px;color:var(--muted);font-weight:400">${qItems.length} questions</span>
-          </div>
-        </div>
-        <div>${qItems.map(({catId, idx, q}) => `
-          <div class="q-item">
-            <span class="q-diff-badge ${q.diff==='easy'?'easy':q.diff==='medio'?'medio':'dificil'}">${q.diff==='easy'?'Easy':q.diff==='medio'?'Medium':'Hard'}</span>
-            <div class="q-text-wrap">
-              <div class="q-text">${q.q}</div>
-              <div class="q-answer">Answer: <strong>${q.a}</strong></div>
-            </div>
-            <div class="q-actions">
-              <button class="btn-icon" onclick="editQuestion('${catId}',${idx})" title="Edit">
-                <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              </button>
-              <button class="btn-icon danger" onclick="deleteQuestion('${catId}',${idx})" title="Delete">
-                <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-              </button>
-            </div>
-          </div>`).join('')}
-        </div>
-      </div>`;
+  if (q) {
+    if (!_shuffledOpts) _shuffledOpts = [...q.opts].sort(() => Math.random() - 0.5);
+    const shuffled = _shuffledOpts;
+    shuffled.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      const letter = document.createElement('span');
+      letter.className = 'opt-letter';
+      letter.textContent = LETTERS[i];
+      btn.appendChild(letter);
+      btn.appendChild(document.createTextNode(opt.trim()));
+
+      if (alreadyAnswered || iAnswered) {
+        btn.disabled = true;
+        if (opt.trim() === q.a.trim()) btn.classList.add('correct');
+        else if (alreadyAnswered && alreadyAnswered.answer.trim() === opt.trim() && opt.trim() !== q.a.trim()) btn.classList.add('wrong');
+      } else {
+        btn.onclick = () => submitAnswer(opt.trim(), q.a.trim(), shuffled);
+      }
+      grid.appendChild(btn);
+    });
+  }
+
+  // Feedback
+  if (alreadyAnswered) {
+    const fb = el('q-feedback');
+    fb.className = `q-feedback show ${alreadyAnswered.correct ? 'correct-fb' : 'wrong-fb'}`;
+    el('fb-title').textContent = alreadyAnswered.correct ? 'Correct!' : 'Wrong';
+    el('fb-detail').textContent = alreadyAnswered.correct ? '' : `Correct answer: ${q ? q.a : ''}`;
+  } else {
+    el('q-feedback').className = 'q-feedback';
+  }
+
+  // Waiting indicator
+  const waitEl = el('q-waiting');
+  waitEl.className = alreadyAnswered || iAnswered ? 'q-waiting show' : 'q-waiting';
+  el('q-waiting-text').textContent = 'Waiting for other players...';
+
+  // Answered dots
+  renderAnsweredDots(room);
+
+  // Timer
+  clearInterval(timerInterval);
+  if (!alreadyAnswered && !iAnswered) {
+    let t = TIME_LIMIT;
+    updateTimer(t);
+    timerInterval = setInterval(() => {
+      t--;
+      updateTimer(t);
+      if (t <= 0) {
+        clearInterval(timerInterval);
+        if (!iAnswered) submitAnswer('', q ? q.a : '');
+      }
+    }, 1000);
+  }
+}
+
+function renderAnsweredDots(room) {
+  const players = room.players || [];
+  const answers = room.allAnswers || [];
+  const answeredIds = new Set(answers.map(a => a.playerName));
+
+  el('ev-answered-text').textContent = `${answers.length} / ${players.length} answered`;
+  el('ev-answered-dots').innerHTML = players.map(p => {
+    const done  = answeredIds.has(p.name);
+    const isMe  = p.name === MY_NAME;
+    return `<div class="ev-answered-dot ${done ? (isMe ? 'me-done' : 'done') : ''}" title="${p.name}" style="background:${done ? p.color : 'transparent'};border-color:${done ? p.color : 'rgba(255,255,255,0.2)'}"></div>`;
   }).join('');
 }
 
-function openNewQuestion() {
-  editingQ = null;
-  setText('modal-title', 'New question');
-  setHTML('modal-body', questionForm(null));
-  setHTML('modal-footer', `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveQuestion()">Save question</button>`);
-  openModal();
+function submitAnswer(answer, correctA, _shuffled) {
+  if (iAnswered) return;
+  iAnswered = true;
+  clearInterval(timerInterval);
+
+  const isCorrect = answer.trim() !== '' && answer.trim() === correctA.trim();
+
+  // Visual feedback on buttons
+  document.querySelectorAll('.opt-btn').forEach(btn => {
+    btn.disabled = true;
+    const txt = btn.textContent.replace(/^[A-D]/, '').trim();
+    if (txt === correctA.trim()) btn.classList.add('correct');
+    else if (txt === answer.trim() && !isCorrect) btn.classList.add('wrong');
+  });
+
+  const fb = el('q-feedback');
+  fb.className = `q-feedback show ${isCorrect ? 'correct-fb' : 'wrong-fb'}`;
+  el('fb-title').textContent  = isCorrect ? 'Correct!' : (answer === '' ? 'Time\'s up!' : 'Wrong');
+  el('fb-detail').textContent = isCorrect ? '' : `Correct answer: ${correctA}`;
+  el('q-waiting').className   = 'q-waiting show';
+
+  socket.emit('event:answer', { answer: answer.trim() });
 }
 
-function editQuestion(catId, idx) {
-  editingQ = { catId, idx };
-  setText('modal-title', 'Edit question');
-  setHTML('modal-body', questionForm(data.questions[catId][idx], catId));
-  setHTML('modal-footer', `<button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveQuestion()">Save changes</button>`);
-  openModal();
+function updateTimer(t) {
+  const fill = el('timer-fill');
+  fill.style.width      = `${(t / TIME_LIMIT) * 100}%`;
+  fill.style.background = t <= 5 ? '#e84545' : t <= 10 ? '#f5a623' : 'var(--blue)';
+  el('timer-num').textContent = t;
 }
 
-function questionForm(q, selectedCat) {
-  const cats      = data.categories.map(c => `<option value="${c.id}" ${selectedCat===c.id?'selected':''}>${c.name}</option>`).join('');
-  const wrongOpts = q ? q.opts.filter(o => o !== q.a) : ['',''];
-  return `
-    <div class="field"><label>Category</label><select id="q-cat">${cats}</select></div>
-    <div class="field"><label>Question</label><textarea id="q-text" rows="3" placeholder="Write the question here...">${q?q.q:''}</textarea></div>
-    <div class="field"><label>Correct answer</label><input type="text" id="q-answer" value="${q?q.a:''}" placeholder="Correct answer"></div>
-    <div class="form-grid">
-      <div class="field"><label>Option 2</label><input type="text" id="q-opt2" value="${wrongOpts[0]||''}" placeholder="Wrong option"></div>
-      <div class="field"><label>Option 3</label><input type="text" id="q-opt3" value="${wrongOpts[1]||''}" placeholder="Wrong option"></div>
-    </div>
-    <div class="field"><label>Difficulty</label><select id="q-diff">
-      <option value="easy"   ${q?.diff==='easy'  ?'selected':''}>Easy</option>
-      <option value="medio"   ${q?.diff==='medio'  ?'selected':''}>Medium</option>
-      <option value="hard" ${q?.diff==='hard'?'selected':''}>Hard</option>
-    </select></div>`;
-}
+// ── SCOREBOARD ────────────────────────────────────────────────────────────────
+function renderScoreboard(room) {
+  clearInterval(timerInterval);
+  clearInterval(sbCountdown);
 
-function saveQuestion() {
-  const catId  = el('q-cat').value;
-  const text   = el('q-text').value.trim();
-  const answer = el('q-answer').value.trim();
-  const opt2   = el('q-opt2').value.trim();
-  const opt3   = el('q-opt3').value.trim();
-  const diff   = el('q-diff').value;
+  const q       = room.currentQuestion;
+  const answers = room.allAnswers || [];
+  const players = room.players || [];
+  const sorted  = [...players].sort((a, b) => b.score - a.score);
+  const maxScore = sorted[0] ? sorted[0].score : 1;
 
-  if (!text)   return alert('Enter the question');
-  if (!answer) return alert('Enter the correct answer');
-  if (!opt2)   return alert('Enter at least option 2');
+  // Round info
+  el('sb-round').textContent = `Round ${room.currentRound} of ${room.totalRounds}`;
+  const remaining = room.totalRounds - room.currentRound;
+  el('sb-sub').textContent   = remaining > 0 ? `${remaining} round${remaining !== 1 ? 's' : ''} remaining` : 'Last round';
 
-  const entry = { q: text, a: answer, opts: [answer, opt2, opt3].filter(Boolean), diff };
-  if (!data.questions[catId]) data.questions[catId] = [];
+  // Banner: show correct answer
+  const banner = el('sb-banner');
+  banner.className = 'sb-answer-banner correct';
+  el('sb-icon').textContent          = '✓';
+  el('sb-banner-title').textContent  = 'Round complete';
+  el('sb-banner-detail').textContent = q ? `Correct answer: ${q.a}` : '—';
 
-  if (editingQ && editingQ.catId === catId)  data.questions[catId][editingQ.idx] = entry;
-  else if (editingQ && editingQ.catId !== catId) {
-    data.questions[editingQ.catId].splice(editingQ.idx, 1);
-    data.questions[catId].push(entry);
-  } else {
-    data.questions[catId].push(entry);
-  }
-
-  closeModal();
-  saveToServer();
-  refresh();
-}
-
-function deleteQuestion(catId, idx) {
-  if (!confirm('Delete this question?')) return;
-  data.questions[catId].splice(idx, 1);
-  saveToServer();
-  refresh();
-}
-
-async function saveToServer() {
-  try {
-    await apiPost(`/api/tenant/${TENANT}/questions`, { questions: data.questions });
-    flashMsg('Saved successfully', 'success', 'msg-questions');
-  } catch {
-    flashMsg('Error saving to server', 'error', 'msg-questions');
-  }
-}
-
-function openModal()  { el('modal').classList.add('show'); }
-function closeModal() { el('modal').classList.remove('show'); }
-
-function showPage(id) {
-  qsAll('.page').forEach(p => p.classList.remove('active'));
-  el('page-' + id).classList.add('active');
-  if (id === 'events') loadEvents();
-  if (id === 'users')  loadUsers();
-}
-
-function refresh() { renderSidebar(); renderDashboard(); renderQuestions(); }
-
-async function loadUsers() {
-  if (!el('msg-users')) {
-    const msgDiv = document.createElement('div');
-    msgDiv.id = 'msg-users';
-    msgDiv.className = 'msg';
-    const usersList = el('users-list');
-    if (usersList) usersList.parentNode.insertBefore(msgDiv, usersList);
-  }
-  try {
-    const list = await apiGet('/api/users');
-    setText('users-count', `${list.length} player${list.length !== 1 ? 's' : ''}`);
-    setHTML('users-list', list.length
-      ? list.map((u, i) => `
-          <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border)${i===list.length-1?';border-bottom:none':''}">
-            ${avatarHTML(u.name, i, 34)}
-            <div style="flex:1"><div style="font-size:14px;font-weight:600">${u.name}</div><div style="font-size:12px;color:var(--muted)">${u.email}</div></div>
-            <span style="font-family:var(--font-cond);font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:2px;background:rgba(24,194,90,0.1);color:var(--green);margin-right:8px">${u.role}</span>
-            <button onclick="resetUserPassword('${u.email}','${u.name}')" title="Resetear contraseña" style="background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);border-radius:3px;padding:5px 9px;color:#f5a623;cursor:pointer;font-size:11px;font-family:var(--font-cond);font-weight:700;letter-spacing:1px">🔑 RESET</button>
-            <button onclick="deleteUser('${u.email}','${u.name}')" title="Delete usuario" style="background:rgba(232,69,69,0.1);border:1px solid rgba(232,69,69,0.2);border-radius:3px;padding:5px 9px;color:#e84545;cursor:pointer;font-size:11px;font-family:var(--font-cond);font-weight:700;letter-spacing:1px">🗑 DELETE</button>
-          </div>`)
-        .join('')
-      : `<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px">No registered players yet</div>`
-    );
-  } catch {
-    setHTML('users-list', `<div style="padding:20px;color:var(--muted)">Error loading players</div>`);
-  }
-}
-
-// ════════════════════════════════════
-//  EVENT MANAGEMENT
-// ════════════════════════════════════
-
-let editingEventId = null;
-
-async function loadEvents() {
-  try {
-    const events = await apiGet('/api/events');
-    renderEventsList(events);
-  } catch(e) {
-    console.error('loadEvents error:', e);
-    setHTML('events-list', '<div style="padding:20px;color:var(--muted)">Error loading events: ' + e.message + '</div>');
-  }
-}
-
-function renderEventsList(events) {
-  if (!events.length) {
-    setHTML('events-list', `
-      <div style="text-align:center;padding:60px;color:var(--muted);font-size:14px">
-        No hay eventos todavía.<br>
-        <button class="btn btn-primary" style="margin-top:20px" onclick="openNewEvent()">Create primer evento</button>
-      </div>`);
-    return;
-  }
-
-  setHTML('events-list', events.map(ev => {
-    const color = CAT_META[ev.category]?.color || '#888';
-    const isActive = ev.status === 'active';
-    const statusColor = isActive ? '#18c25a' : ev.status === 'upcoming' ? '#3B9EFF' : 'var(--muted)';
-    const statusLabel = { active:'🔓 ABIERTO', upcoming:'📅 PRÓXIMO', finished:'⏹ FINALIZADO', closed:'🔒 CERRADO' }[ev.status] || ev.status;
-
+  // Scores with answer indicators
+  el('sb-list').innerHTML = sorted.map((p, i) => {
+    const barW  = maxScore > 0 ? Math.round((p.score / maxScore) * 100) : 0;
+    const ans   = answers.find(a => a.playerName === p.name);
+    const indicator = ans
+      ? `<span style="font-size:13px;margin-left:4px">${ans.correct ? '✓' : '✗'}</span>`
+      : `<span style="font-size:11px;color:rgba(255,255,255,0.3);margin-left:4px">—</span>`;
+    const isMe = p.name === MY_NAME;
     return `
-      <div class="card" style="margin-bottom:12px;border-left:3px solid ${color}">
-        <div class="card-header" style="background:var(--card-bg)">
-          <div style="display:flex;align-items:center;gap:10px;flex:1;flex-wrap:wrap">
-            <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0"></div>
-            <span class="card-title" style="font-size:15px">${ev.title}</span>
-            <span style="font-size:11px;color:var(--muted)">${ev.category}</span>
-            <span style="font-family:var(--font-cond);font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:2px;background:rgba(45,125,210,0.1);color:var(--blue)">${ev.rounds||6} rounds</span>
-            <span style="font-size:11px;color:${statusColor};font-weight:600">${statusLabel}</span>
-          </div>
-          <div class="q-actions">
-            <button class="btn-icon" onclick="openEditEvent(${ev.id})" title="Edit">
-              <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            </button>
-            <button class="btn-icon danger" onclick="deleteEvent(${ev.id})" title="Delete">
-              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-            </button>
-          </div>
-        </div>
-        ${ev.description ? `<div style="padding:8px 18px;font-size:13px;color:var(--muted)">${ev.description}</div>` : ''}
-        <div style="padding:10px 18px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
-          <div>
-            <span id="ev-players-${ev.id}" style="font-size:12px;color:var(--muted)">👥 0 in room</span>
-            <span id="ev-state-${ev.id}" style="font-size:12px;color:var(--muted);margin-left:12px"></span>
-          </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            ${!isActive ? `<button onclick="adminOpenEvent(${ev.id})" style="padding:5px 12px;background:rgba(45,125,210,0.15);border:1px solid rgba(45,125,210,0.3);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--blue);cursor:pointer">🔓 Open</button>` : ''}
-            ${isActive ? `
-              <button onclick="adminStartEvent(${ev.id})" style="padding:5px 12px;background:rgba(24,194,90,0.15);border:1px solid rgba(24,194,90,0.3);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#18c25a;cursor:pointer">▶ Start</button>
-              <button onclick="adminStopEvent(${ev.id})" style="padding:5px 12px;background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#f5a623;cursor:pointer">⏸ Parar</button>
-              <button onclick="adminFinishEvent(${ev.id})" style="padding:5px 12px;background:rgba(24,194,90,0.1);border:1px solid rgba(24,194,90,0.3);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#18c25a;cursor:pointer">✅ Finalizar</button>
-              <button onclick="adminCloseEvent(${ev.id})" style="padding:5px 12px;background:rgba(232,69,69,0.1);border:1px solid rgba(232,69,69,0.2);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#e84545;cursor:pointer">🔒 Close</button>
-            ` : ''}
-          </div>
-        </div>
+      <div class="sb-row ${i===0?'leader':''} ${isMe?'is-me':''}" style="--bar:${barW}%">
+        <div class="sb-pos ${i===0?'first':''}">${i+1}</div>
+        <div class="sb-dot" style="background:${p.color}"></div>
+        <span class="sb-name">${p.name} ${indicator}</span>
+        ${isMe ? '<span class="sb-you">You</span>' : ''}
+        <span class="sb-score" style="color:${p.color}">${p.score}</span>
       </div>`;
-  }).join(''));
+  }).join('');
 
-  connectAdminSocket();
+  // Admin controls next round — no button for players
+  el('sb-btn-next').style.display = 'none';
+
+  // Simple countdown display — server controls actual timing
+  let t = 5;
+  el('sb-fill').style.width      = '100%';
+  el('sb-fill').style.transition = 'none';
+  el('sb-countdown-text').textContent = `Next in ${t}s...`;
+
+  clearInterval(sbCountdown);
+  sbCountdown = setInterval(() => {
+    t--;
+    el('sb-fill').style.transition = 'width 1s linear';
+    el('sb-fill').style.width      = `${Math.max(0, (t / 5)) * 100}%`;
+    el('sb-countdown-text').textContent = t > 0 ? `Next in ${t}s...` : 'Loading...';
+    if (t <= 0) clearInterval(sbCountdown);
+  }, 1000);
 }
 
-function openNewEvent() {
-  editingEventId = null;
-  _evQCount = 0;
-  setText('modal-event-title', 'New event');
-  renderEventForm({});
-  openEventModal();
+function hostNextRound() {
+  clearInterval(sbCountdown);
+  if (socket) socket.emit('event:nextRound');
 }
 
-async function openEditEvent(id) {
-  try {
-    const ev = await apiGet(`/api/events/${id}`);
-    editingEventId = id;
-    _evQCount = 0;
-    setText('modal-event-title', 'Edit event');
-    renderEventForm(ev);
-    if (ev.questions && ev.questions.length) {
-      ev.questions.forEach(q => addEventQuestion(q));
+// ── RESULTS / PODIUM ─────────────────────────────────────────────────────────
+function renderResults(room) {
+  clearInterval(timerInterval);
+  clearInterval(sbCountdown);
+
+  const sorted = [...(room.players||[])].sort((a, b) => b.score - a.score);
+  const medals = ['🥇','🥈','🥉'];
+  const rankClasses = ['gold','silver','bronze'];
+
+  el('ev-podium-sub').textContent = sorted[0]
+    ? `${sorted[0].name} wins with ${sorted[0].score} points!`
+    : 'Game over';
+
+  el('ev-podium-list').innerHTML = sorted.map((p, i) => `
+    <div class="ev-podium-row" style="animation-delay:${i*0.07}s">
+      <div class="ev-podium-rank ${rankClasses[i]||''}">${medals[i]||i+1}</div>
+      <div class="ev-podium-dot" style="background:${p.color}"></div>
+      <span class="ev-podium-name">${p.name}</span>
+      ${p.name === MY_NAME ? '<span class="ev-podium-you">You</span>' : ''}
+      <span class="ev-podium-score" style="color:${p.color}">${p.score}</span>
+    </div>
+  `).join('');
+}
+
+// ── MINI SCORES ───────────────────────────────────────────────────────────────
+function renderMiniScores(room, containerId) {
+  const sorted = [...(room.players||[])].sort((a, b) => b.score - a.score);
+  const el_c = el(containerId);
+  if (!el_c) return;
+  el_c.innerHTML = sorted.map(p => `
+    <div class="mini-score-chip">
+      <div class="dot" style="background:${p.color}"></div>
+      <span style="font-size:12px">${p.name}</span>
+      <span class="mini-score-pts">${p.score}</span>
+    </div>
+  `).join('');
+}
+
+// ── WHEEL DRAW (same as online-juego.js) ─────────────────────────────────────
+function drawWheel(cats, angle, highlightId = null) {
+  const canvas = el('wheel-canvas');
+  if (!canvas) return;
+  const W = canvas.width, H = canvas.height;
+  const ctx = canvas.getContext('2d');
+  const cx = W/2, cy = H/2;
+  const r  = W/2 - 6;
+  const n  = cats.length;
+  const slice = (2 * Math.PI) / n;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(angle);
+  ctx.translate(-cx, -cy);
+
+  cats.forEach((cat, i) => {
+    const s = -Math.PI/2 + i*slice;
+    const e = s + slice;
+    const highlight = highlightId === cat.id;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, highlight ? r+5 : r, s, e);
+    ctx.closePath();
+    if (highlight) {
+      const grad = ctx.createRadialGradient(cx, cy, r*0.3, cx, cy, r+5);
+      grad.addColorStop(0, lightenColor(cat.color, 80));
+      grad.addColorStop(1, cat.color);
+      ctx.fillStyle = grad;
+    } else {
+      ctx.fillStyle = cat.color;
     }
-    openEventModal();
-  } catch { alert('Error loading event'); }
-}
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
 
-function renderEventForm(ev) {
-  const allCatOptions = Object.entries(CAT_META)
-    .map(([id, m]) => `<option value="${id}" ${ev.category === id ? 'selected' : ''}>${m.name}</option>`).join('');
-  const rounds = ev.rounds || 6;
+    const mid    = s + slice/2;
+    const emojiR = r * 0.70;
+    const nameR  = r * 0.42;
+    const emojiSz = Math.max(11, Math.min(18, Math.floor(r * slice / 2.4)));
+    const nameSz  = Math.max(7,  Math.min(11, Math.floor(r * slice / 4)));
 
-  setHTML('modal-event-body', `
-    <div class="field">
-      <label>Event title</label>
-      <input type="text" id="ev-title" value="${ev.title || ''}" placeholder="Event name">
-    </div>
-    <div class="field">
-      <label>Description</label>
-      <textarea id="ev-desc" rows="2" placeholder="Description breve">${ev.description || ''}</textarea>
-    </div>
-    <div class="form-grid">
-      <div class="field">
-        <label>Category</label>
-        <select id="ev-cat">${allCatOptions}</select>
-      </div>
-      <div class="field">
-        <label>Initial status</label>
-        <select id="ev-status">
-          <option value="upcoming" ${ev.status === 'upcoming' ? 'selected' : ''}>📅 Upcoming (hidden)</option>
-          <option value="active"   ${ev.status === 'active'   ? 'selected' : ''}>🔓 Open (visible)</option>
-          <option value="finished" ${ev.status === 'finished' ? 'selected' : ''}>⏹ Finished</option>
-        </select>
-      </div>
-    </div>
-    <div class="field">
-      <label>Number of rounds</label>
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:6px">
-        ${[4,6,8,10,12].map(n => `
-          <button type="button" onclick="selectEventRounds(${n})" id="ev-round-btn-${n}"
-            class="round-btn ${n === rounds ? 'selected' : ''}">${n}</button>`).join('')}
-      </div>
-      <input type="hidden" id="ev-rounds" value="${rounds}">
-    </div>
-    <div class="form-grid">
-      <div class="field">
-        <label>Start date (opcional)</label>
-        <input type="datetime-local" id="ev-starts" value="${ev.starts_at ? ev.starts_at.replace(' ','T').slice(0,16) : ''}">
-      </div>
-      <div class="field">
-        <label>End date (opcional)</label>
-        <input type="datetime-local" id="ev-ends" value="${ev.ends_at ? ev.ends_at.replace(' ','T').slice(0,16) : ''}">
-      </div>
-    </div>
+    ctx.save();
+    ctx.translate(cx + Math.cos(mid)*emojiR, cy + Math.sin(mid)*emojiR);
+    ctx.rotate(mid + Math.PI/2);
+    ctx.font = `${emojiSz}px serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(cat.emoji || '', 0, 0);
+    ctx.restore();
 
-    <!-- PREGUNTAS -->
-    <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <span style="font-family:var(--font-cond);font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Event questions</span>
-      </div>
-      <div id="ev-questions-list" style="display:flex;flex-direction:column;gap:10px"></div>
-      <div id="ev-no-questions" style="text-align:center;padding:20px;color:var(--muted);font-size:13px">
-        No questions yet.
-      </div>
-      <button type="button" onclick="addEventQuestion()" style="width:100%;margin-top:12px;padding:10px;background:rgba(45,125,210,0.12);border:1.5px dashed rgba(45,125,210,0.4);border-radius:4px;font-family:var(--font-cond);font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--blue);cursor:pointer;transition:background .15s" onmouseover="this.style.background='rgba(45,125,210,0.22)'" onmouseout="this.style.background='rgba(45,125,210,0.12)'">+ Add question</button>
-    </div>
-  `);
-
-  setHTML('modal-event-footer', `
-    <button class="btn btn-ghost" onclick="closeEventModal()">Cancel</button>
-    <button class="btn btn-primary" onclick="saveEvent()">
-      ${editingEventId ? 'Save changes' : 'Create event'}
-    </button>
-  `);
-}
-
-function selectEventRounds(n) {
-  el('ev-rounds').value = n;
-  [4,6,8,10,12].forEach(x => {
-    const btn = el(`ev-round-btn-${x}`);
-    if (!btn) return;
-    btn.className = 'round-btn' + (x === n ? ' selected' : '');
+    const shortName = cat.name.length > 6 ? cat.name.slice(0,6) : cat.name;
+    ctx.save();
+    ctx.translate(cx + Math.cos(mid)*nameR, cy + Math.sin(mid)*nameR);
+    ctx.rotate(mid + Math.PI/2);
+    ctx.font = `bold ${nameSz}px 'Barlow Condensed', sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.fillText(shortName.toUpperCase(), 0, 0);
+    ctx.restore();
   });
+
+  ctx.restore();
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.strokeStyle = 'rgba(45,125,210,0.6)';
+  ctx.lineWidth = 5;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, 22, 0, Math.PI*2);
+  ctx.fillStyle = '#0d1130';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(45,125,210,0.8)';
+  ctx.lineWidth = 3;
+  ctx.stroke();
 }
 
-// ── PREGUNTAS DEL EVENTO ──────────────────────────────────────────────────────
-let _evQCount = 0;
+function lightenColor(hex, amount = 60) {
+  const r = Math.min(255, parseInt(hex.slice(1,3),16) + amount);
+  const g = Math.min(255, parseInt(hex.slice(3,5),16) + amount);
+  const b = Math.min(255, parseInt(hex.slice(5,7),16) + amount);
+  return `rgb(${r},${g},${b})`;
+}
 
-function addEventQuestion(existing = null) {
-  _evQCount++;
-  const qId  = _evQCount;
-  const list = el('ev-questions-list');
-  const noQ  = el('ev-no-questions');
-  if (noQ) noQ.style.display = 'none';
+function hexToRgba(hex, alpha) {
+  if (!hex || !hex.startsWith('#')) return `rgba(100,100,100,${alpha})`;
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
 
-  const opts = existing ? existing.options : ['', '', ''];
-  const existingCat   = existing ? (existing.category || '') : '';
-  const existingImage = existing ? (existing.image_url || '') : '';
-  const div  = document.createElement('div');
-  div.id = `evq-block-${qId}`;
-  div.style.cssText = 'background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:4px;padding:14px';
-  div.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <span style="font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">Question ${qId}</span>
-      <button type="button" onclick="removeEvQ(${qId})" style="background:none;border:none;color:#e84545;cursor:pointer;font-size:16px">✕</button>
-    </div>
-    <div class="field" style="margin-bottom:8px">
-      <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;display:block;margin-bottom:4px">Question</label>
-      <input type="text" id="evq-q-${qId}" value="${existing ? (existing.question||'').replace(/"/g,'&quot;') : ''}" placeholder="Write the question..." style="width:100%;padding:10px;background:var(--bg);border:1.5px solid var(--border);border-radius:3px;color:var(--text);font-size:14px;outline:none">
-    </div>
-    <div class="field" style="margin-bottom:8px">
-      <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#18c25a;font-weight:700;display:block;margin-bottom:4px">✓ Correct answer</label>
-      <input type="text" id="evq-a-${qId}" value="${existing ? (existing.answer||'').replace(/"/g,'&quot;') : ''}" placeholder="Correct answer..." style="width:100%;padding:10px;background:var(--bg);border:1.5px solid #18c25a;border-radius:3px;color:#18c25a;font-size:14px;outline:none">
-    </div>
-    <div class="field" style="margin-bottom:8px">
-      <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#a259ff;font-weight:700;display:block;margin-bottom:4px">🎯 Category en ruleta</label>
-      <div style="display:flex;gap:6px">
-        <select id="evq-cat-${qId}" onchange="handleEvqCatChange(${qId})" style="flex:1;padding:8px 10px;background:var(--bg);border:1.5px solid #a259ff;border-radius:3px;color:var(--text);font-size:13px;outline:none">
-          <option value="">-- No specific category --</option>
-          <option value="sports">⚽ Sports</option>
-          <option value="geo">🌍 Geography</option>
-          <option value="culture">🎭 Culture</option>
-          <option value="history">📜 History</option>
-          <option value="eu">🇪🇺 Europa</option>
-          <option value="__custom__">✏️ Custom category...</option>
-        </select>
-        <input type="text" id="evq-cat-custom-${qId}" placeholder="Category name" style="display:none;flex:1;padding:8px 10px;background:var(--bg);border:1.5px solid #a259ff;border-radius:3px;color:var(--text);font-size:13px;outline:none">
-      </div>
-    </div>
-    <div class="field" style="margin-bottom:8px">
-      <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#3B9EFF;font-weight:700;display:block;margin-bottom:4px">🖼 Background image URL (optional)</label>
-      <input type="text" id="evq-img-${qId}" value="${existingImage}" placeholder="https://... (leave empty for default)" style="width:100%;padding:8px 10px;background:var(--bg);border:1.5px solid rgba(59,158,255,0.4);border-radius:3px;color:var(--text);font-size:13px;outline:none">
-    </div>
-    <div class="field" style="margin-bottom:0">
-      <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;display:block;margin-bottom:4px">Options (minimum 2)</label>
-      <div id="evq-opts-${qId}" style="display:flex;gap:6px;flex-wrap:wrap">
-        ${opts.map((opt, i) => `<input type="text" id="evq-opt-${qId}-${i}" value="${(opt||'').replace(/"/g,'&quot;')}" placeholder="Option ${i+1}" style="flex:1;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:13px;outline:none;min-width:100px">`).join('')}
-        <button type="button" onclick="addEvQOpt(${qId})" style="padding:8px 10px;background:rgba(255,255,255,0.05);border:1px dashed var(--border);border-radius:3px;color:var(--muted);cursor:pointer;font-size:12px">+ option</button>
-      </div>
-    </div>`;
-  list.appendChild(div);
-  // Set category if exists (handles both preset and custom values)
-  if (existingCat) {
-    const catSel = el(`evq-cat-${qId}`);
-    const presets = ['sports','geo','culture','history','eu'];
-    if (catSel) {
-      if (presets.includes(existingCat)) {
-        catSel.value = existingCat;
-      } else {
-        catSel.value = '__custom__';
-        const customInp = el(`evq-cat-custom-${qId}`);
-        if (customInp) { customInp.style.display = 'block'; customInp.value = existingCat; }
-      }
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+function goToEvents() { goTo('trivial-eventos.html'); }
+function goHome()     { goTo('trivial-modos.html'); }
+
+// ── COMODINES PRIVADOS ────────────────────────────────────────────────────────
+let _wcTimeout = null;
+
+function showPrivateWildcard(wildcard, message) {
+  clearTimeout(_wcTimeout);
+  const colors = { doble:'#FFD700', robo:'#ff4dff', bomba:'#ff6600', skip:'#00e5ff', suerte:'#00ff88' };
+  const color  = colors[wildcard] || '#fff';
+
+  let toast = document.getElementById('wc-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'wc-toast';
+    toast.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:999;padding:14px 22px;border-radius:10px;font-weight:800;font-size:15px;letter-spacing:1px;text-align:center;max-width:320px;box-shadow:0 4px 24px rgba(0,0,0,0.5);transition:opacity .3s;pointer-events:none';
+    document.body.appendChild(toast);
+  }
+
+  toast.style.background = color + '22';
+  toast.style.border     = `2px solid ${color}`;
+  toast.style.color      = color;
+  toast.textContent      = message;
+  toast.style.opacity    = '1';
+
+  _wcTimeout = setTimeout(() => { toast.style.opacity = '0'; }, 5000);
+}
+
+function showWildcardResult(message) {
+  let result = document.getElementById('wc-result');
+  if (!result) {
+    result = document.createElement('div');
+    result.id = 'wc-result';
+    result.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:999;padding:10px 20px;border-radius:8px;background:rgba(0,0,0,0.8);border:1px solid rgba(255,255,255,0.2);font-weight:700;font-size:14px;color:#e8eaf6;text-align:center;max-width:300px;pointer-events:none;transition:opacity .3s';
+    document.body.appendChild(result);
+  }
+  result.textContent  = message;
+  result.style.opacity = '1';
+  setTimeout(() => { result.style.opacity = '0'; }, 4000);
+}
+
+// ── GLOBAL RANKING ────────────────────────────────────────────────────────────
+function showGlobalRanking(ranking) {
+  clearInterval(timerInterval);
+  clearInterval(sbCountdown);
+  showScreen('global-ranking');
+
+  const myEntry = ranking.find(p => p.name === MY_NAME);
+  const myPos   = myEntry ? myEntry.position : ranking.length;
+  const myScore = myEntry ? myEntry.score : 0;
+  const top10   = ranking.slice(0, 10);
+
+  // Cabecera personal
+  const grHeader = el('gr-my-result');
+  if (grHeader) {
+    if (myPos <= 10) {
+      const medals = ['🥇','🥈','🥉'];
+      grHeader.innerHTML = `
+        <div class="gr-my-pos top">${medals[myPos-1] || '#' + myPos}</div>
+        <div class="gr-my-name">${MY_NAME}</div>
+        <div class="gr-my-score">${myScore} pts</div>`;
+      grHeader.className = 'gr-my-result top10';
+    } else {
+      grHeader.innerHTML = `
+        <div class="gr-my-text">Has acabado en el puesto <strong>#${myPos}</strong> con <strong>${myScore} puntos</strong></div>`;
+      grHeader.className = 'gr-my-result outside';
     }
+  }
+
+  // Top 10
+  const list = el('gr-top10-list');
+  if (list) {
+    const medals = ['🥇','🥈','🥉'];
+    list.innerHTML = top10.map((p, i) => {
+      const isMe   = p.name === MY_NAME;
+      const medal  = medals[i] || '';
+      // Detectar empates
+      const tied   = top10.filter(x => x.score === p.score).length > 1;
+      return `
+        <div class="gr-row ${isMe ? 'is-me' : ''} ${tied ? 'tied' : ''}">
+          <div class="gr-pos">${medal || p.position}</div>
+          <div class="gr-name">${p.name} ${isMe ? '<span class="player-you">Tú</span>' : ''}</div>
+          ${tied ? '<div class="gr-tied">EMPATE</div>' : ''}
+          <div class="gr-score">${p.score} pts</div>
+        </div>`;
+    }).join('');
   }
 }
 
-function removeEvQ(qId) {
-  const b = el(`evq-block-${qId}`); if (b) b.remove();
-  const list = el('ev-questions-list');
-  if (list && !list.children.length) { const n = el('ev-no-questions'); if (n) n.style.display = 'block'; }
+// ── AUDIO ─────────────────────────────────────────────────────────────────────
+const EventAudio = (() => {
+  let ctx = null;
+  function getCtx() {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+  function tone(freq, type, vol, dur, delay = 0) {
+    try {
+      const c = getCtx();
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.connect(gain); gain.connect(c.destination);
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, c.currentTime + delay);
+      gain.gain.setValueAtTime(0, c.currentTime + delay);
+      gain.gain.linearRampToValueAtTime(vol, c.currentTime + delay + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + delay + dur);
+      osc.start(c.currentTime + delay);
+      osc.stop(c.currentTime + delay + dur + 0.05);
+    } catch(e) {}
+  }
+  return {
+    chatMsg() { tone(880, 'sine', 0.08, 0.06, 0); tone(1100, 'sine', 0.06, 0.08, 0.05); },
+  };
+})();
+
+// ── CHAT ──────────────────────────────────────────────────────────────────────
+let _chatOpen = false;
+let _unread   = 0;
+
+function toggleChat() {
+  _chatOpen = !_chatOpen;
+  document.getElementById('chat-panel').classList.toggle('collapsed', !_chatOpen);
+  if (_chatOpen) {
+    _unread = 0;
+    const badge = document.getElementById('chat-unread');
+    if (badge) badge.style.display = 'none';
+    const msgs = document.getElementById('chat-messages');
+    if (msgs) msgs.scrollTop = msgs.scrollHeight;
+  }
 }
 
-function handleEvqCatChange(qId) {
-  const sel = el(`evq-cat-${qId}`);
-  const inp = el(`evq-cat-custom-${qId}`);
-  if (!sel || !inp) return;
-  inp.style.display = sel.value === '__custom__' ? 'block' : 'none';
-  if (sel.value === '__custom__') inp.focus();
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg   = (input.value || '').trim();
+  if (!msg || !socket) return;
+  socket.emit('chat:send', { message: msg, playerName: MY_NAME });
+  input.value = '';
 }
 
-function addEvQOpt(qId) {
-  const wrap = el(`evq-opts-${qId}`); if (!wrap) return;
-  const n = wrap.querySelectorAll('input').length;
-  const inp = document.createElement('input');
-  inp.type = 'text'; inp.id = `evq-opt-${qId}-${n}`; inp.placeholder = `Option ${n+1}`;
-  inp.style.cssText = 'flex:1;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:13px;outline:none;min-width:100px';
-  wrap.insertBefore(inp, wrap.lastElementChild);
+function addChatMsg(playerName, message, isSystem = false) {
+  const msgs = document.getElementById('chat-messages');
+  if (!msgs) return;
+  const isMe = playerName === MY_NAME;
+  const div  = document.createElement('div');
+
+  if (isSystem) {
+    div.className = 'chat-msg system';
+    div.innerHTML = `<span class="chat-msg-text">${message}</span>`;
+  } else {
+    div.className = `chat-msg${isMe ? ' is-me' : ''}`;
+    div.innerHTML = `
+      <span class="chat-msg-name${isMe ? ' me' : ''}">${isMe ? 'You' : playerName}</span>
+      <span class="chat-msg-text">${message}</span>`;
+  }
+
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  if (!isSystem) EventAudio.chatMsg();
+  if (!_chatOpen && !isSystem) {
+    _unread++;
+    const badge = document.getElementById('chat-unread');
+    if (badge) { badge.textContent = _unread; badge.style.display = 'inline-flex'; }
+  }
 }
-
-function collectEvQuestions() {
-  const list = el('ev-questions-list'); if (!list) return [];
-  const qs = [];
-  list.querySelectorAll('[id^="evq-block-"]').forEach(block => {
-    const qId = block.id.replace('evq-block-','');
-    const question = (el(`evq-q-${qId}`)?.value||'').trim();
-    const answer   = (el(`evq-a-${qId}`)?.value||'').trim();
-    const options  = [];
-    block.querySelectorAll(`input[id^="evq-opt-${qId}-"]`).forEach(i => { const v=i.value.trim(); if(v) options.push(v); });
-    if (question && answer && options.length >= 2) {
-      if (!options.includes(answer)) options.push(answer);
-      const catSel   = el(`evq-cat-${qId}`);
-      const catRaw   = catSel?.value || '';
-      const category = catRaw === '__custom__'
-        ? (el(`evq-cat-custom-${qId}`)?.value || '').trim() || null
-        : catRaw || null;
-      const image_url = (el(`evq-img-${qId}`)?.value || '').trim() || null;
-      qs.push({ question, answer, options, difficulty:'medio', category, image_url });
-    }
-  });
-  return qs;
-}
-
-async function saveEvent() {
-  const title     = el('ev-title').value.trim();
-  const desc      = el('ev-desc').value.trim();
-  const category  = el('ev-cat').value;
-  const status    = el('ev-status').value;
-  const rounds    = parseInt(el('ev-rounds').value) || 6;
-  const starts_at = el('ev-starts').value || null;
-  const ends_at   = el('ev-ends').value   || null;
-
-  if (!title)    return alert('The event needs a title');
-  if (!category) return alert('Please select a category');
-
-  const questions = collectEvQuestions();
-  if (!questions.length) return alert('Add at least one question to the event');
-
-  const payload = { title, description:desc, category, difficulty:'medio', status, rounds, starts_at, ends_at, questions };
-
-  try {
-    let res;
-    if (editingEventId) {
-      res = await fetch(`${SERVER}/api/events/${editingEventId}`, {
-        method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
-      }).then(r=>r.json());
-    } else {
-      res = await apiPost('/api/events', payload);
-    }
-    if (res.ok) {
-      closeEventModal();
-      flashMsg(editingEventId ? `Event updated (${questions.length} questions)` : `Event created with ${questions.length} questions`, 'success', 'msg-events');
-      loadEvents();
-    } else { alert(res.msg || 'Error saving'); }
-  } catch(e) { alert('Error de conexión: ' + e.message); }
-}
-
-async function deleteEvent(id) {
-  if (!confirm('Delete this event?')) return;
-  try {
-    const res = await fetch(`${SERVER}/api/events/${id}`, { method: 'DELETE' }).then(r => r.json());
-    if (res.ok) { flashMsg('Event deleted', 'success', 'msg-events'); loadEvents(); }
-    else alert(res.msg || 'Error deleting');
-  } catch { alert('Connection error'); }
-}
-
-function openEventModal()  { el('modal-event').classList.add('show'); }
-function closeEventModal() { el('modal-event').classList.remove('show'); }
-document.addEventListener('DOMContentLoaded', () => {
-  const me = el('modal-event');
-  if (me) me.addEventListener('click', e => { if (e.target === me) closeEventModal(); });
-  const m = el('modal');
-  if (m) m.addEventListener('click', e => { if (e.target === m) closeModal(); });
-});
-
-// ── ADMIN SOCKET — control eventos ────────────────────────────────────────────
-let adminSocket = null;
-
-function connectAdminSocket() {
-  if (adminSocket && adminSocket.connected) return;
-  adminSocket = io(SERVER, { transports: ['polling'] });
-  adminSocket.on('connect', () => adminSocket.emit('admin:watchEvents'));
-  adminSocket.on('admin:eventStatus', ({ eventId, players, state, currentRound, totalRounds }) => {
-    const pe = el(`ev-players-${eventId}`);
-    const se = el(`ev-state-${eventId}`);
-    if (pe) pe.textContent = `👥 ${players} in room`;
-    if (se) {
-      const labels = { waiting:'⏳ Waiting for players', playing:'▶ En curso', spinning:`🎡 Round ${currentRound}/${totalRounds}`, question:`❓ Round ${currentRound}/${totalRounds}`, answer:`✅ Round ${currentRound}/${totalRounds}`, finished:'🏁 Terminado' };
-      se.textContent = labels[state] || '';
-    }
-  });
-}
-
-function adminOpenEvent(id)  { toggleEventStatus(id, 'active'); }
-
-function adminCloseEvent(id) {
-  if (!confirm('¿Close el evento? Dejará de aparecer para los players.')) return;
-  if (adminSocket) adminSocket.emit('admin:stopEvent', { eventId: String(id) });
-  toggleEventStatus(id, 'closed');
-}
-
-function adminStartEvent(id) {
-  if (!adminSocket) return alert('Sin conexión');
-  adminSocket.once('error', ({ msg }) => alert('⚠️ ' + msg));
-  adminSocket.emit('admin:startEvent', { eventId: String(id) });
-  flashMsg('▶ Starting game...', 'success', 'msg-events');
-}
-
-function adminStopEvent(id) {
-  if (!confirm('¿Parar la partida en curso?')) return;
-  if (!adminSocket) return alert('Sin conexión');
-  adminSocket.emit('admin:stopEvent', { eventId: String(id) });
-  flashMsg('⏸ Game stopped', 'success', 'msg-events');
-}
-
-async function adminFinishEvent(id) {
-  if (!confirm('¿Finalizar el evento? Los jugadores volverán al lobby y podrán unirse de nuevo cuando lances la siguiente partida.')) return;
-  if (!adminSocket) return alert('Sin conexión');
-  // 1. Emit finish event to server — sends players back to lobby
-  adminSocket.emit('admin:finishEvent', { eventId: String(id) });
-  // 2. Reset lobby in DB so it stays active but startable again
-  await toggleEventStatus(id, 'active');
-  flashMsg('✅ Evento finalizado — lobby listo para nueva partida', 'success', 'msg-events');
-}
-
-async function toggleEventStatus(id, newStatus) {
-  try {
-    const ev = await apiGet(`/api/events/${id}`);
-    const payload = {
-      title: ev.title, description: ev.description||'', category: ev.category,
-      difficulty: ev.difficulty||'medio', status: newStatus, rounds: ev.rounds||6,
-      starts_at: ev.starts_at||null, ends_at: ev.ends_at||null,
-      questions: (ev.questions||[]).map(q => ({
-        question: q.question, answer: q.answer, difficulty: q.difficulty||'medio',
-        options: Array.isArray(q.options) ? q.options : JSON.parse(q.options||'[]'),
-        category: q.category || null,
-      })),
-    };
-    const res = await fetch(`${SERVER}/api/events/${id}`, {
-      method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
-    }).then(r=>r.json());
-    if (res.ok) {
-      flashMsg('Status updated', 'success', 'msg-events');
-      // If opening the event, reset the lobby so players can join fresh
-      if (newStatus === 'active' && adminSocket) {
-        adminSocket.emit('admin:resetLobby', { eventId: String(id) });
-      }
-      loadEvents();
-    }
-    else alert(res.msg || 'Error');
-  } catch(e) { alert('Error: ' + e.message); }
-}
-
-// ── GESTIÓN DE USUARIOS ──────────────────────────────────────────────────────
-async function resetUserPassword(email, name) {
-  const newPass = prompt(`New password para ${name}:`);
-  if (!newPass) return;
-  if (newPass.length < 6) { alert('At least 6 characters'); return; }
-  try {
-    const res = await fetch(`${SERVER}/api/admin/users/${encodeURIComponent(email)}/reset-password`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ newPassword: newPass }),
-    }).then(r => r.json());
-    if (res.ok) { flashMsg(`✅ Password de ${name} actualizada`, 'success', 'msg-users'); }
-    else alert(res.msg || 'Error');
-  } catch { alert('Error de conexión'); }
-}
-
-async function deleteUser(email, name) {
-  if (!confirm(`¿Delete al usuario ${name}? Esta acción no se puede deshacer.`)) return;
-  try {
-    const res = await fetch(`${SERVER}/api/admin/users/${encodeURIComponent(email)}`, {
-      method: 'DELETE',
-    }).then(r => r.json());
-    if (res.ok) { flashMsg(`🗑 User ${name} deleted`, 'success', 'msg-users'); loadUsers(); }
-    else alert(res.msg || 'Error');
-  } catch { alert('Error de conexión'); }
-}
-
-// ── STARTUP ───────────────────────────────────────────────────────────────────
-loadData();
-loadUsers();
-loadEvents();
