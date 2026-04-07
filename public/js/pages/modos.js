@@ -60,7 +60,7 @@ async function loadActiveEvents() {
     // Cargar conteo de players en cada evento
     banner.innerHTML = active.map(ev => {
       const color = CAT_COLORS[ev.category] || '#2d7dd2';
-      const bg    = CAT_BG[ev.category] || 'images/bg-ia.png';
+      const bg    = ev.banner_image || CAT_BG[ev.category] || 'images/bg-ia.png';
       const desc  = ev.description ? `<div class="event-live-desc">${ev.description}</div>` : '';
       return `
         <a href="trivial-eventos.html" style="text-decoration:none;display:block">
