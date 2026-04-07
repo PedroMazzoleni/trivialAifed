@@ -374,8 +374,6 @@ function _loadQuestion(io, room, categoryId, difficulty) {
   room.currentCategory = categoryId; room.currentDifficulty = difficulty;
   room.currentQuestion = q; room.specialEffect = null;
   room.state = 'question'; room.allAnswers = [];
-  room.privateWildcards = {};
-  _assignPrivateWildcards(io, room);
   broadcastGroup(io, room.groupKey);
 
   clearTimeout(room._questionTimer);
