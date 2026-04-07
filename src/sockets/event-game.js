@@ -278,14 +278,13 @@ function registerEventGameHandlers(io, socket) {
   socket.on('admin:resetLobby', async ({ eventId }) => {
     const eid = String(eventId);
     const prevData = eventLobbies[eid]?.eventData || {};
-    const prevQuestions = eventLobbies[eid]?.eventQuestions || [];
-    const questions = prevQuestions.length ? prevQuestions : await loadEventQuestions(eid);
+    const questions = await loadEventQuestions(eid);
     eventLobbies[eid] = {
       eventId: eid, eventData: prevData, players: [],
       started: false, groups: [], doneGroups: 0, globalScores: {}, eventQuestions: questions,
     };
     io.to('event:' + eid).emit('event:lobbyUpdate', { players: [], totalPlayers: 0 });
-    console.log(`🔄 Lobby reset by admin — event ${eid}`);
+    console.log(`🔄 Lobby reset by admin — event ${eid}, ${questions.length} questions reloaded`);
   });
 
   socket.on('admin:stopEvent', ({ eventId }) => {
