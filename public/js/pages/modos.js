@@ -60,19 +60,22 @@ async function loadActiveEvents() {
     // Cargar conteo de players en cada evento
     banner.innerHTML = active.map(ev => {
       const color = CAT_COLORS[ev.category] || '#2d7dd2';
-      const bg    = CAT_BG[ev.category] || '';
+      const bg    = CAT_BG[ev.category] || 'images/bg-ia.png';
+      const desc  = ev.description ? `<div class="event-live-desc">${ev.description}</div>` : '';
       return `
         <a href="trivial-eventos.html" style="text-decoration:none;display:block">
           <div class="event-live-banner" style="--ev-color:${color};--ev-bg:url('${bg}')">
             <div class="event-live-bg"></div>
             <div class="event-live-pulse"></div>
             <div class="event-live-content">
-              <div class="event-live-badge">🔴 LIVE</div>
+              <div class="event-live-badge">🔴 LIVE EVENT</div>
               <div class="event-live-title">${ev.title}</div>
-              <div class="event-live-meta">${ev.category} · ${ev.rounds} rounds</div>
+              ${desc}
+              <div class="event-live-meta">${ev.rounds} rounds</div>
               <div class="event-live-players" id="ev-live-players-${ev.id}">👥 loading...</div>
             </div>
-            <div class="event-live-arrow">
+            <div class="event-live-cta">
+              Join now
               <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </div>
           </div>
