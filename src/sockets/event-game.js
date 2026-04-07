@@ -15,10 +15,21 @@ const ALL_NORMAL_CATS = [
   { id: 'eu',      name: 'EU',        color: '#a259ff', emoji: '🇪🇺' },
 ];
 
+const CUSTOM_CAT_COLORS = ['#e67e22','#1abc9c','#9b59b6','#e74c3c','#2980b9','#f39c12','#16a085','#8e44ad'];
+
 function buildWheelFromQuestions(eventQuestions) {
   let usedCatIds = [...new Set(eventQuestions.map(q => q.cat).filter(Boolean))];
   if (!usedCatIds.length) usedCatIds = ALL_NORMAL_CATS.map(c => c.id);
-  return usedCatIds.map(id => ALL_NORMAL_CATS.find(c => c.id === id) || { id, name: id, color: '#888', emoji: '❓' });
+  let customColorIdx = 0;
+  return usedCatIds.map(id => {
+    const known = ALL_NORMAL_CATS.find(c => c.id === id);
+    if (known) return known;
+    // Custom category — assign a color from the palette
+    const color = CUSTOM_CAT_COLORS[customColorIdx++ % CUSTOM_CAT_COLORS.length];
+    // Capitalise first letter for display
+    const name  = id.charAt(0).toUpperCase() + id.slice(1);
+    return { id, name, color, emoji: '🎯' };
+  });
 }
 
 function pickCategoryFromWheel(room) {
@@ -185,6 +196,8 @@ function registerEventGameHandlers(io, socket) {
     if (existing) { existing.id = socket.id; }
     else { lobby.players.push({ id: socket.id, name: playerName, score: 0, color: COLORS[lobby.players.length % COLORS.length] }); }
 
+    // Leave old group room if rejoining after finish
+    if (socket.data.groupKey) socket.leave('group:' + socket.data.groupKey);
     socket.join('event:' + eid);
     socket.data.eventId  = eid;
     socket.data.groupKey = null;
@@ -285,6 +298,76 @@ function registerEventGameHandlers(io, socket) {
     };
     io.to('event:' + eid).emit('event:lobbyUpdate', { players: [], totalPlayers: 0 });
     console.log(`🔄 Lobby reset by admin — event ${eid}, ${questions.length} questions reloaded`);
+  });
+
+  socket.on('admin:finishEvent', async ({ eventId }) => {
+    const eid   = String(eventId);
+    const lobby = eventLobbies[eid];
+
+    // Stop any running groups cleanly
+    (lobby?.groups || []).forEach(gk => {
+      const room = eventRooms[gk];
+      if (room) {
+        clearTimeout(room._questionTimer);
+        clearTimeout(room._autoAdvanceTimer);
+        delete eventRooms[gk];
+      }
+    });
+
+    // Reload fresh questions from DB
+    const questions = await loadEventQuestions(eid);
+
+    // Reset lobby to waiting state — players stay connected and see lobby again
+    const prevData = lobby?.eventData || {};
+    eventLobbies[eid] = {
+      eventId: eid, eventData: prevData, players: [],
+      started: false, groups: [], doneGroups: 0, globalScores: {},
+      eventQuestions: questions,
+    };
+
+    // Tell all players in the event to go back to lobby screen
+    io.to('event:' + eid).emit('event:backToLobby');
+    io.to('event:' + eid).emit('event:lobbyUpdate', { players: [], totalPlayers: 0 });
+    io.to('admin:events').emit('admin:eventStatus', {
+      eventId: eid, players: 0, state: 'waiting', currentRound: 0,
+      totalRounds: prevData?.rounds || 6,
+    });
+    console.log(`✅ Event ${eid} finished by admin — lobby reset for new session`);
+  });
+
+  socket.on('admin:finishEvent', async ({ eventId }) => {
+    const eid   = String(eventId);
+    const lobby = eventLobbies[eid];
+
+    // Stop any running groups cleanly
+    (lobby?.groups || []).forEach(gk => {
+      const room = eventRooms[gk];
+      if (room) {
+        clearTimeout(room._questionTimer);
+        clearTimeout(room._autoAdvanceTimer);
+        delete eventRooms[gk];
+      }
+    });
+
+    // Reload fresh questions from DB
+    const questions = await loadEventQuestions(eid);
+    const prevData  = lobby?.eventData || {};
+
+    // Reset lobby to waiting — players will rejoin fresh
+    eventLobbies[eid] = {
+      eventId: eid, eventData: prevData, players: [],
+      started: false, groups: [], doneGroups: 0, globalScores: {},
+      eventQuestions: questions,
+    };
+
+    // Send all players back to the lobby screen
+    io.to('event:' + eid).emit('event:backToLobby');
+    io.to('event:' + eid).emit('event:lobbyUpdate', { players: [], totalPlayers: 0 });
+    io.to('admin:events').emit('admin:eventStatus', {
+      eventId: eid, players: 0, state: 'waiting', currentRound: 0,
+      totalRounds: prevData?.rounds || 6,
+    });
+    console.log(`✅ Event ${eid} finished by admin — lobby ready for new session`);
   });
 
   socket.on('admin:stopEvent', ({ eventId }) => {
