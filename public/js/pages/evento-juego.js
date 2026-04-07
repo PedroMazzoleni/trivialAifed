@@ -12,6 +12,22 @@ const EVENT_ROUNDS  = parseInt(params.get('rounds') || '6');
 const LETTERS    = ['A','B','C','D'];
 const TIME_LIMIT = 20;
 
+// ── SECURITY: validate session matches URL player param ──────────────────────
+(function enforceAuth() {
+  const sessionName = Session.playerName();
+  if (!sessionName) {
+    // Not logged in at all — redirect to login
+    goTo('trivial-login.html');
+    return;
+  }
+  if (MY_NAME && sessionName.toLowerCase() !== MY_NAME.toLowerCase()) {
+    // URL has been tampered with a different name — force correct name
+    const url = new URL(window.location.href);
+    url.searchParams.set('player', sessionName);
+    window.location.replace(url.toString());
+  }
+})();
+
 let socket, myPlayer, isHost = false, roomState = null;
 let timerInterval = null;
 let sbCountdown   = null;
