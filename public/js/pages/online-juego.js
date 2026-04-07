@@ -163,7 +163,7 @@ function connectSocket() {
 
 // ── ROOM UPDATE ───────────────────────────────────────────────────────────────
 function handleRoomUpdate(room) {
-  if (room.categories && room.categories.length > categories.length) categories = room.categories;
+  if (room.categories && room.categories.length) categories = room.categories;
   switch (room.state) {
     case 'waiting':
     case 'lobby':
