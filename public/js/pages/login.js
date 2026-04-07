@@ -54,7 +54,15 @@ async function handleLogin() {
     Session.set('player_email', email);
 
     showMsg('Logged in. Redirecting...', 'success');
-    setTimeout(() => goTo(Session.isAdmin() ? 'trivial-admin.html' : 'trivial-modos.html'), 800);
+    setTimeout(() => {
+      const redirect = sessionStorage.getItem('redirect_after_login');
+      if (redirect && !Session.isAdmin()) {
+        sessionStorage.removeItem('redirect_after_login');
+        goTo(redirect);
+      } else {
+        goTo(Session.isAdmin() ? 'trivial-admin.html' : 'trivial-modos.html');
+      }
+    }, 800);
   } catch {
     setLoading('btn-login', false);
     showMsg('Cannot connect to server');
