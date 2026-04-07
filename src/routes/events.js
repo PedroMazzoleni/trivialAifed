@@ -27,12 +27,12 @@ function registerEventRoutes(app, db) {
   // ── POST /api/events ──────────────────────────────────────────────────────
   app.post('/api/events', async (req, res) => {
     if (!db) return res.json({ ok: false, msg: 'No database' });
-    const { title, description, category, difficulty, status, rounds, starts_at, ends_at, questions } = req.body;
+    const { title, description, category, difficulty, status, rounds, starts_at, ends_at, questions, banner_image } = req.body;
     if (!title || !category) return res.json({ ok: false, msg: 'Missing required fields' });
     try {
       const r = await db.query(
-        'INSERT INTO events (title, description, category, difficulty, status, rounds, starts_at, ends_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id',
-        [title, description||'', category, difficulty||'medio', status||'active', rounds||6, starts_at||null, ends_at||null]
+        'INSERT INTO events (title, description, category, difficulty, status, rounds, starts_at, ends_at, banner_image) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id',
+        [title, description||'', category, difficulty||'medio', status||'active', rounds||6, starts_at||null, ends_at||null, banner_image||null]
       );
       const eventId = r.rows[0].id;
       if (questions && questions.length) {
@@ -50,11 +50,11 @@ function registerEventRoutes(app, db) {
   // ── PUT /api/events/:id ───────────────────────────────────────────────────
   app.put('/api/events/:id', async (req, res) => {
     if (!db) return res.json({ ok: false, msg: 'No database' });
-    const { title, description, category, difficulty, status, rounds, starts_at, ends_at, questions } = req.body;
+    const { title, description, category, difficulty, status, rounds, starts_at, ends_at, questions, banner_image } = req.body;
     try {
       await db.query(
-        'UPDATE events SET title=$1, description=$2, category=$3, difficulty=$4, status=$5, rounds=$6, starts_at=$7, ends_at=$8 WHERE id=$9',
-        [title, description||'', category, difficulty||'medio', status||'active', rounds||6, starts_at||null, ends_at||null, req.params.id]
+        'UPDATE events SET title=$1, description=$2, category=$3, difficulty=$4, status=$5, rounds=$6, starts_at=$7, ends_at=$8, banner_image=$9 WHERE id=$10',
+        [title, description||'', category, difficulty||'medio', status||'active', rounds||6, starts_at||null, ends_at||null, banner_image||null, req.params.id]
       );
       await db.query('DELETE FROM event_questions WHERE event_id = $1', [req.params.id]);
       if (questions && questions.length) {
