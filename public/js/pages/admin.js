@@ -648,6 +648,7 @@ async function toggleEventStatus(id, newStatus) {
       questions: (ev.questions||[]).map(q => ({
         question: q.question, answer: q.answer, difficulty: q.difficulty||'medio',
         options: Array.isArray(q.options) ? q.options : JSON.parse(q.options||'[]'),
+        category: q.category || null,
       })),
     };
     const res = await fetch(`${SERVER}/api/events/${id}`, {
