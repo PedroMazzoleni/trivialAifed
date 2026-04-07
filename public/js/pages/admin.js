@@ -434,12 +434,12 @@ function renderEventForm(ev) {
     <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <span style="font-family:var(--font-cond);font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Event questions</span>
-        <button type="button" onclick="addEventQuestion()" style="background:rgba(45,125,210,0.15);border:1px solid rgba(45,125,210,0.3);border-radius:3px;padding:5px 14px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--blue);cursor:pointer">+ Add question</button>
       </div>
       <div id="ev-questions-list" style="display:flex;flex-direction:column;gap:10px"></div>
       <div id="ev-no-questions" style="text-align:center;padding:20px;color:var(--muted);font-size:13px">
-        No questions. Click "+ Add question".
+        No questions yet.
       </div>
+      <button type="button" onclick="addEventQuestion()" style="width:100%;margin-top:12px;padding:10px;background:rgba(45,125,210,0.12);border:1.5px dashed rgba(45,125,210,0.4);border-radius:4px;font-family:var(--font-cond);font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--blue);cursor:pointer;transition:background .15s" onmouseover="this.style.background='rgba(45,125,210,0.22)'" onmouseout="this.style.background='rgba(45,125,210,0.12)'">+ Add question</button>
     </div>
   `);
 
@@ -471,7 +471,8 @@ function addEventQuestion(existing = null) {
   if (noQ) noQ.style.display = 'none';
 
   const opts = existing ? existing.options : ['', '', ''];
-  const existingCat = existing ? (existing.category || '') : '';
+  const existingCat   = existing ? (existing.category || '') : '';
+  const existingImage = existing ? (existing.image_url || '') : '';
   const div  = document.createElement('div');
   div.id = `evq-block-${qId}`;
   div.style.cssText = 'background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:4px;padding:14px';
@@ -502,6 +503,10 @@ function addEventQuestion(existing = null) {
         </select>
         <input type="text" id="evq-cat-custom-${qId}" placeholder="Category name" style="display:none;flex:1;padding:8px 10px;background:var(--bg);border:1.5px solid #a259ff;border-radius:3px;color:var(--text);font-size:13px;outline:none">
       </div>
+    </div>
+    <div class="field" style="margin-bottom:8px">
+      <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#3B9EFF;font-weight:700;display:block;margin-bottom:4px">🖼 Background image URL (optional)</label>
+      <input type="text" id="evq-img-${qId}" value="${existingImage}" placeholder="https://... (leave empty for default)" style="width:100%;padding:8px 10px;background:var(--bg);border:1.5px solid rgba(59,158,255,0.4);border-radius:3px;color:var(--text);font-size:13px;outline:none">
     </div>
     <div class="field" style="margin-bottom:0">
       <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;display:block;margin-bottom:4px">Options (minimum 2)</label>
@@ -566,7 +571,8 @@ function collectEvQuestions() {
       const category = catRaw === '__custom__'
         ? (el(`evq-cat-custom-${qId}`)?.value || '').trim() || null
         : catRaw || null;
-      qs.push({ question, answer, options, difficulty:'medio', category });
+      const image_url = (el(`evq-img-${qId}`)?.value || '').trim() || null;
+      qs.push({ question, answer, options, difficulty:'medio', category, image_url });
     }
   });
   return qs;
