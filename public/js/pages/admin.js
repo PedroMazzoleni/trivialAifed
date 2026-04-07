@@ -539,7 +539,8 @@ function collectEvQuestions() {
     block.querySelectorAll(`input[id^="evq-opt-${qId}-"]`).forEach(i => { const v=i.value.trim(); if(v) options.push(v); });
     if (question && answer && options.length >= 2) {
       if (!options.includes(answer)) options.push(answer);
-      qs.push({ question, answer, options, difficulty:'medio' });
+      const category = (el(`evq-cat-${qId}`)?.value || '').trim() || null;
+      qs.push({ question, answer, options, difficulty:'medio', category });
     }
   });
   return qs;
