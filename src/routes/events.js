@@ -38,8 +38,8 @@ function registerEventRoutes(app, db) {
       if (questions && questions.length) {
         for (const q of questions) {
           await db.query(
-            'INSERT INTO event_questions (event_id, question, answer, options, difficulty, category) VALUES ($1,$2,$3,$4,$5,$6)',
-            [eventId, q.question, q.answer, JSON.stringify(q.options), q.difficulty||'medio', q.category||null]
+            'INSERT INTO event_questions (event_id, question, answer, options, difficulty, category, image_url) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+            [eventId, q.question, q.answer, JSON.stringify(q.options), q.difficulty||'medio', q.category||null, q.image_url||null]
           );
         }
       }
@@ -60,8 +60,8 @@ function registerEventRoutes(app, db) {
       if (questions && questions.length) {
         for (const q of questions) {
           await db.query(
-            'INSERT INTO event_questions (event_id, question, answer, options, difficulty, category) VALUES ($1,$2,$3,$4,$5,$6)',
-            [req.params.id, q.question, q.answer, JSON.stringify(q.options), q.difficulty||'medio', q.category||null]
+            'INSERT INTO event_questions (event_id, question, answer, options, difficulty, category, image_url) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+            [req.params.id, q.question, q.answer, JSON.stringify(q.options), q.difficulty||'medio', q.category||null, q.image_url||null]
           );
         }
       }
