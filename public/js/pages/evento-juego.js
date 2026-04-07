@@ -12,19 +12,39 @@ const EVENT_ROUNDS  = parseInt(params.get('rounds') || '6');
 const LETTERS    = ['A','B','C','D'];
 const TIME_LIMIT = 20;
 
-// ── SECURITY: validate session matches URL player param ──────────────────────
+// ── SECURITY: lock player name — cannot be changed via URL ──────────────────
 (function enforceAuth() {
-  const sessionName = Session.playerName();
+  const sessionName   = Session.playerName();
+  const isGuest       = Session.playerRole() === 'guest';
+  const displayName   = sessionStorage.getItem('event_display_name'); // set by confirmJoin
+
   if (!sessionName) {
-    // Not logged in at all — redirect to login
+    // Not logged in at all — go to login
+    sessionStorage.setItem('redirect_after_login', 'trivial-eventos.html');
     goTo('trivial-login.html');
     return;
   }
-  if (MY_NAME && sessionName.toLowerCase() !== MY_NAME.toLowerCase()) {
-    // URL has been tampered with a different name — force correct name
-    const url = new URL(window.location.href);
-    url.searchParams.set('player', sessionName);
-    window.location.replace(url.toString());
+
+  if (isGuest) {
+    // Guest: the name locked is whatever they chose in the modal
+    if (!displayName || displayName === 'Invitado' || displayName === 'Guest') {
+      // No valid name chosen — back to events to pick one
+      goTo('trivial-eventos.html');
+      return;
+    }
+    // If URL was tampered, silently correct to the locked name
+    if (MY_NAME !== displayName) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('player', displayName);
+      window.location.replace(url.toString());
+    }
+  } else {
+    // Registered user: lock to session name
+    if (MY_NAME && sessionName.toLowerCase() !== MY_NAME.toLowerCase()) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('player', sessionName);
+      window.location.replace(url.toString());
+    }
   }
 })();
 
