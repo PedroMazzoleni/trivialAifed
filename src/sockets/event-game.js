@@ -15,36 +15,22 @@ const ALL_NORMAL_CATS = [
   { id: 'eu',      name: 'EU',        color: '#a259ff', emoji: '🇪🇺' },
 ];
 
-const SPECIAL_CATS_LIST = [
-  { id: 'doble',  name: 'x2 Pts', color: '#FFD700', emoji: '⚡', special: true },
-  { id: 'robo',   name: 'Robo',   color: '#ff4dff', emoji: '💸', special: true },
-  { id: 'bomba',  name: 'Bomba',  color: '#ff6600', emoji: '💣', special: true },
-  { id: 'skip',   name: 'SKIP',   color: '#00e5ff', emoji: '⏭️', special: true },
-  { id: 'suerte', name: 'Suerte', color: '#00ff88', emoji: '🍀', special: true },
-];
-
 function buildWheelFromQuestions(eventQuestions) {
   let usedCatIds = [...new Set(eventQuestions.map(q => q.cat).filter(Boolean))];
   if (!usedCatIds.length) usedCatIds = ALL_NORMAL_CATS.map(c => c.id);
-  const normalCats = usedCatIds.map(id => ALL_NORMAL_CATS.find(c => c.id === id) || { id, name: id, color: '#888', emoji: '❓' });
-  const result = [];
-  for (let i = 0; i < Math.max(normalCats.length, SPECIAL_CATS_LIST.length); i++) {
-    result.push({ ...normalCats[i % normalCats.length] });
-    if (SPECIAL_CATS_LIST[i]) result.push(SPECIAL_CATS_LIST[i]);
-  }
-  return result;
+  return usedCatIds.map(id => ALL_NORMAL_CATS.find(c => c.id === id) || { id, name: id, color: '#888', emoji: '❓' });
 }
 
 function pickCategoryFromWheel(room) {
-  const normalCats = room.categories.filter(c => !c.special);
-  if (!normalCats.length) return room.categories[0];
+  const cats = room.categories;
+  if (!cats || !cats.length) return ALL_NORMAL_CATS[0];
   if (!room.usedCatsRound) room.usedCatsRound = [];
-  const uniqueIds = [...new Set(normalCats.map(c => c.id))];
+  const uniqueIds = [...new Set(cats.map(c => c.id))];
   let available = uniqueIds.filter(id => !room.usedCatsRound.includes(id));
   if (!available.length) { room.usedCatsRound = []; available = uniqueIds; }
   const pickedId = available[Math.floor(Math.random() * available.length)];
   room.usedCatsRound.push(pickedId);
-  return normalCats.find(c => c.id === pickedId) || normalCats[0];
+  return cats.find(c => c.id === pickedId) || cats[0];
 }
 
 function buildGroupPayload(room) {
@@ -56,7 +42,7 @@ function buildGroupPayload(room) {
     currentDifficulty: room.currentDifficulty, specialEffect: room.specialEffect || null,
     allAnswers: room.allAnswers || [], answeredCount: (room.allAnswers || []).length,
     spinCatId: room.spinCatId || null, spinExtra: room.spinExtra || null,
-    timerSeconds: 15,
+    timerSeconds: 20,
   };
 }
 
@@ -236,50 +222,13 @@ function registerEventGameHandlers(io, socket) {
     const player = room.players.find(p => p.id === socket.id);
     if (!player || room.allAnswers.find(a => a.playerId === socket.id)) return;
 
-    const correct  = answer.trim().toLowerCase() === room.currentQuestion.a.trim().toLowerCase();
-    const diffPts  = { easy: 3, medium: 6, hard: 12 };
-    const basePts  = diffPts[room.currentDifficulty] || 6;
-    const myWc     = (room.privateWildcards || {})[socket.id] || null;
-    let resultMsg  = null;
+    const correct = answer.trim().toLowerCase() === room.currentQuestion.a.trim().toLowerCase();
+    const diffPts = { easy: 3, medium: 6, hard: 12 };
+    const pts     = diffPts[room.currentDifficulty] || 6;
 
-    if (myWc === 'suerte') {
-      // Suerte: siempre +basePts sin importar la respuesta
-      room.scores[socket.id] = (room.scores[socket.id] || 0) + basePts;
-      player.score = room.scores[socket.id];
-      resultMsg = `🍀 ¡Suerte! +${basePts} pts garantizados. Total: ${player.score} pts`;
-    } else if (myWc === 'skip') {
-      // Skip: sin cambio de puntos
-      resultMsg = `⏭️ SKIP activado — sin cambios esta ronda.`;
-    } else if (correct) {
-      let pts = basePts;
-      if (myWc === 'doble') pts *= 2;
-      if (myWc === 'robo') {
-        // Robar al líder
-        const leader = [...room.players].sort((a,b) => b.score - a.score).find(p => p.id !== socket.id);
-        const stolen = leader ? Math.min(pts, leader.score) : 0;
-        if (leader && stolen > 0) {
-          leader.score = leader.score - stolen;
-          room.scores[leader.id] = leader.score;
-          pts = stolen;
-          resultMsg = `💸 ¡Robo exitoso! +${stolen} pts robados. Total: ${(room.scores[socket.id]||0) + pts} pts`;
-        }
-      }
+    if (correct) {
       room.scores[socket.id] = (room.scores[socket.id] || 0) + pts;
       player.score = room.scores[socket.id];
-      if (!resultMsg && myWc === 'doble') resultMsg = `⚡ ¡x2 activado! +${pts} pts. Total: ${player.score} pts`;
-    } else {
-      // Falló
-      if (myWc === 'bomba') {
-        room.scores[socket.id] = Math.max(0, (room.scores[socket.id] || 0) - basePts);
-        player.score = room.scores[socket.id];
-        resultMsg = `💣 ¡Bomba! Fallaste y pierdes ${basePts} pts. Total: ${player.score} pts`;
-      }
-    }
-
-    // Enviar resultado del comodín solo al jugador afectado
-    if (resultMsg) {
-      const sock = io.sockets.sockets.get(socket.id);
-      if (sock) sock.emit('event:wildcardResult', { message: resultMsg });
     }
 
     room.allAnswers.push({ playerId: socket.id, playerName: player.name, answer, correct });
@@ -412,37 +361,6 @@ function _doSpin(io, room) {
   setTimeout(() => _loadQuestion(io, room, cat.id, diff), 6500);
 }
 
-function _assignPrivateWildcards(io, room) {
-  room.privateWildcards = {};
-  return; // Wildcards disabled
-
-  // 35% de probabilidad de que haya comodines esta ronda
-  if (Math.random() > 0.35) return;
-
-  const WILDCARDS = ['doble', 'robo', 'bomba', 'skip', 'suerte'];
-  const players   = [...room.players];
-  if (!players.length) return;
-
-  // Máximo 1 jugador si hay menos de 5, sino máximo 2, nunca más del 20% de la sala
-  const maxAffected = Math.max(1, Math.min(2, Math.floor(players.length * 0.2)));
-  const count       = Math.min(1 + Math.floor(Math.random() * maxAffected), players.length);
-  const shuffled    = players.sort(() => Math.random() - 0.5).slice(0, count);
-
-  const labels = {
-    doble:  '⚡ ¡Te ha tocado x2! Si aciertas, ganas el doble de puntos.',
-    robo:   '💸 ¡Te ha tocado Robo! Si aciertas, robas puntos al líder.',
-    bomba:  '💣 ¡Te ha tocado Bomba! Si fallas, perderás puntos extra.',
-    skip:   '⏭️ ¡Te ha tocado SKIP! Esta ronda no suma ni resta nada.',
-    suerte: '🍀 ¡Te ha tocado Suerte! Aciertes o no, ganas puntos gratis.',
-  };
-
-  shuffled.forEach(player => {
-    const wc = WILDCARDS[Math.floor(Math.random() * WILDCARDS.length)];
-    room.privateWildcards[player.id] = wc;
-    const sock = io.sockets.sockets.get(player.id);
-    if (sock) sock.emit('event:privateWildcard', { wildcard: wc, message: labels[wc] });
-  });
-}
 
 function _loadQuestion(io, room, categoryId, difficulty) {
   let q = null;
@@ -467,7 +385,7 @@ function _loadQuestion(io, room, categoryId, difficulty) {
     room.state = 'answer';
     broadcastGroup(io, room.groupKey);
     room._autoAdvanceTimer = setTimeout(() => _advanceRound(io, room), 5000);
-  }, 20000);
+  }, 25000);
 }
 
 function _advanceRound(io, room) {
