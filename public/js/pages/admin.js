@@ -396,6 +396,10 @@ function renderEventForm(ev) {
       <label>Description</label>
       <textarea id="ev-desc" rows="2" placeholder="Description breve">${ev.description || ''}</textarea>
     </div>
+    <div class="field">
+      <label>🖼 Banner image URL (optional)</label>
+      <input type="text" id="ev-banner" value="${ev.banner_image || ''}" placeholder="https://... background image for the event banner">
+    </div>
     <div class="form-grid">
       <div class="field">
         <label>Category</label>
@@ -579,13 +583,14 @@ function collectEvQuestions() {
 }
 
 async function saveEvent() {
-  const title     = el('ev-title').value.trim();
-  const desc      = el('ev-desc').value.trim();
-  const category  = el('ev-cat').value;
-  const status    = el('ev-status').value;
-  const rounds    = parseInt(el('ev-rounds').value) || 6;
-  const starts_at = el('ev-starts').value || null;
-  const ends_at   = el('ev-ends').value   || null;
+  const title        = el('ev-title').value.trim();
+  const desc         = el('ev-desc').value.trim();
+  const banner_image = (el('ev-banner')?.value || '').trim() || null;
+  const category     = el('ev-cat').value;
+  const status       = el('ev-status').value;
+  const rounds       = parseInt(el('ev-rounds').value) || 6;
+  const starts_at    = el('ev-starts').value || null;
+  const ends_at      = el('ev-ends').value   || null;
 
   if (!title)    return alert('The event needs a title');
   if (!category) return alert('Please select a category');
@@ -593,7 +598,7 @@ async function saveEvent() {
   const questions = collectEvQuestions();
   if (!questions.length) return alert('Add at least one question to the event');
 
-  const payload = { title, description:desc, category, difficulty:'medio', status, rounds, starts_at, ends_at, questions };
+  const payload = { title, description:desc, banner_image, category, difficulty:'medio', status, rounds, starts_at, ends_at, questions };
 
   try {
     let res;
@@ -687,10 +692,11 @@ async function toggleEventStatus(id, newStatus) {
       title: ev.title, description: ev.description||'', category: ev.category,
       difficulty: ev.difficulty||'medio', status: newStatus, rounds: ev.rounds||6,
       starts_at: ev.starts_at||null, ends_at: ev.ends_at||null,
+      banner_image: ev.banner_image || null,
       questions: (ev.questions||[]).map(q => ({
         question: q.question, answer: q.answer, difficulty: q.difficulty||'medio',
         options: Array.isArray(q.options) ? q.options : JSON.parse(q.options||'[]'),
-        category: q.category || null,
+        category: q.category || null, image_url: q.image_url || null,
       })),
     };
     const res = await fetch(`${SERVER}/api/events/${id}`, {
