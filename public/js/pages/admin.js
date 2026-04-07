@@ -349,6 +349,7 @@ function renderEventsList(events) {
             ${isActive ? `
               <button onclick="adminStartEvent(${ev.id})" style="padding:5px 12px;background:rgba(24,194,90,0.15);border:1px solid rgba(24,194,90,0.3);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#18c25a;cursor:pointer">▶ Start</button>
               <button onclick="adminStopEvent(${ev.id})" style="padding:5px 12px;background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#f5a623;cursor:pointer">⏸ Parar</button>
+              <button onclick="adminFinishEvent(${ev.id})" style="padding:5px 12px;background:rgba(24,194,90,0.1);border:1px solid rgba(24,194,90,0.3);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#18c25a;cursor:pointer">✅ Finalizar</button>
               <button onclick="adminCloseEvent(${ev.id})" style="padding:5px 12px;background:rgba(232,69,69,0.1);border:1px solid rgba(232,69,69,0.2);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#e84545;cursor:pointer">🔒 Close</button>
             ` : ''}
           </div>
@@ -489,14 +490,18 @@ function addEventQuestion(existing = null) {
     </div>
     <div class="field" style="margin-bottom:8px">
       <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#a259ff;font-weight:700;display:block;margin-bottom:4px">🎯 Category en ruleta</label>
-      <select id="evq-cat-${qId}" style="width:100%;padding:8px 10px;background:var(--bg);border:1.5px solid #a259ff;border-radius:3px;color:var(--text);font-size:13px;outline:none">
-        <option value="">-- No specific category --</option>
-      <option value="sports">⚽ Sports</option>
-      <option value="geo">🌍 Geography</option>
-      <option value="culture">🎭 Culture</option>
-      <option value="history">📜 History</option>
-      <option value="eu">🇪🇺 Europa</option>
-      </select>
+      <div style="display:flex;gap:6px">
+        <select id="evq-cat-${qId}" onchange="handleEvqCatChange(${qId})" style="flex:1;padding:8px 10px;background:var(--bg);border:1.5px solid #a259ff;border-radius:3px;color:var(--text);font-size:13px;outline:none">
+          <option value="">-- No specific category --</option>
+          <option value="sports">⚽ Sports</option>
+          <option value="geo">🌍 Geography</option>
+          <option value="culture">🎭 Culture</option>
+          <option value="history">📜 History</option>
+          <option value="eu">🇪🇺 Europa</option>
+          <option value="__custom__">✏️ Custom category...</option>
+        </select>
+        <input type="text" id="evq-cat-custom-${qId}" placeholder="Category name" style="display:none;flex:1;padding:8px 10px;background:var(--bg);border:1.5px solid #a259ff;border-radius:3px;color:var(--text);font-size:13px;outline:none">
+      </div>
     </div>
     <div class="field" style="margin-bottom:0">
       <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;display:block;margin-bottom:4px">Options (minimum 2)</label>
@@ -506,10 +511,19 @@ function addEventQuestion(existing = null) {
       </div>
     </div>`;
   list.appendChild(div);
-  // Set category if exists
+  // Set category if exists (handles both preset and custom values)
   if (existingCat) {
     const catSel = el(`evq-cat-${qId}`);
-    if (catSel) catSel.value = existingCat;
+    const presets = ['sports','geo','culture','history','eu'];
+    if (catSel) {
+      if (presets.includes(existingCat)) {
+        catSel.value = existingCat;
+      } else {
+        catSel.value = '__custom__';
+        const customInp = el(`evq-cat-custom-${qId}`);
+        if (customInp) { customInp.style.display = 'block'; customInp.value = existingCat; }
+      }
+    }
   }
 }
 
@@ -517,6 +531,14 @@ function removeEvQ(qId) {
   const b = el(`evq-block-${qId}`); if (b) b.remove();
   const list = el('ev-questions-list');
   if (list && !list.children.length) { const n = el('ev-no-questions'); if (n) n.style.display = 'block'; }
+}
+
+function handleEvqCatChange(qId) {
+  const sel = el(`evq-cat-${qId}`);
+  const inp = el(`evq-cat-custom-${qId}`);
+  if (!sel || !inp) return;
+  inp.style.display = sel.value === '__custom__' ? 'block' : 'none';
+  if (sel.value === '__custom__') inp.focus();
 }
 
 function addEvQOpt(qId) {
@@ -539,7 +561,11 @@ function collectEvQuestions() {
     block.querySelectorAll(`input[id^="evq-opt-${qId}-"]`).forEach(i => { const v=i.value.trim(); if(v) options.push(v); });
     if (question && answer && options.length >= 2) {
       if (!options.includes(answer)) options.push(answer);
-      const category = (el(`evq-cat-${qId}`)?.value || '').trim() || null;
+      const catSel   = el(`evq-cat-${qId}`);
+      const catRaw   = catSel?.value || '';
+      const category = catRaw === '__custom__'
+        ? (el(`evq-cat-custom-${qId}`)?.value || '').trim() || null
+        : catRaw || null;
       qs.push({ question, answer, options, difficulty:'medio', category });
     }
   });
@@ -636,6 +662,16 @@ function adminStopEvent(id) {
   if (!adminSocket) return alert('Sin conexión');
   adminSocket.emit('admin:stopEvent', { eventId: String(id) });
   flashMsg('⏸ Game stopped', 'success', 'msg-events');
+}
+
+async function adminFinishEvent(id) {
+  if (!confirm('¿Finalizar el evento? Los jugadores volverán al lobby y podrán unirse de nuevo cuando lances la siguiente partida.')) return;
+  if (!adminSocket) return alert('Sin conexión');
+  // 1. Emit finish event to server — sends players back to lobby
+  adminSocket.emit('admin:finishEvent', { eventId: String(id) });
+  // 2. Reset lobby in DB so it stays active but startable again
+  await toggleEventStatus(id, 'active');
+  flashMsg('✅ Evento finalizado — lobby listo para nueva partida', 'success', 'msg-events');
 }
 
 async function toggleEventStatus(id, newStatus) {
