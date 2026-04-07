@@ -27,11 +27,6 @@ const categories = [
   { id:'history', name:'History',   color:'#e84545', emoji:'📜' },
   { id:'eu',      name:'EU',        color:'#a259ff', emoji:'🇪🇺' },
   { id:'mixed',   name:'Mixed',     color:'#9b59b6', emoji:'🎲' },
-  { id:'doble',   name:'x2 Pts',    color:'#FFD700', emoji:'⚡', special:true },
-  { id:'robo',    name:'Steal',     color:'#ff4dff', emoji:'💸', special:true },
-  { id:'bomba',   name:'Bomb',      color:'#ff6600', emoji:'💣', special:true },
-  { id:'skip',    name:'SKIP',      color:'#00e5ff', emoji:'⏭️', special:true },
-  { id:'suerte',  name:'Lucky',     color:'#00ff88', emoji:'🍀', special:true },
 ];
 
 // Dynamic wheel categories — updated from room state
@@ -101,6 +96,25 @@ function connectSocket() {
   socket.on('event:doSpin', ({ catId, diff, extra }) => {
     isSpinning = false; // reset por si quedó bloqueado
     doSpin(catId, diff, extra);
+  });
+
+  socket.on('event:backToLobby', () => {
+    // Admin finalizó la partida — resetear estado local y volver al lobby
+    clearInterval(timerInterval);
+    clearInterval(sbCountdown);
+    isSpinning    = false;
+    iAnswered     = false;
+    roomState     = null;
+    spinAngle     = 0;
+    _shuffledOpts = null;
+    // Rejoin the event lobby with fresh state
+    socket.emit('event:join', {
+      eventId:    EVENT_ID,
+      playerName: MY_NAME,
+      eventData:  { title: EVENT_TITLE, rounds: EVENT_ROUNDS },
+    });
+    showScreen('lobby');
+    addChatMsg('', '🔄 Partida finalizada — espera a que el admin lance la siguiente sesión.', true);
   });
 
   socket.on('connect_error', () => {
