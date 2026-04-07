@@ -78,10 +78,9 @@ async function initDB() {
       )
     `);
 
-          // Añadir columna category si no existe (migración)
-      try {
-        await db.query("ALTER TABLE event_questions ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT NULL");
-      } catch(e) {}
+          // Migraciones de columnas
+      try { await db.query("ALTER TABLE event_questions ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT NULL"); } catch(e) {}
+      try { await db.query("ALTER TABLE event_questions ADD COLUMN IF NOT EXISTS image_url TEXT DEFAULT NULL"); } catch(e) {}
       const cleanupExpired = async () => {
       try {
         const r = await db.query("DELETE FROM events WHERE ends_at IS NOT NULL AND ends_at < NOW() - INTERVAL '1 day'");
