@@ -10,7 +10,7 @@ const EVENT_CAT     = params.get('cat')      || 'mixed';
 const EVENT_ROUNDS  = parseInt(params.get('rounds') || '6');
 
 const LETTERS    = ['A','B','C','D'];
-const TIME_LIMIT = 15;
+const TIME_LIMIT = 20;
 
 let socket, myPlayer, isHost = false, roomState = null;
 let timerInterval = null;
