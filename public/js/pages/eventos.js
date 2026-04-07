@@ -128,17 +128,57 @@ const CAT_COLORS = {
   
   // ── JOIN EVENT ────────────────────────────────────────────────────────────────
   function joinEvent(eventId, title, category, rounds) {
-    const playerName = Session.playerName() || '';
+    const sessionName = Session.playerName() || '';
+    const isGuest     = Session.playerRole() === 'guest';
 
-    if (!playerName) {
-      // Not logged in — redirect to login and come back
-      sessionStorage.setItem('redirect_after_login',
-        `trivial-eventos.html`);
+    if (!sessionName) {
+      // Not logged in at all — go to login first
+      sessionStorage.setItem('redirect_after_login', 'trivial-eventos.html');
       goTo('trivial-login.html');
       return;
     }
 
-    goTo(`trivial-evento-juego.html?event=${eventId}&player=${encodeURIComponent(playerName)}&title=${encodeURIComponent(decodeURIComponent(title))}&cat=${category}&rounds=${rounds}`);
+    // Guests start with empty name so they must choose one
+    // Registered users start pre-filled but can change it
+    const defaultName = isGuest ? '' : sessionName;
+    showJoinModal(eventId, title, category, rounds, defaultName, isGuest);
+  }
+
+  function showJoinModal(eventId, title, category, rounds, defaultName, isGuest) {
+    const modal = document.getElementById('ev-modal');
+    const body  = document.getElementById('ev-modal-body');
+    modal.classList.add('show');
+    body.innerHTML = `
+      <div style="padding:28px 28px 0">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:#111;margin-bottom:6px;text-transform:uppercase">${decodeURIComponent(title)}</div>
+        <p style="font-size:14px;color:#666;margin-bottom:20px">${isGuest ? 'Choose a name to identify yourself in the game.' : 'Choose your display name for this game.'}</p>
+        <div style="margin-bottom:20px">
+          <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;color:#333">Display name</label>
+          <input type="text" id="join-name-input" value="${defaultName}" placeholder="${isGuest ? 'Enter your name...' : ''}" maxlength="20"
+            style="width:100%;padding:12px 14px;border:1.5px solid #e0e0e0;border-radius:4px;font-size:15px;outline:none;transition:border-color .15s"
+            onfocus="this.style.borderColor='#3d5af1'" onblur="this.style.borderColor='#e0e0e0'"
+            onkeydown="if(event.key==='Enter') confirmJoin(${eventId},'${title}','${category}',${rounds})">
+        </div>
+        <div style="display:flex;gap:8px;padding-bottom:24px">
+          <button onclick="closeEventModal()" style="flex:1;padding:12px;background:transparent;border:1.5px solid #e0e0e0;border-radius:4px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;color:#888">Cancel</button>
+          <button onclick="confirmJoin(${eventId},'${title}','${category}',${rounds})" style="flex:2;padding:12px;background:#3d5af1;border:none;border-radius:4px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;color:#fff">Join Event</button>
+        </div>
+      </div>
+    `;
+    setTimeout(() => {
+      const inp = document.getElementById('join-name-input');
+      if (inp) { inp.focus(); inp.select(); }
+    }, 100);
+  }
+
+  function confirmJoin(eventId, title, category, rounds) {
+    const inp  = document.getElementById('join-name-input');
+    const name = inp ? inp.value.trim() : '';
+    if (!name) { if (inp) inp.focus(); return; }
+    // Save the chosen display name so it can't be changed via URL
+    sessionStorage.setItem('event_display_name', name);
+    closeEventModal();
+    goTo(`trivial-evento-juego.html?event=${eventId}&player=${encodeURIComponent(name)}&title=${encodeURIComponent(decodeURIComponent(title))}&cat=${category}&rounds=${rounds}`);
   }
   
   // ── INFO MODAL (for non-active events) ───────────────────────────────────────
