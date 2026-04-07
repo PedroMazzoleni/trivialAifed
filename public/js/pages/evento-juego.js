@@ -325,7 +325,10 @@ function renderQuestion(room) {
 
   // Background
   const bgEl = el('screen-question');
-  const bg   = CAT_BACKGROUNDS[room.currentCategory] || 'images/bg-ia.png';
+  // Use question's custom image URL if set, otherwise fall back to category image
+  const bg = (room.currentQuestion && room.currentQuestion.image_url)
+    ? room.currentQuestion.image_url
+    : (CAT_BACKGROUNDS[room.currentCategory] || 'images/bg-ia.png');
   bgEl.style.backgroundImage    = `url('${bg}')`;
   bgEl.style.backgroundSize     = 'cover';
   bgEl.style.backgroundPosition = 'center';
@@ -591,28 +594,17 @@ function drawWheel(cats, angle, highlightId = null) {
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    const mid    = s + slice/2;
-    const emojiR = r * 0.70;
-    const nameR  = r * 0.42;
-    const emojiSz = Math.max(11, Math.min(18, Math.floor(r * slice / 2.4)));
-    const nameSz  = Math.max(7,  Math.min(11, Math.floor(r * slice / 4)));
+    const mid     = s + slice/2;
+    const nameR   = r * 0.62;
+    const nameSz  = Math.max(8, Math.min(13, Math.floor(r * slice / 3.2)));
+    const shortName = cat.name.length > 8 ? cat.name.slice(0,8) : cat.name;
 
-    ctx.save();
-    ctx.translate(cx + Math.cos(mid)*emojiR, cy + Math.sin(mid)*emojiR);
-    ctx.rotate(mid + Math.PI/2);
-    ctx.font = `${emojiSz}px serif`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#fff';
-    ctx.fillText(cat.emoji || '', 0, 0);
-    ctx.restore();
-
-    const shortName = cat.name.length > 6 ? cat.name.slice(0,6) : cat.name;
     ctx.save();
     ctx.translate(cx + Math.cos(mid)*nameR, cy + Math.sin(mid)*nameR);
     ctx.rotate(mid + Math.PI/2);
     ctx.font = `bold ${nameSz}px 'Barlow Condensed', sans-serif`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
     ctx.fillText(shortName.toUpperCase(), 0, 0);
     ctx.restore();
   });
