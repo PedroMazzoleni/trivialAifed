@@ -32,16 +32,35 @@ function buildWheelFromQuestions(eventQuestions) {
   });
 }
 
+function getCatQueue(room, catId) {
+  if (!room.catQueues)     room.catQueues     = {};
+  if (!room.catLastUsed)   room.catLastUsed   = {};
+  const questions = (room.eventQuestions || []).filter(q => q.cat === catId);
+  if (!questions.length) return null;
+  // Only fill the queue once — when it runs out, keep returning the last used question
+  if (!room.catQueues[catId]) {
+    room.catQueues[catId] = shuffleIndices(questions.length);
+  }
+  return { queue: room.catQueues[catId], questions, lastUsed: room.catLastUsed[catId] ?? null };
+}
+
 function pickCategoryFromWheel(room) {
   const cats = room.categories;
   if (!cats || !cats.length) return ALL_NORMAL_CATS[0];
   if (!room.usedCatsRound) room.usedCatsRound = [];
-  const uniqueIds = [...new Set(cats.map(c => c.id))];
+
+  // Only consider categories that have questions
+  const catsWithQuestions = room.eventQuestions && room.eventQuestions.length
+    ? cats.filter(c => room.eventQuestions.some(q => q.cat === c.id))
+    : cats;
+  const pool = catsWithQuestions.length ? catsWithQuestions : cats;
+
+  const uniqueIds = [...new Set(pool.map(c => c.id))];
   let available = uniqueIds.filter(id => !room.usedCatsRound.includes(id));
   if (!available.length) { room.usedCatsRound = []; available = uniqueIds; }
   const pickedId = available[Math.floor(Math.random() * available.length)];
   room.usedCatsRound.push(pickedId);
-  return cats.find(c => c.id === pickedId) || cats[0];
+  return pool.find(c => c.id === pickedId) || pool[0];
 }
 
 function buildGroupPayload(room) {
@@ -447,8 +466,26 @@ function _doSpin(io, room) {
 function _loadQuestion(io, room, categoryId, difficulty) {
   let q = null;
   if (room.eventQuestions && room.eventQuestions.length > 0) {
-    if (!room.eventQQueue || room.eventQQueue.length === 0) room.eventQQueue = shuffleIndices(room.eventQuestions.length);
-    q = room.eventQuestions[room.eventQQueue.shift()];
+    // Use per-category queue so each category cycles through its own questions
+    const catData = getCatQueue(room, categoryId);
+    if (catData) {
+      if (catData.queue.length > 0) {
+        // Still questions left in this category — pick the next one
+        const localIdx = catData.queue.shift();
+        q = catData.questions[localIdx];
+        room.catLastUsed[categoryId] = q;  // remember it
+      } else if (catData.lastUsed !== null) {
+        // Queue exhausted — repeat the last question shown for this category
+        q = catData.lastUsed;
+      } else {
+        // Edge case: queue empty and no lastUsed (shouldn't happen) — fallback
+        q = catData.questions[0];
+      }
+    } else {
+      // Category has no questions at all — fallback to global pool
+      if (!room.eventQQueue || room.eventQQueue.length === 0) room.eventQQueue = shuffleIndices(room.eventQuestions.length);
+      q = room.eventQuestions[room.eventQQueue.shift()];
+    }
   } else {
     const diffMap = { easy: 'fácil', medium: 'medio', hard: 'difícil' };
     q = getUniqueQuestion(room, categoryId, diffMap[difficulty] || 'medio');
