@@ -81,6 +81,7 @@ async function initDB() {
           // Migraciones de columnas
       try { await db.query("ALTER TABLE event_questions ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT NULL"); } catch(e) {}
       try { await db.query("ALTER TABLE event_questions ADD COLUMN IF NOT EXISTS image_url TEXT DEFAULT NULL"); } catch(e) {}
+      try { await db.query("ALTER TABLE events ADD COLUMN IF NOT EXISTS banner_image TEXT DEFAULT NULL"); } catch(e) {}
       const cleanupExpired = async () => {
       try {
         const r = await db.query("DELETE FROM events WHERE ends_at IS NOT NULL AND ends_at < NOW() - INTERVAL '1 day'");
