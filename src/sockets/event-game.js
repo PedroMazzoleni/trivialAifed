@@ -97,7 +97,7 @@ async function loadEventQuestions(eventId) {
     const result = await db.query('SELECT * FROM event_questions WHERE event_id = $1 ORDER BY id', [eventId]);
     return result.rows.map(q => ({
       q: q.question, a: q.answer, opts: JSON.parse(q.options),
-      diff: q.difficulty || 'medio', cat: q.category || null,
+      diff: q.difficulty || 'medio', cat: q.category || null, image_url: q.image_url || null,
     }));
   } catch(e) { console.error('Error loading event questions:', e.message); return []; }
 }
