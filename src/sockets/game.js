@@ -176,15 +176,14 @@ function registerGameHandlers(io, socket) {
     const currentPlayer = room.players[room.currentPlayerIdx];
     if (!currentPlayer || currentPlayer.id !== socket.id) return;
 
-    const allCats    = room.categories || defaultCategories;
-    const normalCats = allCats.filter(c => !c.special);
+    const allCats = room.categories || defaultCategories;
 
     if (!room.usedCatsPerPlayer)                        room.usedCatsPerPlayer = {};
     if (!room.usedCatsPerPlayer[currentPlayer.name])    room.usedCatsPerPlayer[currentPlayer.name] = [];
 
     const usedCats = room.usedCatsPerPlayer[currentPlayer.name];
-    let available  = normalCats.filter(c => !usedCats.includes(c.id));
-    if (!available.length) { room.usedCatsPerPlayer[currentPlayer.name] = []; available = normalCats; }
+    let available  = allCats.filter(c => !usedCats.includes(c.id));
+    if (!available.length) { room.usedCatsPerPlayer[currentPlayer.name] = []; available = allCats; }
 
     let winningCat = catId ? allCats.find(c => c.id === catId) : null;
     if (!winningCat) winningCat = available[Math.floor(Math.random() * available.length)];
@@ -192,13 +191,13 @@ function registerGameHandlers(io, socket) {
     room.usedCatsPerPlayer[currentPlayer.name].push(winningCat.id);
 
     const diffs      = ['easy', 'medium', 'hard'];
-    const chosenDiff = winningCat.special ? 'special' : diffs[Math.floor(Math.random() * diffs.length)];
+    const chosenDiff = diffs[Math.floor(Math.random() * diffs.length)];
     const extraRots  = 5 + Math.random() * 3;
 
     io.to(code).emit('game:doSpin', {
       catId:   winningCat.id,
       diff:    chosenDiff,
-      special: winningCat.special ? winningCat.id : null,
+      special: null,
       extra:   extraRots,
     });
   });
@@ -212,34 +211,6 @@ function registerGameHandlers(io, socket) {
       const currentPlayer = room.players[room.currentPlayerIdx];
       if (!currentPlayer || currentPlayer.id !== socket.id) return;
       if (!categoryId) return console.error('❌ spinResult: categoryId null');
-
-      if (special) {
-        room.currentCategory = categoryId;
-        room.specialEffect   = special;
-
-        if (special === 'skip') {
-          room.state      = 'answer';
-          room.lastAnswer = { playerId: socket.id, playerName: currentPlayer.name, answer: '__skip__', correct: false, special: 'skip' };
-          room.allAnswers = [];
-          broadcastRoom(io, code);
-          return;
-        }
-        if (special === 'suerte') {
-          room.scores[socket.id]  = (room.scores[socket.id] || 0) + 6;
-          currentPlayer.score     = room.scores[socket.id];
-          room.state              = 'answer';
-          room.lastAnswer         = { playerId: socket.id, playerName: currentPlayer.name, answer: '__suerte__', correct: true, special: 'suerte' };
-          room.allAnswers         = [];
-          broadcastRoom(io, code);
-          return;
-        }
-        const normalCats    = ['sports','geo','culture','history','eu'];
-        const randCat       = normalCats[Math.floor(Math.random() * normalCats.length)];
-        room.currentQuestion  = getUniqueQuestion(room, randCat, null);
-        room.currentDifficulty= 'medium';
-        setTimeout(() => { room.state = 'question'; broadcastRoom(io, code); }, 500);
-        return;
-      }
 
       const diffMap          = { easy: 'fácil', medium: 'medio', hard: 'difícil' };
       room.currentCategory   = categoryId;
@@ -265,31 +236,8 @@ function registerGameHandlers(io, socket) {
 
       if (correct) {
         const diffPts = { easy: 3, medium: 6, hard: 12 };
-        let points    = diffPts[room.currentDifficulty] || 6;
-
-        if (room.specialEffect === 'doble') points *= 2;
-
-        if (room.specialEffect === 'robo') {
-          const sorted = [...room.players].sort((a, b) => b.score - a.score);
-          const leader = sorted.find(p => p.id !== socket.id);
-          if (leader && leader.score > 0) {
-            const stolen            = Math.min(points, leader.score);
-            room.scores[leader.id]  = (room.scores[leader.id] || 0) - stolen;
-            leader.score            = room.scores[leader.id];
-            room.scores[socket.id]  = (room.scores[socket.id] || 0) + stolen;
-            currentPlayer.score     = room.scores[socket.id];
-          } else {
-            room.scores[socket.id]  = (room.scores[socket.id] || 0) + points;
-            currentPlayer.score     = room.scores[socket.id];
-          }
-        } else {
-          room.scores[socket.id] = (room.scores[socket.id] || 0) + points;
-          currentPlayer.score    = room.scores[socket.id];
-        }
-      } else if (room.specialEffect === 'bomba') {
-        const diffPts = { easy: 3, medium: 6, hard: 12 };
-        const penalty = diffPts[room.currentDifficulty] || 6;
-        room.scores[socket.id] = Math.max(0, (room.scores[socket.id] || 0) - penalty);
+        const points  = diffPts[room.currentDifficulty] || 6;
+        room.scores[socket.id] = (room.scores[socket.id] || 0) + points;
         currentPlayer.score    = room.scores[socket.id];
       }
 
