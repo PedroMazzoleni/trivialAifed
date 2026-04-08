@@ -53,6 +53,7 @@ let timerInterval = null;
 let sbCountdown   = null;
 let spinAngle     = 0;
 let isSpinning    = false;
+let _forceStop    = false; // set to true to kill any running animation
 let iAnswered     = false;
 let _shuffledOpts = null; // fixed option order for current round
 
@@ -135,7 +136,8 @@ function connectSocket() {
   });
 
   socket.on('event:backToLobby', () => {
-    // Admin finalizó — limpiar estado y mostrar pantalla de espera de ranking
+    // Admin finalizó — matar animación en curso y mostrar ranking
+    _forceStop    = true;  // kill any running rAF loop immediately
     clearInterval(timerInterval);
     clearInterval(sbCountdown);
     isSpinning    = false;
@@ -289,8 +291,8 @@ function doSpin(catId, diff, extra) {
     const sec   = Math.floor(mod / slice) % n;
     if (sec !== lastSector) { lastSector = sec; }
     drawWheel(wheelCats, spinAngle);
-    if (t < 1) { requestAnimationFrame(frame); return; }
-    isSpinning = false;
+    if (t < 1 && !_forceStop) { requestAnimationFrame(frame); return; }
+    isSpinning = false; _forceStop = false;
     drawWheel(wheelCats, spinAngle, catId);
     _bounceReveal(catId, cat);
   }
@@ -307,7 +309,7 @@ function _bounceReveal(catId, cat) {
     const t   = Math.min((now - bounceStart) / BOUNCE_DUR, 1);
     const osc = Math.sin(t * Math.PI) * BOUNCE_ANGLE * (1 - t * 0.6);
     drawWheel(wheelCats, baseAngle - osc, catId);
-    if (t < 1) { requestAnimationFrame(bounceFrame); return; }
+    if (t < 1 && !_forceStop) { requestAnimationFrame(bounceFrame); return; }
     drawWheel(wheelCats, baseAngle, catId);
     // Show reveal
     const reveal = el('cat-reveal');
