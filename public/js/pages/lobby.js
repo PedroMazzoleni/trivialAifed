@@ -107,6 +107,7 @@ function createRoom() {
   const name      = el('player-name').value.trim();
   const isPrivate = createTabMode === 'private';
   if (!name) return showMsg('Enter your name');
+  if (name.toLowerCase() === 'invitado' || name.toLowerCase() === 'guest') return showMsg('Choose a real name to play');
   hideMsg();
   setLoading('btn-create', true);
   initSocket(() => socket.emit('room:create', { playerName: name, tenantId: 'default', isPrivate }));
@@ -115,6 +116,7 @@ function createRoom() {
 function joinRoomByCard(code) {
   const name = el('player-name').value.trim();
   if (!name) return showMsg('Enter your name first');
+  if (name.toLowerCase() === 'invitado' || name.toLowerCase() === 'guest') return showMsg('Choose a real name to play');
   hideMsg();
   setLoading('btn-create', true);
   initSocket(() => socket.emit('room:join', { code, playerName: name, tenantId: 'default' }));
@@ -124,6 +126,7 @@ function joinByCode() {
   const name = el('player-name').value.trim();
   const code = el('join-code').value.trim().toUpperCase();
   if (!name)                    return showMsg('Enter your name');
+  if (name.toLowerCase() === 'invitado' || name.toLowerCase() === 'guest') return showMsg('Choose a real name to play');
   if (!code || code.length < 4) return showMsg('Enter the room code');
   hideMsg();
   setLoading('btn-join', true);
