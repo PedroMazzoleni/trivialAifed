@@ -323,41 +323,6 @@ function registerEventGameHandlers(io, socket) {
     const eid   = String(eventId);
     const lobby = eventLobbies[eid];
 
-    // Stop any running groups cleanly
-    (lobby?.groups || []).forEach(gk => {
-      const room = eventRooms[gk];
-      if (room) {
-        clearTimeout(room._questionTimer);
-        clearTimeout(room._autoAdvanceTimer);
-        delete eventRooms[gk];
-      }
-    });
-
-    // Reload fresh questions from DB
-    const questions = await loadEventQuestions(eid);
-
-    // Reset lobby to waiting state — players stay connected and see lobby again
-    const prevData = lobby?.eventData || {};
-    eventLobbies[eid] = {
-      eventId: eid, eventData: prevData, players: [],
-      started: false, groups: [], doneGroups: 0, globalScores: {},
-      eventQuestions: questions,
-    };
-
-    // Tell all players in the event to go back to lobby screen
-    io.to('event:' + eid).emit('event:backToLobby');
-    io.to('event:' + eid).emit('event:lobbyUpdate', { players: [], totalPlayers: 0 });
-    io.to('admin:events').emit('admin:eventStatus', {
-      eventId: eid, players: 0, state: 'waiting', currentRound: 0,
-      totalRounds: prevData?.rounds || 6,
-    });
-    console.log(`✅ Event ${eid} finished by admin — lobby reset for new session`);
-  });
-
-  socket.on('admin:finishEvent', async ({ eventId }) => {
-    const eid   = String(eventId);
-    const lobby = eventLobbies[eid];
-
     // Mark all running groups as finished and broadcast — triggers ranking screen on clients
     (lobby?.groups || []).forEach(gk => {
       const room = eventRooms[gk];
