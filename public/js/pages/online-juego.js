@@ -32,6 +32,9 @@ let isSpinning = false;
 let spinAngle  = 0;
 let timerInterval;
 let sbCountdownInterval = null;
+let _shuffledOpts    = null;  // locked option order for current question
+let _currentQId      = null;  // tracks current question to avoid re-shuffle
+let _nextTurnPending = false; // prevent double game:nextTurn emit
 
 let categories = [
   { id:'sports',  name:'Sports',    color:'#18c25a', emoji:'⚽' },
@@ -168,15 +171,17 @@ function handleRoomUpdate(room) {
     case 'waiting':
     case 'lobby':
       showWaiting(room);
-      setTimeout(() => {
-        if (roomState && (roomState.state === 'lobby' || roomState.state === 'waiting')) {
-          socket.emit('room:rejoin', { code: ROOM_CODE, playerName: MY_NAME });
-        }
-      }, 2000);
       break;
     case 'spinning': showSpin(room);     break;
-    case 'question': showQuestion(room); break;
-    case 'answer':   showAnswer(room);   break;
+    case 'question':
+      // Always call showQuestion — it guards internally against re-shuffling and re-timing
+      showQuestion(room);
+      break;
+    case 'answer':
+      clearInterval(timerInterval);
+      timerInterval = null;
+      showAnswer(room);
+      break;
     case 'finished': showResults(room);  break;
   }
 }
@@ -191,6 +196,7 @@ function showWaiting(room) {
       ${p.name === MY_NAME ? '<span class="wait-you">Tú</span>' : ''}
     </div>
   `).join('');
+  // No rejoin loop — server handles reconnection state
 }
 
 // ── SPIN ─────────────────────────────────────────────────────────────────────
@@ -237,7 +243,12 @@ function spinWheel() {
 
 function doSpin(catId, diff, special, isMeTurn, extra) {
   if (isSpinning) return;
-  isSpinning = true;
+  isSpinning       = true;
+  _currentQId      = null;
+  _shuffledOpts    = null;
+  _nextTurnPending = false;
+  clearInterval(timerInterval);
+  timerInterval = null;
 
   const cat = categories.find(c => c.id === catId);
   if (!cat) { isSpinning = false; return; }
@@ -531,33 +542,50 @@ function showQuestion(room) {
   const myScore = room.players.find(p => p.name === MY_NAME);
   document.getElementById('my-score-hud').textContent = `${myScore ? myScore.score : 0} pts`;
 
-  const myAnswer     = room.allAnswers && room.allAnswers.find(a => a.playerName === MY_NAME);
+  const myAnswer      = room.allAnswers && room.allAnswers.find(a => a.playerName === MY_NAME);
   const iHaveAnswered = !!myAnswer;
 
-  const grid = document.getElementById('q-options');
-  grid.innerHTML = '';
-  if (q) {
-    const shuffled = [...q.opts].sort(() => Math.random() - 0.5);
-    shuffled.forEach((opt, i) => {
-      const cleanOpt = opt.trim();
-      const btn      = document.createElement('button');
-      btn.className  = 'opt-btn';
-      const letter   = document.createElement('span');
-      letter.className    = 'opt-letter';
-      letter.textContent  = LETTERS[i] || String.fromCharCode(65 + i);
-      btn.appendChild(letter);
-      btn.appendChild(document.createTextNode(cleanOpt));
+  // ── Lock option order for this question — shuffle only once per question ──
+  const qId = q ? (q.q + room.currentRound) : null;
+  if (qId !== _currentQId) {
+    _currentQId   = qId;
+    _shuffledOpts = q ? [...q.opts].sort(() => Math.random() - 0.5) : [];
+  }
 
-      if (!myTurn || iHaveAnswered) {
-        btn.disabled = true;
-        if (iHaveAnswered) {
-          if (cleanOpt === q.a.trim()) btn.classList.add('correct');
-          else if (myAnswer && cleanOpt === myAnswer.answer.trim() && myAnswer.answer.trim() !== q.a.trim()) btn.classList.add('wrong');
+  const grid = document.getElementById('q-options');
+  // Only rebuild options if not already answered (avoid re-render on allAnswers updates)
+  if (!iHaveAnswered || grid.children.length === 0) {
+    grid.innerHTML = '';
+    if (q && _shuffledOpts) {
+      _shuffledOpts.forEach((opt, i) => {
+        const cleanOpt = opt.trim();
+        const btn      = document.createElement('button');
+        btn.className  = 'opt-btn';
+        const letter   = document.createElement('span');
+        letter.className    = 'opt-letter';
+        letter.textContent  = LETTERS[i] || String.fromCharCode(65 + i);
+        btn.appendChild(letter);
+        btn.appendChild(document.createTextNode(cleanOpt));
+
+        if (!myTurn || iHaveAnswered) {
+          btn.disabled = true;
+          if (iHaveAnswered) {
+            if (cleanOpt === q.a.trim()) btn.classList.add('correct');
+            else if (myAnswer && cleanOpt === myAnswer.answer.trim() && myAnswer.answer.trim() !== q.a.trim()) btn.classList.add('wrong');
+          }
+        } else {
+          btn.onclick = () => submitAnswer(cleanOpt, q.a);
         }
-      } else {
-        btn.onclick = () => submitAnswer(cleanOpt, q.a);
-      }
-      grid.appendChild(btn);
+        grid.appendChild(btn);
+      });
+    }
+  } else if (iHaveAnswered) {
+    // Already answered — just update button states without rebuilding
+    grid.querySelectorAll('.opt-btn').forEach(btn => {
+      btn.disabled = true;
+      const txt = btn.textContent.replace(/^[A-D]/, '').trim();
+      if (txt === q.a.trim()) btn.classList.add('correct');
+      else if (myAnswer && txt === myAnswer.answer.trim() && myAnswer.answer.trim() !== q.a.trim()) btn.classList.add('wrong');
     });
   }
 
@@ -575,18 +603,24 @@ function showQuestion(room) {
     waitTxt.textContent  = 'Answer submitted, waiting...';
   }
 
-  clearInterval(timerInterval);
-  let t = TIME_LIMIT;
-  updateTimer(t);
-  if (myTurn && !iHaveAnswered) {
+  // ── Only start timer once per question, not on every room:update ──
+  if (myTurn && !iHaveAnswered && qId !== null && _currentQId === qId && !timerInterval) {
+    let t = TIME_LIMIT;
+    updateTimer(t);
     timerInterval = setInterval(() => {
       t--;
       updateTimer(t);
       if (t <= 0) {
         clearInterval(timerInterval);
+        timerInterval = null;
         submitAnswer('__timeout__', q ? q.a : '');
       }
     }, 1000);
+  } else if (!myTurn || iHaveAnswered) {
+    // Not my turn or already answered — clear timer
+    clearInterval(timerInterval);
+    timerInterval = null;
+    if (!iHaveAnswered) updateTimer(TIME_LIMIT);
   }
 }
 
@@ -600,6 +634,7 @@ function updateTimer(t) {
 
 function submitAnswer(answer, correctA) {
   clearInterval(timerInterval);
+  timerInterval = null;
   const cleanAnswer  = (answer || '').trim();
   const cleanCorrect = (correctA || '').trim();
   const isCorrect    = cleanAnswer === cleanCorrect && cleanAnswer !== '';
@@ -719,9 +754,18 @@ function showScoreboard(room) {
 }
 
 function proceedNextTurn() {
+  if (_nextTurnPending) return;
+  _nextTurnPending = true;
   clearInterval(sbCountdownInterval);
-  isSpinning = false;
+  sbCountdownInterval = null;
+  isSpinning    = false;
+  _currentQId   = null;
+  _shuffledOpts = null;
+  timerInterval && clearInterval(timerInterval);
+  timerInterval = null;
   socket.emit('game:nextTurn');
+  // Reset flag after server responds with new state
+  setTimeout(() => { _nextTurnPending = false; }, 3000);
 }
 
 // ── RESULTS ───────────────────────────────────────────────────────────────────
