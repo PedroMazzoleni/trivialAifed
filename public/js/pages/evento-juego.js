@@ -658,9 +658,6 @@ function rejoinAfterFinish() {
   socket.emit('event:join', { eventId: EVENT_ID, playerName: MY_NAME, eventData: { title: EVENT_TITLE, rounds: EVENT_ROUNDS } });
   showScreen('lobby');
 }
-  });
-  showScreen('lobby');
-}
 
 // ── COMODINES PRIVADOS ────────────────────────────────────────────────────────
 let _wcTimeout = null;
