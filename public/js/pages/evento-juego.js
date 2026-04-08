@@ -135,8 +135,7 @@ function connectSocket() {
   });
 
   socket.on('event:backToLobby', () => {
-    // Admin finalizó — el ranking llegará via event:globalRanking
-    // Solo limpiamos estado local y esperamos
+    // Admin finalizó — limpiar estado y mostrar pantalla de espera de ranking
     clearInterval(timerInterval);
     clearInterval(sbCountdown);
     isSpinning    = false;
@@ -144,6 +143,17 @@ function connectSocket() {
     roomState     = null;
     spinAngle     = 0;
     _shuffledOpts = null;
+
+    // Show ranking screen immediately with a loading state
+    showScreen('global-ranking');
+    const grHeader = el('gr-my-result');
+    if (grHeader) {
+      grHeader.className = 'gr-my-result outside';
+      grHeader.innerHTML = `<div style="font-size:36px;margin-bottom:12px">&#127937;</div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;color:#e8eaf6;text-transform:uppercase;letter-spacing:2px">Partida finalizada</div><div style="font-size:13px;color:#8892b0;margin-top:8px">Calculando ranking...</div>`;
+    }
+    const list = el('gr-top10-list');
+    if (list) list.innerHTML = '';
+    // event:globalRanking will arrive shortly and fill the screen
   });
 
   socket.on('connect_error', () => {
