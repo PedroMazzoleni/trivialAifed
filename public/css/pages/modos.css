@@ -120,7 +120,7 @@
   position: absolute;
   inset: 0;
   background: var(--ev-bg) center/cover no-repeat;
-  opacity: 0.12;
+  opacity: 0.22;
   z-index: 0;
 }
 
