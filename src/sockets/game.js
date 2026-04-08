@@ -80,7 +80,8 @@ function registerGameHandlers(io, socket) {
     if (!room)                     return socket.emit('error', { msg: 'Sala no encontrada' });
     if (room.state !== 'lobby')    return socket.emit('error', { msg: 'Game already started' });
     if (room.players.length >= 6)  return socket.emit('error', { msg: 'Sala llena (máx. 6)' });
-
+    const nameExists = room.players.some(p => p.name.toLowerCase() === (playerName||'').toLowerCase());
+    if (nameExists) return socket.emit('error', { msg: `El nombre "${playerName}" ya está en uso en esta sala. Elige otro.` });
     const colors = ['#E84545','#3B9EFF','#F5A623','#A259FF','#2ECC71','#FF6B6B'];
     const player = { id: socket.id, name: playerName, score: 0, color: colors[room.players.length] };
     room.players.push(player);
