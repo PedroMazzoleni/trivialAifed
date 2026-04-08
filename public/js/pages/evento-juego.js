@@ -135,7 +135,8 @@ function connectSocket() {
   });
 
   socket.on('event:backToLobby', () => {
-    // Admin finalizó la partida — mostrar pantalla de fin con opción de rejoinar
+    // Admin finalizó — el ranking llegará via event:globalRanking
+    // Solo limpiamos estado local y esperamos
     clearInterval(timerInterval);
     clearInterval(sbCountdown);
     isSpinning    = false;
@@ -143,22 +144,6 @@ function connectSocket() {
     roomState     = null;
     spinAngle     = 0;
     _shuffledOpts = null;
-
-    // Show a clear "finished" screen instead of an empty lobby
-    showScreen('global-ranking');
-    const grHeader = el('gr-my-result');
-    if (grHeader) {
-      grHeader.className = 'gr-my-result outside';
-      grHeader.innerHTML = `
-        <div style="font-size:48px;margin-bottom:12px">🏁</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:28px;letter-spacing:2px;text-transform:uppercase;color:#e8eaf6;margin-bottom:8px">Partida finalizada</div>
-        <div style="font-size:14px;color:#8892b0;margin-bottom:24px">El admin ha cerrado esta sesión.</div>
-        <button onclick="rejoinAfterFinish()" style="padding:12px 32px;background:#3B9EFF;border:none;border-radius:4px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;color:#0a0e1a;cursor:pointer">
-          🔄 Unirse a la siguiente sesión
-        </button>`;
-    }
-    const list = el('gr-top10-list');
-    if (list) list.innerHTML = '';
   });
 
   socket.on('connect_error', () => {
