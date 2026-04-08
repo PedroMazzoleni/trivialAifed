@@ -135,7 +135,7 @@ function connectSocket() {
   });
 
   socket.on('event:backToLobby', () => {
-    // Admin finalizó la partida — resetear estado local y volver al lobby
+    // Admin finalizó la partida — mostrar pantalla de fin con opción de rejoinar
     clearInterval(timerInterval);
     clearInterval(sbCountdown);
     isSpinning    = false;
@@ -143,14 +143,22 @@ function connectSocket() {
     roomState     = null;
     spinAngle     = 0;
     _shuffledOpts = null;
-    // Rejoin the event lobby with fresh state
-    socket.emit('event:join', {
-      eventId:    EVENT_ID,
-      playerName: MY_NAME,
-      eventData:  { title: EVENT_TITLE, rounds: EVENT_ROUNDS },
-    });
-    showScreen('lobby');
-    addChatMsg('', '🔄 Partida finalizada — espera a que el admin lance la siguiente sesión.', true);
+
+    // Show a clear "finished" screen instead of an empty lobby
+    showScreen('global-ranking');
+    const grHeader = el('gr-my-result');
+    if (grHeader) {
+      grHeader.className = 'gr-my-result outside';
+      grHeader.innerHTML = `
+        <div style="font-size:48px;margin-bottom:12px">🏁</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:28px;letter-spacing:2px;text-transform:uppercase;color:#e8eaf6;margin-bottom:8px">Partida finalizada</div>
+        <div style="font-size:14px;color:#8892b0;margin-bottom:24px">El admin ha cerrado esta sesión.</div>
+        <button onclick="rejoinAfterFinish()" style="padding:12px 32px;background:#3B9EFF;border:none;border-radius:4px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;color:#0a0e1a;cursor:pointer">
+          🔄 Unirse a la siguiente sesión
+        </button>`;
+    }
+    const list = el('gr-top10-list');
+    if (list) list.innerHTML = '';
   });
 
   socket.on('connect_error', () => {
@@ -644,6 +652,15 @@ function hexToRgba(hex, alpha) {
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
 function goToEvents() { goTo('trivial-eventos.html'); }
 function goHome()     { goTo('trivial-modos.html'); }
+
+function rejoinAfterFinish() {
+  isSpinning = false; iAnswered = false; roomState = null; spinAngle = 0; _shuffledOpts = null;
+  socket.emit('event:join', { eventId: EVENT_ID, playerName: MY_NAME, eventData: { title: EVENT_TITLE, rounds: EVENT_ROUNDS } });
+  showScreen('lobby');
+}
+  });
+  showScreen('lobby');
+}
 
 // ── COMODINES PRIVADOS ────────────────────────────────────────────────────────
 let _wcTimeout = null;
