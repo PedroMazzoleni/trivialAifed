@@ -358,35 +358,37 @@ function registerEventGameHandlers(io, socket) {
     const eid   = String(eventId);
     const lobby = eventLobbies[eid];
 
-    // Stop any running groups cleanly
+    // Mark all running groups as finished and broadcast — triggers ranking screen on clients
     (lobby?.groups || []).forEach(gk => {
       const room = eventRooms[gk];
       if (room) {
         clearTimeout(room._questionTimer);
         clearTimeout(room._autoAdvanceTimer);
-        delete eventRooms[gk];
+        room.state = 'finished';
+        broadcastGroup(io, gk);
       }
     });
 
-    // Reload fresh questions from DB
+    // Emit global ranking — clients will show the ranking screen
+    setTimeout(() => emitGlobalRanking(io, eid), 800);
+
+    // Reload fresh questions from DB and reset lobby after ranking is shown
     const questions = await loadEventQuestions(eid);
     const prevData  = lobby?.eventData || {};
 
-    // Reset lobby to waiting — players will rejoin fresh
-    eventLobbies[eid] = {
-      eventId: eid, eventData: prevData, players: [],
-      started: false, groups: [], doneGroups: 0, globalScores: {},
-      eventQuestions: questions,
-    };
-
-    // Send all players back to the lobby screen
-    io.to('event:' + eid).emit('event:backToLobby');
-    io.to('event:' + eid).emit('event:lobbyUpdate', { players: [], totalPlayers: 0 });
-    io.to('admin:events').emit('admin:eventStatus', {
-      eventId: eid, players: 0, state: 'waiting', currentRound: 0,
-      totalRounds: prevData?.rounds || 6,
-    });
-    console.log(`✅ Event ${eid} finished by admin — lobby ready for new session`);
+    setTimeout(() => {
+      eventLobbies[eid] = {
+        eventId: eid, eventData: prevData, players: [],
+        started: false, groups: [], doneGroups: 0, globalScores: {},
+        eventQuestions: questions,
+      };
+      io.to('event:' + eid).emit('event:lobbyUpdate', { players: [], totalPlayers: 0 });
+      io.to('admin:events').emit('admin:eventStatus', {
+        eventId: eid, players: 0, state: 'waiting', currentRound: 0,
+        totalRounds: prevData?.rounds || 6,
+      });
+      console.log(`✅ Event ${eid} finished by admin — lobby ready for new session`);
+    }, 3000);
   });
 
   socket.on('admin:stopEvent', ({ eventId }) => {
