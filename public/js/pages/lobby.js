@@ -31,22 +31,22 @@ function initSocket(callback) {
   socket = io(SERVER, { transports: ['polling'], reconnection: true, timeout: 8000 });
 
   socket.on('connect', () => {
-    setStatus('Conectado al servidor', true);
+    setStatus('Connected al servidor', true);
     socket.emit('rooms:list');
     callback();
   });
 
-  socket.on('disconnect',    ()    => setStatus('Reconectando...', false));
+  socket.on('disconnect',    ()    => setStatus('Reconnecting...', false));
   socket.on('connect_error', ()    => {
-    setStatus('Sin conexión al servidor', false);
+    setStatus('No connection to server', false);
     setLoading('btn-create', false);
     setLoading('btn-join',   false);
-    showMsg('No se puede conectar al servidor.', 'error');
+    showMsg('Cannot connect to server.', 'error');
   });
 
   socket.on('error',      ({ msg }) => showMsg(msg, 'error'));
 
-  // Lista de salas en tiempo real
+  // Real-time room list
   socket.on('rooms:list', (list) => renderRoomsList(list));
 
   socket.on('room:created', ({ code, player, isPrivate }) => {
@@ -68,7 +68,7 @@ function initSocket(callback) {
     updateStartBtn(room);
   });
 
-  // Cuenta atrás cuando llegan 6 jugadores
+  // Countdown cuando llegan 6 players
   socket.on('game:countdown', ({ seconds }) => showCountdown(seconds));
 
   socket.on('game:start', ({ roomCode: rc }) => {
@@ -77,13 +77,13 @@ function initSocket(callback) {
   });
 }
 
-// Conectar en modo solo-lectura para ver salas (sin entrar a ninguna aún)
+// Connect in read-only mode to see rooms
 function connectReadonly() {
   if (socket && socket.connected) return;
   socket = io(SERVER, { transports: ['polling'], reconnection: true, timeout: 8000 });
-  socket.on('connect',       ()     => { setStatus('Conectado al servidor', true); socket.emit('rooms:list'); });
-  socket.on('disconnect',    ()     => setStatus('Reconectando...', false));
-  socket.on('connect_error', ()     => setStatus('Sin conexión al servidor', false));
+  socket.on('connect',       ()     => { setStatus('Connected al servidor', true); socket.emit('rooms:list'); });
+  socket.on('disconnect',    ()     => setStatus('Reconnecting...', false));
+  socket.on('connect_error', ()     => setStatus('No connection to server', false));
   socket.on('rooms:list',    (list) => renderRoomsList(list));
   socket.on('room:created', ({ code, player, isPrivate }) => { myPlayer = player; roomCode = code; isHost = true; roomIsPrivate = !!isPrivate; setLoading('btn-create', false); showRoom(code); });
   socket.on('room:joined',  ({ code, player }) => { myPlayer = player; roomCode = code; isHost = false; roomIsPrivate = false; setLoading('btn-join', false); setLoading('btn-create', false); showRoom(code); });
@@ -100,13 +100,14 @@ function selectCreateTab(mode) {
   createTabMode = mode;
   el('tab-public').classList.toggle('active', mode === 'public');
   el('tab-private').classList.toggle('active', mode === 'private');
-  el('btn-create-label').textContent = mode === 'private' ? '🔒 Crear sala privada' : '+ Crear sala pública';
+  el('btn-create-label').textContent = mode === 'private' ? '🔒 Create private room' : '+ Create public room';
 }
 
 function createRoom() {
   const name      = el('player-name').value.trim();
   const isPrivate = createTabMode === 'private';
-  if (!name) return showMsg('Introduce tu nombre');
+  if (!name) return showMsg('Enter your name');
+  if (name.toLowerCase() === 'invitado' || name.toLowerCase() === 'guest') return showMsg('Choose a real name to play');
   hideMsg();
   setLoading('btn-create', true);
   initSocket(() => socket.emit('room:create', { playerName: name, tenantId: 'default', isPrivate }));
@@ -114,7 +115,8 @@ function createRoom() {
 
 function joinRoomByCard(code) {
   const name = el('player-name').value.trim();
-  if (!name) return showMsg('Introduce tu nombre primero');
+  if (!name) return showMsg('Enter your name first');
+  if (name.toLowerCase() === 'invitado' || name.toLowerCase() === 'guest') return showMsg('Choose a real name to play');
   hideMsg();
   setLoading('btn-create', true);
   initSocket(() => socket.emit('room:join', { code, playerName: name, tenantId: 'default' }));
@@ -123,8 +125,9 @@ function joinRoomByCard(code) {
 function joinByCode() {
   const name = el('player-name').value.trim();
   const code = el('join-code').value.trim().toUpperCase();
-  if (!name)                    return showMsg('Introduce tu nombre');
-  if (!code || code.length < 4) return showMsg('Introduce el código de sala');
+  if (!name)                    return showMsg('Enter your name');
+  if (name.toLowerCase() === 'invitado' || name.toLowerCase() === 'guest') return showMsg('Choose a real name to play');
+  if (!code || code.length < 4) return showMsg('Enter the room code');
   hideMsg();
   setLoading('btn-join', true);
   initSocket(() => socket.emit('room:join', { code, playerName: name, tenantId: 'default' }));
@@ -172,7 +175,7 @@ function renderPlayers(room) {
       <div class="player-dot" style="background:${p.color}"></div>
       <span class="player-name">${p.name}</span>
       ${isMe       ? '<span class="player-you">Tú</span>'         : ''}
-      ${isRoomHost ? '<span class="player-host">Anfitrión</span>' : ''}
+      ${isRoomHost ? '<span class="player-host">Host</span>' : ''}
     `;
     list.appendChild(row);
   });
@@ -180,7 +183,7 @@ function renderPlayers(room) {
   if (room.players.length < 6) {
     const waiting = document.createElement('div');
     waiting.className = 'waiting-row';
-    waiting.innerHTML = `<div class="dots"><span></span><span></span><span></span></div> Esperando jugadores (${room.players.length}/6)...`;
+    waiting.innerHTML = `<div class="dots"><span></span><span></span><span></span></div> Waiting for players (${room.players.length}/6)...`;
     list.appendChild(waiting);
   }
 }
@@ -192,7 +195,7 @@ function renderRoomsList(list) {
   if (!list || list.length === 0) {
     container.innerHTML = `
       <div class="rooms-empty">
-        <span>No hay salas abiertas</span>
+        <span>No open rooms</span>
         <small>Crea una nueva para empezar</small>
       </div>`;
     return;
@@ -205,12 +208,12 @@ function renderRoomsList(list) {
       <div class="room-card ${full ? 'room-full' : ''}">
         <div class="room-card-info">
           <span class="room-card-code">${r.code}</span>
-          <span class="room-card-count">${r.players}/6 jugadores</span>
+          <span class="room-card-count">${r.players}/6 players</span>
           <div class="room-card-bar"><div class="room-card-fill" style="width:${pct}%"></div></div>
         </div>
         ${full
           ? '<span class="room-card-label-full">Llena</span>'
-          : `<button class="btn-join-card" onclick="joinRoomByCard('${r.code}')">Unirse →</button>`
+          : `<button class="btn-join-card" onclick="joinRoomByCard('${r.code}')">Join →</button>`
         }
       </div>`;
   }).join('');
@@ -233,9 +236,13 @@ function showCountdown(total) {
 }
 
 function updateStartBtn(room) {
-  el('btn-start').classList.toggle('ready', room.players.length >= 1);
+  const enough = room.players.length >= 2;
+  el('btn-start').classList.toggle('ready', enough);
   const note = el('min-note');
-  if (note) note.style.display = 'none';
+  if (note) {
+    note.style.display = enough ? 'none' : 'block';
+    note.textContent = `At least 2 players required (${room.players.length}/2)`;
+  }
 }
 
 function toggleCodePanel() {
@@ -246,7 +253,7 @@ function toggleCodePanel() {
 function setStatus(text, online) {
   setText('status-text', text);
   const conn = el('status-conn');
-  conn.textContent = online ? 'EN LÍNEA' : 'DESCONECTADO';
+  conn.textContent = online ? 'ONLINE' : 'OFFLINE';
   conn.style.color = online ? 'var(--blue)' : '#e84545';
   const dot = qs('.status-dot');
   if (dot) dot.style.background = online ? 'var(--blue)' : '#e84545';
@@ -256,13 +263,13 @@ function copyCode() {
   navigator.clipboard.writeText(roomCode || '').then(() => {
     const btn  = qs('.copy-btn');
     const orig = btn.innerHTML;
-    btn.innerHTML   = '<svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg> Copiado';
+    btn.innerHTML   = '<svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg> Copied';
     btn.style.color = 'var(--green)';
     setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 2000);
   });
 }
 
-// Auto uppercase en código
+// Auto uppercase for code
 window.addEventListener('DOMContentLoaded', () => {
   const jc = el('join-code');
   if (jc) jc.addEventListener('input', function () {

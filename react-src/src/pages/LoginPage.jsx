@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import { Session } from '../utils/session'
 import { apiPost } from '../utils/api'
@@ -27,78 +27,73 @@ export default function LoginPage() {
   const navigate = useNavigate()
 
   const [tab,          setTab]          = useState('login')
-  const [msg,          setMsg]          = useState(null)   // { text, type }
+  const [msg,          setMsg]          = useState(null)
 
-  // Login form
   const [loginEmail,   setLoginEmail]   = useState('')
   const [loginPass,    setLoginPass]    = useState('')
   const [loginLoading, setLoginLoading] = useState(false)
 
-  // Register form
   const [regName,      setRegName]      = useState('')
   const [regEmail,     setRegEmail]     = useState('')
   const [regPass,      setRegPass]      = useState('')
   const [regLoading,   setRegLoading]   = useState(false)
-  const [strength,     setStrength]     = useState(-1)   // -1 = hidden
+  const [strength,     setStrength]     = useState(-1)
 
-  function switchTab(t) {
-    setTab(t)
-    setMsg(null)
-  }
+  function switchTab(t) { setTab(t); setMsg(null) }
 
   async function handleLogin() {
     setMsg(null)
-    if (!loginEmail.trim()) return setMsg({ text: 'Introduce tu correo o usuario', type: 'error' })
-    if (!loginPass)          return setMsg({ text: 'Introduce tu contraseña',        type: 'error' })
+    if (!loginEmail.trim()) return setMsg({ text: 'Enter your email or username', type: 'error' })
+    if (!loginPass)          return setMsg({ text: 'Enter your password',          type: 'error' })
 
     setLoginLoading(true)
     try {
       const data = await apiPost('/api/login', { email: loginEmail.trim(), password: loginPass })
       setLoginLoading(false)
-      if (!data.ok) return setMsg({ text: data.msg || 'Error al iniciar sesión', type: 'error' })
+      if (!data.ok) return setMsg({ text: data.msg || 'Login failed', type: 'error' })
 
       Session.set('player_name',  data.name)
       Session.set('player_role',  data.role)
       Session.set('player_email', loginEmail.trim())
 
-      setMsg({ text: 'Sesión iniciada. Redirigiendo...', type: 'success' })
+      setMsg({ text: 'Logged in. Redirecting...', type: 'success' })
       setTimeout(() => {
         if (data.role === 'admin') window.location.href = '/trivial-admin.html'
         else navigate('/modos')
       }, 800)
     } catch {
       setLoginLoading(false)
-      setMsg({ text: 'No se puede conectar al servidor', type: 'error' })
+      setMsg({ text: 'Cannot connect to server', type: 'error' })
     }
   }
 
   async function handleRegister() {
     setMsg(null)
-    if (!regName.trim())               return setMsg({ text: 'Elige un nombre de usuario',                  type: 'error' })
-    if (regName.trim().length < 3)     return setMsg({ text: 'El nombre debe tener al menos 3 caracteres', type: 'error' })
-    if (!regEmail.trim())              return setMsg({ text: 'Introduce tu correo electrónico',              type: 'error' })
-    if (!regEmail.includes('@'))       return setMsg({ text: 'Correo electrónico no válido',                 type: 'error' })
-    if (!regPass)                      return setMsg({ text: 'Crea una contraseña',                         type: 'error' })
-    if (regPass.length < 6)            return setMsg({ text: 'La contraseña debe tener al menos 6 caracteres', type: 'error' })
+    if (!regName.trim())               return setMsg({ text: 'Choose a username',                        type: 'error' })
+    if (regName.trim().length < 3)     return setMsg({ text: 'Name must be at least 3 characters',      type: 'error' })
+    if (!regEmail.trim())              return setMsg({ text: 'Enter your email address',                 type: 'error' })
+    if (!regEmail.includes('@'))       return setMsg({ text: 'Invalid email address',                    type: 'error' })
+    if (!regPass)                      return setMsg({ text: 'Create a password',                        type: 'error' })
+    if (regPass.length < 6)            return setMsg({ text: 'Password must be at least 6 characters',  type: 'error' })
 
     setRegLoading(true)
     try {
       const data = await apiPost('/api/register', { name: regName.trim(), email: regEmail.trim(), password: regPass })
       setRegLoading(false)
-      if (!data.ok) return setMsg({ text: data.msg || 'Error al registrarse', type: 'error' })
+      if (!data.ok) return setMsg({ text: data.msg || 'Registration failed', type: 'error' })
 
-      setMsg({ text: `Cuenta creada. Bienvenido, ${regName.trim()}`, type: 'success' })
+      setMsg({ text: `Account created. Welcome, ${regName.trim()}!`, type: 'success' })
       setTimeout(() => switchTab('login'), 1500)
     } catch {
       setRegLoading(false)
-      setMsg({ text: 'No se puede conectar al servidor', type: 'error' })
+      setMsg({ text: 'Cannot connect to server', type: 'error' })
     }
   }
 
   function handleGuest() {
-    Session.set('player_name', 'Invitado')
+    Session.set('player_name', 'Guest')
     Session.set('player_role', 'guest')
-    setMsg({ text: 'Entrando como invitado...', type: 'success' })
+    setMsg({ text: 'Continuing as guest...', type: 'success' })
     setTimeout(() => navigate('/modos'), 600)
   }
 
@@ -116,18 +111,17 @@ export default function LoginPage() {
       <div className="page" onKeyDown={handleKeyDown}>
         <div className="card">
 
-          <div className="card-header">
-            <div className="brand">Trivial</div>
-            <h1>{tab === 'login' ? 'Acceder' : 'Crear cuenta'}</h1>
-            <p>{tab === 'login'
-              ? 'Introduce tus datos para continuar'
-              : 'Rellena el formulario para registrarte'}
-            </p>
+          <div className="card-header" style={{ textAlign: 'center' }}>
+            <img
+              src="/images/logometaversing.png"
+              alt="Metaversing"
+              style={{ width: 180, height: 180, objectFit: 'contain', marginBottom: 4 }}
+            />
           </div>
 
           <div className="tabs">
-            <button className={`tab${tab === 'login'    ? ' active' : ''}`} onClick={() => switchTab('login')}>Iniciar sesión</button>
-            <button className={`tab${tab === 'register' ? ' active' : ''}`} onClick={() => switchTab('register')}>Registrarse</button>
+            <button className={`tab${tab === 'login'    ? ' active' : ''}`} onClick={() => switchTab('login')}>Log in</button>
+            <button className={`tab${tab === 'register' ? ' active' : ''}`} onClick={() => switchTab('register')}>Sign up</button>
           </div>
 
           <div className="card-body">
@@ -136,51 +130,52 @@ export default function LoginPage() {
             {tab === 'login' ? (
               <>
                 <div className="field">
-                  <label>Correo electrónico</label>
-                  <input type="text" placeholder="tu@correo.com o usuario" autoComplete="email"
+                  <label>Email address</label>
+                  <input type="text" placeholder="your@email.com or username" autoComplete="email"
                     value={loginEmail} onChange={e => setLoginEmail(e.target.value)} />
                 </div>
                 <div className="field">
-                  <label>Contraseña</label>
-                  <input type="password" placeholder="Contraseña" autoComplete="current-password"
+                  <label>Password</label>
+                  <input type="password" placeholder="Password" autoComplete="current-password"
                     value={loginPass} onChange={e => setLoginPass(e.target.value)} />
                 </div>
 
                 <div className="form-extras">
                   <label className="remember">
                     <input type="checkbox" />
-                    <span>Recordarme</span>
+                    <span>Remember me</span>
                   </label>
-                  <a className="forgot" href="#">¿Olvidaste la contraseña?</a>
+                  <a className="forgot" href="#">Forgot your password?</a>
                 </div>
 
                 <button className={`btn btn-primary btn-full${loginLoading ? ' loading' : ''}`}
                   onClick={handleLogin} disabled={loginLoading}>
-                  <span className="btn-label">Entrar</span>
+                  <span className="btn-label">Enter</span>
                   <div className="spinner" />
                 </button>
 
-                <div className="divider"><hr /><span>o</span><hr /></div>
+                <div className="divider"><hr /><span>or</span><hr /></div>
 
-                <button className="btn btn-secondary btn-full" onClick={handleGuest}>
-                  Entrar como invitado
+                <button className="btn btn-secondary btn-full" onClick={handleGuest}
+                  style={{ background:'rgba(45,125,210,0.15)', border:'1.5px solid rgba(45,125,210,0.6)', color:'#7ab4e8', fontWeight:700, letterSpacing:'1px', boxShadow:'0 0 16px rgba(45,125,210,0.2)' }}>
+                  Continue as guest
                 </button>
               </>
             ) : (
               <>
                 <div className="field">
-                  <label>Nombre de usuario</label>
-                  <input type="text" placeholder="Tu nombre en el juego" maxLength={20}
+                  <label>Username</label>
+                  <input type="text" placeholder="Your in-game name" maxLength={20}
                     value={regName} onChange={e => setRegName(e.target.value)} />
                 </div>
                 <div className="field">
-                  <label>Correo electrónico</label>
-                  <input type="email" placeholder="tu@correo.com"
+                  <label>Email address</label>
+                  <input type="email" placeholder="your@email.com"
                     value={regEmail} onChange={e => setRegEmail(e.target.value)} />
                 </div>
                 <div className="field">
-                  <label>Contraseña</label>
-                  <input type="password" placeholder="Mínimo 6 caracteres"
+                  <label>Password</label>
+                  <input type="password" placeholder="At least 6 characters"
                     value={regPass}
                     onChange={e => { setRegPass(e.target.value); setStrength(e.target.value ? calcStrength(e.target.value) : -1) }} />
                   {strength >= 0 && strengthLevel && (
@@ -192,19 +187,14 @@ export default function LoginPage() {
 
                 <button className={`btn btn-primary btn-full${regLoading ? ' loading' : ''}`}
                   onClick={handleRegister} disabled={regLoading}>
-                  <span className="btn-label">Crear cuenta</span>
+                  <span className="btn-label">Create account</span>
                   <div className="spinner" />
                 </button>
               </>
             )}
           </div>
 
-          <div className="card-footer">
-            {tab === 'login'
-              ? <>¿No tienes cuenta? <a onClick={() => switchTab('register')}>Regístrate</a></>
-              : <>¿Ya tienes cuenta? <a onClick={() => switchTab('login')}>Inicia sesión</a></>
-            }
-          </div>
+          <div className="card-footer" style={{ display: 'none' }}></div>
 
         </div>
       </div>

@@ -3,7 +3,7 @@
 
 const CAT_COLORS = {
     sports: '#18c25a', geo: '#3B9EFF', culture: '#f5a623',
-    history: '#e84545', eu: '#a259ff', kenya: '#cc2200', mixed: '#9b59b6',
+    history: '#e84545', eu: '#a259ff', mixed: '#9b59b6',
   };
   
   const LETTERS = ['A','B','C','D'];
@@ -12,11 +12,17 @@ const CAT_COLORS = {
   let currentFilter = 'all';
   
   // ── INIT ─────────────────────────────────────────────────────────────────────
-  window.addEventListener('DOMContentLoaded', loadEvents);
+  window.addEventListener('DOMContentLoaded', () => {
+    loadEvents();
+    // Auto-refresh cada 10s para detectar cuando el admin abre un evento
+    setInterval(loadEvents, 10000);
+  });
   
   async function loadEvents() {
     try {
-      allEvents = await apiGet('/api/events');
+      const all = await apiGet('/api/events');
+      // Hide closed events from players
+      allEvents = all.filter(ev => ev.status !== 'closed');
       renderEvents();
     } catch {
       document.getElementById('eventos-grid').innerHTML =
@@ -122,28 +128,33 @@ const CAT_COLORS = {
   
   // ── JOIN EVENT ────────────────────────────────────────────────────────────────
   function joinEvent(eventId, title, category, rounds) {
-    const playerName = Session.playerName() || '';
-  
-    if (!playerName || playerName === 'Invitado' || playerName === 'Guest') {
-      // Show name prompt modal
-      showJoinModal(eventId, title, category, rounds);
+    const sessionName = Session.playerName() || '';
+    const isGuest     = Session.playerRole() === 'guest';
+
+    if (!sessionName) {
+      // Not logged in at all — go to login first
+      sessionStorage.setItem('redirect_after_login', 'trivial-eventos.html');
+      goTo('trivial-login.html');
       return;
     }
-  
-    goTo(`trivial-evento-juego.html?event=${eventId}&player=${encodeURIComponent(playerName)}&title=${title}&cat=${category}&rounds=${rounds}`);
+
+    // Guests start with empty name so they must choose one
+    // Registered users start pre-filled but can change it
+    const defaultName = isGuest ? '' : sessionName;
+    showJoinModal(eventId, title, category, rounds, defaultName, isGuest);
   }
-  
-  function showJoinModal(eventId, title, category, rounds) {
+
+  function showJoinModal(eventId, title, category, rounds, defaultName, isGuest) {
     const modal = document.getElementById('ev-modal');
     const body  = document.getElementById('ev-modal-body');
     modal.classList.add('show');
     body.innerHTML = `
       <div style="padding:28px 28px 0">
         <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:#111;margin-bottom:6px;text-transform:uppercase">${decodeURIComponent(title)}</div>
-        <p style="font-size:14px;color:#666;margin-bottom:20px">Enter your name to join this event.</p>
+        <p style="font-size:14px;color:#666;margin-bottom:20px">${isGuest ? 'Choose a name to identify yourself in the game.' : 'Choose your display name for this game.'}</p>
         <div style="margin-bottom:20px">
-          <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;color:#333">Your name</label>
-          <input type="text" id="join-name-input" placeholder="Your name in the game" maxlength="20"
+          <label style="display:block;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;color:#333">Display name</label>
+          <input type="text" id="join-name-input" value="${defaultName}" placeholder="${isGuest ? 'Enter your name...' : ''}" maxlength="20"
             style="width:100%;padding:12px 14px;border:1.5px solid #e0e0e0;border-radius:4px;font-size:15px;outline:none;transition:border-color .15s"
             onfocus="this.style.borderColor='#3d5af1'" onblur="this.style.borderColor='#e0e0e0'"
             onkeydown="if(event.key==='Enter') confirmJoin(${eventId},'${title}','${category}',${rounds})">
@@ -154,13 +165,18 @@ const CAT_COLORS = {
         </div>
       </div>
     `;
-    setTimeout(() => { const inp = document.getElementById('join-name-input'); if (inp) inp.focus(); }, 100);
+    setTimeout(() => {
+      const inp = document.getElementById('join-name-input');
+      if (inp) { inp.focus(); inp.select(); }
+    }, 100);
   }
-  
+
   function confirmJoin(eventId, title, category, rounds) {
     const inp  = document.getElementById('join-name-input');
     const name = inp ? inp.value.trim() : '';
     if (!name) { if (inp) inp.focus(); return; }
+    // Save the chosen display name so it can't be changed via URL
+    sessionStorage.setItem('event_display_name', name);
     closeEventModal();
     goTo(`trivial-evento-juego.html?event=${eventId}&player=${encodeURIComponent(name)}&title=${encodeURIComponent(decodeURIComponent(title))}&cat=${category}&rounds=${rounds}`);
   }

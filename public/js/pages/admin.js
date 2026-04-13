@@ -11,7 +11,6 @@ const CAT_META = {
   culture: { name:'Culture',   color:'#f5a623' },
   history: { name:'History',   color:'#e84545' },
   eu:      { name:'Europa',     color:'#a259ff' },
-  kenya:   { name:'Kenya',     color:'#cc2200' },
   mixed:   { name:'Mixed',     color:'#9b59b6' },
 };
 
@@ -66,9 +65,9 @@ function filterByCat(catId) {
 function renderDashboard() {
   const allQ   = Object.values(data.questions).flat();
   const total  = allQ.length;
-  const easy   = allQ.filter(q => q.diff === 'fácil').length;
+  const easy   = allQ.filter(q => q.diff === 'easy').length;
   const medium = allQ.filter(q => q.diff === 'medio').length;
-  const hard   = allQ.filter(q => q.diff === 'difícil').length;
+  const hard   = allQ.filter(q => q.diff === 'hard').length;
 
   setHTML('stats-grid', `
     <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Total Questions</div></div>
@@ -79,9 +78,9 @@ function renderDashboard() {
 
   const rows = data.categories.map(cat => {
     const qs = data.questions[cat.id] || [];
-    const e = qs.filter(q => q.diff === 'fácil').length;
+    const e = qs.filter(q => q.diff === 'easy').length;
     const m = qs.filter(q => q.diff === 'medio').length;
-    const h = qs.filter(q => q.diff === 'difícil').length;
+    const h = qs.filter(q => q.diff === 'hard').length;
     const color = cat.color || CAT_META[cat.id]?.color || '#888';
     return `<tr>
       <td style="padding:10px 14px;display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0"></div>${cat.name}</td>
@@ -151,7 +150,7 @@ function renderQuestions() {
         </div>
         <div>${qItems.map(({catId, idx, q}) => `
           <div class="q-item">
-            <span class="q-diff-badge ${q.diff==='fácil'?'easy':q.diff==='medio'?'medio':'dificil'}">${q.diff==='fácil'?'Easy':q.diff==='medio'?'Medium':'Hard'}</span>
+            <span class="q-diff-badge ${q.diff==='easy'?'easy':q.diff==='medio'?'medio':'dificil'}">${q.diff==='easy'?'Easy':q.diff==='medio'?'Medium':'Hard'}</span>
             <div class="q-text-wrap">
               <div class="q-text">${q.q}</div>
               <div class="q-answer">Answer: <strong>${q.a}</strong></div>
@@ -198,9 +197,9 @@ function questionForm(q, selectedCat) {
       <div class="field"><label>Option 3</label><input type="text" id="q-opt3" value="${wrongOpts[1]||''}" placeholder="Wrong option"></div>
     </div>
     <div class="field"><label>Difficulty</label><select id="q-diff">
-      <option value="fácil"   ${q?.diff==='fácil'  ?'selected':''}>Easy</option>
+      <option value="easy"   ${q?.diff==='easy'  ?'selected':''}>Easy</option>
       <option value="medio"   ${q?.diff==='medio'  ?'selected':''}>Medium</option>
-      <option value="difícil" ${q?.diff==='difícil'?'selected':''}>Hard</option>
+      <option value="hard" ${q?.diff==='hard'?'selected':''}>Hard</option>
     </select></div>`;
 }
 
@@ -250,7 +249,6 @@ async function saveToServer() {
 
 function openModal()  { el('modal').classList.add('show'); }
 function closeModal() { el('modal').classList.remove('show'); }
-el('modal').addEventListener('click', e => { if (e.target === el('modal')) closeModal(); });
 
 function showPage(id) {
   qsAll('.page').forEach(p => p.classList.remove('active'));
@@ -262,15 +260,24 @@ function showPage(id) {
 function refresh() { renderSidebar(); renderDashboard(); renderQuestions(); }
 
 async function loadUsers() {
+  if (!el('msg-users')) {
+    const msgDiv = document.createElement('div');
+    msgDiv.id = 'msg-users';
+    msgDiv.className = 'msg';
+    const usersList = el('users-list');
+    if (usersList) usersList.parentNode.insertBefore(msgDiv, usersList);
+  }
   try {
     const list = await apiGet('/api/users');
     setText('users-count', `${list.length} player${list.length !== 1 ? 's' : ''}`);
     setHTML('users-list', list.length
       ? list.map((u, i) => `
-          <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;border-bottom:1px solid var(--border)${i===list.length-1?';border-bottom:none':''}">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border)${i===list.length-1?';border-bottom:none':''}">
             ${avatarHTML(u.name, i, 34)}
             <div style="flex:1"><div style="font-size:14px;font-weight:600">${u.name}</div><div style="font-size:12px;color:var(--muted)">${u.email}</div></div>
-            <span style="font-family:var(--font-cond);font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:2px;background:rgba(24,194,90,0.1);color:var(--green)">${u.role}</span>
+            <span style="font-family:var(--font-cond);font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:2px;background:rgba(24,194,90,0.1);color:var(--green);margin-right:8px">${u.role}</span>
+            <button onclick="resetUserPassword('${u.email}','${u.name}')" title="Resetear contraseña" style="background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);border-radius:3px;padding:5px 9px;color:#f5a623;cursor:pointer;font-size:11px;font-family:var(--font-cond);font-weight:700;letter-spacing:1px">🔑 RESET</button>
+            <button onclick="deleteUser('${u.email}','${u.name}')" title="Delete usuario" style="background:rgba(232,69,69,0.1);border:1px solid rgba(232,69,69,0.2);border-radius:3px;padding:5px 9px;color:#e84545;cursor:pointer;font-size:11px;font-family:var(--font-cond);font-weight:700;letter-spacing:1px">🗑 DELETE</button>
           </div>`)
         .join('')
       : `<div style="text-align:center;padding:32px;color:var(--muted);font-size:14px">No registered players yet</div>`
@@ -290,8 +297,9 @@ async function loadEvents() {
   try {
     const events = await apiGet('/api/events');
     renderEventsList(events);
-  } catch {
-    setHTML('events-list', '<div style="padding:20px;color:var(--muted)">Error loading events</div>');
+  } catch(e) {
+    console.error('loadEvents error:', e);
+    setHTML('events-list', '<div style="padding:20px;color:var(--muted)">Error loading events: ' + e.message + '</div>');
   }
 }
 
@@ -299,15 +307,18 @@ function renderEventsList(events) {
   if (!events.length) {
     setHTML('events-list', `
       <div style="text-align:center;padding:60px;color:var(--muted);font-size:14px">
-        No events created yet.<br>
-        <button class="btn btn-primary" style="margin-top:20px" onclick="openNewEvent()">Create first event</button>
+        No hay eventos todavía.<br>
+        <button class="btn btn-primary" style="margin-top:20px" onclick="openNewEvent()">Create primer evento</button>
       </div>`);
     return;
   }
 
   setHTML('events-list', events.map(ev => {
     const color = CAT_META[ev.category]?.color || '#888';
-    const statusColor = ev.status==='active'?'#18c25a':ev.status==='upcoming'?'#3B9EFF':'var(--muted)';
+    const isActive = ev.status === 'active';
+    const statusColor = isActive ? '#18c25a' : ev.status === 'upcoming' ? '#3B9EFF' : 'var(--muted)';
+    const statusLabel = { active:'🔓 ABIERTO', upcoming:'📅 PRÓXIMO', finished:'⏹ FINALIZADO', closed:'🔒 CERRADO' }[ev.status] || ev.status;
+
     return `
       <div class="card" style="margin-bottom:12px;border-left:3px solid ${color}">
         <div class="card-header" style="background:var(--card-bg)">
@@ -315,8 +326,8 @@ function renderEventsList(events) {
             <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0"></div>
             <span class="card-title" style="font-size:15px">${ev.title}</span>
             <span style="font-size:11px;color:var(--muted)">${ev.category}</span>
-            <span style="font-family:var(--font-cond);font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:2px;background:rgba(45,125,210,0.1);color:var(--blue)">${ev.rounds || 6} rounds</span>
-            <span style="font-size:11px;color:${statusColor};font-weight:600;text-transform:uppercase">● ${ev.status}</span>
+            <span style="font-family:var(--font-cond);font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:2px;background:rgba(45,125,210,0.1);color:var(--blue)">${ev.rounds||6} rounds</span>
+            <span style="font-size:11px;color:${statusColor};font-weight:600">${statusLabel}</span>
           </div>
           <div class="q-actions">
             <button class="btn-icon" onclick="openEditEvent(${ev.id})" title="Edit">
@@ -327,13 +338,31 @@ function renderEventsList(events) {
             </button>
           </div>
         </div>
-        ${ev.description ? `<div style="padding:10px 18px;font-size:13px;color:var(--muted)">${ev.description}</div>` : ''}
+        ${ev.description ? `<div style="padding:8px 18px;font-size:13px;color:var(--muted)">${ev.description}</div>` : ''}
+        <div style="padding:10px 18px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+          <div>
+            <span id="ev-players-${ev.id}" style="font-size:12px;color:var(--muted)">👥 0 in room</span>
+            <span id="ev-state-${ev.id}" style="font-size:12px;color:var(--muted);margin-left:12px"></span>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${!isActive ? `<button onclick="adminOpenEvent(${ev.id})" style="padding:5px 12px;background:rgba(45,125,210,0.15);border:1px solid rgba(45,125,210,0.3);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--blue);cursor:pointer">🔓 Open</button>` : ''}
+            ${isActive ? `
+              <button onclick="adminStartEvent(${ev.id})" style="padding:5px 12px;background:rgba(24,194,90,0.15);border:1px solid rgba(24,194,90,0.3);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#18c25a;cursor:pointer">▶ Start</button>
+              <button onclick="adminStopEvent(${ev.id})" style="padding:5px 12px;background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#f5a623;cursor:pointer">⏸ Parar</button>
+              <button onclick="adminFinishEvent(${ev.id})" style="padding:5px 12px;background:rgba(24,194,90,0.1);border:1px solid rgba(24,194,90,0.3);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#18c25a;cursor:pointer">✅ Finalizar</button>
+              <button onclick="adminCloseEvent(${ev.id})" style="padding:5px 12px;background:rgba(232,69,69,0.1);border:1px solid rgba(232,69,69,0.2);border-radius:3px;font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#e84545;cursor:pointer">🔒 Close</button>
+            ` : ''}
+          </div>
+        </div>
       </div>`;
   }).join(''));
+
+  connectAdminSocket();
 }
 
 function openNewEvent() {
   editingEventId = null;
+  _evQCount = 0;
   setText('modal-event-title', 'New event');
   renderEventForm({});
   openEventModal();
@@ -343,18 +372,19 @@ async function openEditEvent(id) {
   try {
     const ev = await apiGet(`/api/events/${id}`);
     editingEventId = id;
+    _evQCount = 0;
     setText('modal-event-title', 'Edit event');
     renderEventForm(ev);
+    if (ev.questions && ev.questions.length) {
+      ev.questions.forEach(q => addEventQuestion(q));
+    }
     openEventModal();
-  } catch {
-    alert('Error loading event');
-  }
+  } catch { alert('Error loading event'); }
 }
 
 function renderEventForm(ev) {
   const allCatOptions = Object.entries(CAT_META)
     .map(([id, m]) => `<option value="${id}" ${ev.category === id ? 'selected' : ''}>${m.name}</option>`).join('');
-
   const rounds = ev.rounds || 6;
 
   setHTML('modal-event-body', `
@@ -364,52 +394,56 @@ function renderEventForm(ev) {
     </div>
     <div class="field">
       <label>Description</label>
-      <textarea id="ev-desc" rows="2" placeholder="Brief description of the event">${ev.description || ''}</textarea>
+      <textarea id="ev-desc" rows="2" placeholder="Description breve">${ev.description || ''}</textarea>
+    </div>
+    <div class="field">
+      <label>🖼 Banner image URL (optional)</label>
+      <input type="text" id="ev-banner" value="${ev.banner_image || ''}" placeholder="https://... background image for the event banner">
     </div>
     <div class="form-grid">
       <div class="field">
         <label>Category</label>
-        <select id="ev-cat">
-          ${allCatOptions}
-        </select>
+        <select id="ev-cat">${allCatOptions}</select>
       </div>
       <div class="field">
-        <label>Status</label>
+        <label>Initial status</label>
         <select id="ev-status">
-          <option value="active"   ${ev.status === 'active'   ? 'selected' : ''}>Active</option>
-          <option value="upcoming" ${ev.status === 'upcoming' ? 'selected' : ''}>Upcoming</option>
-          <option value="finished" ${ev.status === 'finished' ? 'selected' : ''}>Finished</option>
+          <option value="upcoming" ${ev.status === 'upcoming' ? 'selected' : ''}>📅 Upcoming (hidden)</option>
+          <option value="active"   ${ev.status === 'active'   ? 'selected' : ''}>🔓 Open (visible)</option>
+          <option value="finished" ${ev.status === 'finished' ? 'selected' : ''}>⏹ Finished</option>
         </select>
       </div>
     </div>
-
     <div class="field">
       <label>Number of rounds</label>
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:6px">
         ${[4,6,8,10,12].map(n => `
-          <button type="button"
-            onclick="selectEventRounds(${n})"
-            id="ev-round-btn-${n}"
-            class="round-btn ${n === rounds ? 'selected' : ''}">
-            ${n}
-          </button>`).join('')}
+          <button type="button" onclick="selectEventRounds(${n})" id="ev-round-btn-${n}"
+            class="round-btn ${n === rounds ? 'selected' : ''}">${n}</button>`).join('')}
       </div>
       <input type="hidden" id="ev-rounds" value="${rounds}">
     </div>
-
     <div class="form-grid">
       <div class="field">
-        <label>Start date</label>
+        <label>Start date (opcional)</label>
         <input type="datetime-local" id="ev-starts" value="${ev.starts_at ? ev.starts_at.replace(' ','T').slice(0,16) : ''}">
       </div>
       <div class="field">
-        <label>End date</label>
+        <label>End date (opcional)</label>
         <input type="datetime-local" id="ev-ends" value="${ev.ends_at ? ev.ends_at.replace(' ','T').slice(0,16) : ''}">
       </div>
     </div>
 
-    <div style="padding:14px 16px;background:rgba(45,125,210,0.06);border:1px solid rgba(45,125,210,0.2);border-radius:4px;font-size:13px;color:var(--muted);line-height:1.6">
-      🎡 <strong style="color:var(--text)">Spin Wheel mode</strong> — unlimited players join the event room. Each round, the wheel spins and everyone answers the same question simultaneously. A podium is revealed at the end.
+    <!-- PREGUNTAS -->
+    <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <span style="font-family:var(--font-cond);font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)">Event questions</span>
+      </div>
+      <div id="ev-questions-list" style="display:flex;flex-direction:column;gap:10px"></div>
+      <div id="ev-no-questions" style="text-align:center;padding:20px;color:var(--muted);font-size:13px">
+        No questions yet.
+      </div>
+      <button type="button" onclick="addEventQuestion()" style="width:100%;margin-top:12px;padding:10px;background:rgba(45,125,210,0.12);border:1.5px dashed rgba(45,125,210,0.4);border-radius:4px;font-family:var(--font-cond);font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--blue);cursor:pointer;transition:background .15s" onmouseover="this.style.background='rgba(45,125,210,0.22)'" onmouseout="this.style.background='rgba(45,125,210,0.12)'">+ Add question</button>
     </div>
   `);
 
@@ -430,42 +464,157 @@ function selectEventRounds(n) {
   });
 }
 
+// ── PREGUNTAS DEL EVENTO ──────────────────────────────────────────────────────
+let _evQCount = 0;
+
+function addEventQuestion(existing = null) {
+  _evQCount++;
+  const qId  = _evQCount;
+  const list = el('ev-questions-list');
+  const noQ  = el('ev-no-questions');
+  if (noQ) noQ.style.display = 'none';
+
+  const opts = existing ? existing.options : ['', '', ''];
+  const existingCat   = existing ? (existing.category || '') : '';
+  const existingImage = existing ? (existing.image_url || '') : '';
+  const div  = document.createElement('div');
+  div.id = `evq-block-${qId}`;
+  div.style.cssText = 'background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:4px;padding:14px';
+  div.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-family:var(--font-cond);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">Question ${qId}</span>
+      <button type="button" onclick="removeEvQ(${qId})" style="background:none;border:none;color:#e84545;cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <div class="field" style="margin-bottom:8px">
+      <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;display:block;margin-bottom:4px">Question</label>
+      <input type="text" id="evq-q-${qId}" value="${existing ? (existing.question||'').replace(/"/g,'&quot;') : ''}" placeholder="Write the question..." style="width:100%;padding:10px;background:var(--bg);border:1.5px solid var(--border);border-radius:3px;color:var(--text);font-size:14px;outline:none">
+    </div>
+    <div class="field" style="margin-bottom:8px">
+      <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#18c25a;font-weight:700;display:block;margin-bottom:4px">✓ Correct answer</label>
+      <input type="text" id="evq-a-${qId}" value="${existing ? (existing.answer||'').replace(/"/g,'&quot;') : ''}" placeholder="Correct answer..." style="width:100%;padding:10px;background:var(--bg);border:1.5px solid #18c25a;border-radius:3px;color:#18c25a;font-size:14px;outline:none">
+    </div>
+    <div class="field" style="margin-bottom:8px">
+      <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#a259ff;font-weight:700;display:block;margin-bottom:4px">🎯 Category en ruleta</label>
+      <div style="display:flex;gap:6px">
+        <select id="evq-cat-${qId}" onchange="handleEvqCatChange(${qId})" style="flex:1;padding:8px 10px;background:var(--bg);border:1.5px solid #a259ff;border-radius:3px;color:var(--text);font-size:13px;outline:none">
+          <option value="">-- No specific category --</option>
+          <option value="sports">⚽ Sports</option>
+          <option value="geo">🌍 Geography</option>
+          <option value="culture">🎭 Culture</option>
+          <option value="history">📜 History</option>
+          <option value="eu">🇪🇺 Europa</option>
+          <option value="__custom__">✏️ Custom category...</option>
+        </select>
+        <input type="text" id="evq-cat-custom-${qId}" placeholder="Category name" style="display:none;flex:1;padding:8px 10px;background:var(--bg);border:1.5px solid #a259ff;border-radius:3px;color:var(--text);font-size:13px;outline:none">
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:8px">
+      <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#3B9EFF;font-weight:700;display:block;margin-bottom:4px">🖼 Background image URL (optional)</label>
+      <input type="text" id="evq-img-${qId}" value="${existingImage}" placeholder="https://... (leave empty for default)" style="width:100%;padding:8px 10px;background:var(--bg);border:1.5px solid rgba(59,158,255,0.4);border-radius:3px;color:var(--text);font-size:13px;outline:none">
+    </div>
+    <div class="field" style="margin-bottom:0">
+      <label style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;display:block;margin-bottom:4px">Options (minimum 2)</label>
+      <div id="evq-opts-${qId}" style="display:flex;gap:6px;flex-wrap:wrap">
+        ${opts.map((opt, i) => `<input type="text" id="evq-opt-${qId}-${i}" value="${(opt||'').replace(/"/g,'&quot;')}" placeholder="Option ${i+1}" style="flex:1;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:13px;outline:none;min-width:100px">`).join('')}
+        <button type="button" onclick="addEvQOpt(${qId})" style="padding:8px 10px;background:rgba(255,255,255,0.05);border:1px dashed var(--border);border-radius:3px;color:var(--muted);cursor:pointer;font-size:12px">+ option</button>
+      </div>
+    </div>`;
+  list.appendChild(div);
+  // Set category if exists (handles both preset and custom values)
+  if (existingCat) {
+    const catSel = el(`evq-cat-${qId}`);
+    const presets = ['sports','geo','culture','history','eu'];
+    if (catSel) {
+      if (presets.includes(existingCat)) {
+        catSel.value = existingCat;
+      } else {
+        catSel.value = '__custom__';
+        const customInp = el(`evq-cat-custom-${qId}`);
+        if (customInp) { customInp.style.display = 'block'; customInp.value = existingCat; }
+      }
+    }
+  }
+}
+
+function removeEvQ(qId) {
+  const b = el(`evq-block-${qId}`); if (b) b.remove();
+  const list = el('ev-questions-list');
+  if (list && !list.children.length) { const n = el('ev-no-questions'); if (n) n.style.display = 'block'; }
+}
+
+function handleEvqCatChange(qId) {
+  const sel = el(`evq-cat-${qId}`);
+  const inp = el(`evq-cat-custom-${qId}`);
+  if (!sel || !inp) return;
+  inp.style.display = sel.value === '__custom__' ? 'block' : 'none';
+  if (sel.value === '__custom__') inp.focus();
+}
+
+function addEvQOpt(qId) {
+  const wrap = el(`evq-opts-${qId}`); if (!wrap) return;
+  const n = wrap.querySelectorAll('input').length;
+  const inp = document.createElement('input');
+  inp.type = 'text'; inp.id = `evq-opt-${qId}-${n}`; inp.placeholder = `Option ${n+1}`;
+  inp.style.cssText = 'flex:1;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:13px;outline:none;min-width:100px';
+  wrap.insertBefore(inp, wrap.lastElementChild);
+}
+
+function collectEvQuestions() {
+  const list = el('ev-questions-list'); if (!list) return [];
+  const qs = [];
+  list.querySelectorAll('[id^="evq-block-"]').forEach(block => {
+    const qId = block.id.replace('evq-block-','');
+    const question = (el(`evq-q-${qId}`)?.value||'').trim();
+    const answer   = (el(`evq-a-${qId}`)?.value||'').trim();
+    const options  = [];
+    block.querySelectorAll(`input[id^="evq-opt-${qId}-"]`).forEach(i => { const v=i.value.trim(); if(v) options.push(v); });
+    if (question && answer && options.length >= 2) {
+      if (!options.includes(answer)) options.push(answer);
+      const catSel   = el(`evq-cat-${qId}`);
+      const catRaw   = catSel?.value || '';
+      const category = catRaw === '__custom__'
+        ? (el(`evq-cat-custom-${qId}`)?.value || '').trim() || null
+        : catRaw || null;
+      const image_url = (el(`evq-img-${qId}`)?.value || '').trim() || null;
+      qs.push({ question, answer, options, difficulty:'medio', category, image_url });
+    }
+  });
+  return qs;
+}
+
 async function saveEvent() {
-  const title     = el('ev-title').value.trim();
-  const desc      = el('ev-desc').value.trim();
-  const category  = el('ev-cat').value;
-  const status    = el('ev-status').value;
-  const rounds    = parseInt(el('ev-rounds').value) || 6;
-  const starts_at = el('ev-starts').value || null;
-  const ends_at   = el('ev-ends').value   || null;
+  const title        = el('ev-title').value.trim();
+  const desc         = el('ev-desc').value.trim();
+  const banner_image = (el('ev-banner')?.value || '').trim() || null;
+  const category     = el('ev-cat').value;
+  const status       = el('ev-status').value;
+  const rounds       = parseInt(el('ev-rounds').value) || 6;
+  const starts_at    = el('ev-starts').value || null;
+  const ends_at      = el('ev-ends').value   || null;
 
   if (!title)    return alert('The event needs a title');
-  if (!category) return alert('Select a category');
+  if (!category) return alert('Please select a category');
 
-  const payload = { title, description: desc, category, difficulty: 'medio', status, rounds, starts_at, ends_at, questions: [] };
+  const questions = collectEvQuestions();
+  if (!questions.length) return alert('Add at least one question to the event');
+
+  const payload = { title, description:desc, banner_image, category, difficulty:'medio', status, rounds, starts_at, ends_at, questions };
 
   try {
     let res;
     if (editingEventId) {
       res = await fetch(`${SERVER}/api/events/${editingEventId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).then(r => r.json());
+        method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
+      }).then(r=>r.json());
     } else {
       res = await apiPost('/api/events', payload);
     }
-
     if (res.ok) {
       closeEventModal();
-      flashMsg(editingEventId ? 'Event updated' : 'Event created', 'success', 'msg-events');
+      flashMsg(editingEventId ? `Event updated (${questions.length} questions)` : `Event created with ${questions.length} questions`, 'success', 'msg-events');
       loadEvents();
-    } else {
-      alert(res.msg || 'Error saving event');
-    }
-  } catch(e) {
-    alert('Connection error: ' + e.message);
-  }
+    } else { alert(res.msg || 'Error saving'); }
+  } catch(e) { alert('Error de conexión: ' + e.message); }
 }
 
 async function deleteEvent(id) {
@@ -479,8 +628,121 @@ async function deleteEvent(id) {
 
 function openEventModal()  { el('modal-event').classList.add('show'); }
 function closeEventModal() { el('modal-event').classList.remove('show'); }
-el('modal-event').addEventListener('click', e => { if (e.target === el('modal-event')) closeEventModal(); });
+document.addEventListener('DOMContentLoaded', () => {
+  const me = el('modal-event');
+  if (me) me.addEventListener('click', e => { if (e.target === me) closeEventModal(); });
+  const m = el('modal');
+  if (m) m.addEventListener('click', e => { if (e.target === m) closeModal(); });
+});
+
+// ── ADMIN SOCKET — control eventos ────────────────────────────────────────────
+let adminSocket = null;
+
+function connectAdminSocket() {
+  if (adminSocket && adminSocket.connected) return;
+  adminSocket = io(SERVER, { transports: ['polling'] });
+  adminSocket.on('connect', () => adminSocket.emit('admin:watchEvents'));
+  adminSocket.on('admin:eventStatus', ({ eventId, players, state, currentRound, totalRounds }) => {
+    const pe = el(`ev-players-${eventId}`);
+    const se = el(`ev-state-${eventId}`);
+    if (pe) pe.textContent = `👥 ${players} in room`;
+    if (se) {
+      const labels = { waiting:'⏳ Waiting for players', playing:'▶ En curso', spinning:`🎡 Round ${currentRound}/${totalRounds}`, question:`❓ Round ${currentRound}/${totalRounds}`, answer:`✅ Round ${currentRound}/${totalRounds}`, finished:'🏁 Terminado' };
+      se.textContent = labels[state] || '';
+    }
+  });
+}
+
+function adminOpenEvent(id)  { toggleEventStatus(id, 'active'); }
+
+function adminCloseEvent(id) {
+  if (!confirm('¿Close el evento? Dejará de aparecer para los players.')) return;
+  if (adminSocket) adminSocket.emit('admin:stopEvent', { eventId: String(id) });
+  toggleEventStatus(id, 'closed');
+}
+
+function adminStartEvent(id) {
+  if (!adminSocket) return alert('Sin conexión');
+  adminSocket.once('error', ({ msg }) => alert('⚠️ ' + msg));
+  adminSocket.emit('admin:startEvent', { eventId: String(id) });
+  flashMsg('▶ Starting game...', 'success', 'msg-events');
+}
+
+function adminStopEvent(id) {
+  if (!confirm('¿Parar la partida en curso?')) return;
+  if (!adminSocket) return alert('Sin conexión');
+  adminSocket.emit('admin:stopEvent', { eventId: String(id) });
+  flashMsg('⏸ Game stopped', 'success', 'msg-events');
+}
+
+async function adminFinishEvent(id) {
+  if (!confirm('¿Finalizar el evento? Los jugadores volverán al lobby y podrán unirse de nuevo cuando lances la siguiente partida.')) return;
+  if (!adminSocket) return alert('Sin conexión');
+  // 1. Emit finish event to server — sends players back to lobby
+  adminSocket.emit('admin:finishEvent', { eventId: String(id) });
+  // 2. Reset lobby in DB so it stays active but startable again
+  await toggleEventStatus(id, 'active');
+  flashMsg('✅ Evento finalizado — lobby listo para nueva partida', 'success', 'msg-events');
+}
+
+async function toggleEventStatus(id, newStatus) {
+  try {
+    const ev = await apiGet(`/api/events/${id}`);
+    const payload = {
+      title: ev.title, description: ev.description||'', category: ev.category,
+      difficulty: ev.difficulty||'medio', status: newStatus, rounds: ev.rounds||6,
+      starts_at: ev.starts_at||null, ends_at: ev.ends_at||null,
+      banner_image: ev.banner_image || null,
+      questions: (ev.questions||[]).map(q => ({
+        question: q.question, answer: q.answer, difficulty: q.difficulty||'medio',
+        options: Array.isArray(q.options) ? q.options : JSON.parse(q.options||'[]'),
+        category: q.category || null, image_url: q.image_url || null,
+      })),
+    };
+    const res = await fetch(`${SERVER}/api/events/${id}`, {
+      method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
+    }).then(r=>r.json());
+    if (res.ok) {
+      flashMsg('Status updated', 'success', 'msg-events');
+      // If opening the event, reset the lobby so players can join fresh
+      if (newStatus === 'active' && adminSocket) {
+        adminSocket.emit('admin:resetLobby', { eventId: String(id) });
+      }
+      loadEvents();
+    }
+    else alert(res.msg || 'Error');
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── GESTIÓN DE USUARIOS ──────────────────────────────────────────────────────
+async function resetUserPassword(email, name) {
+  const newPass = prompt(`New password para ${name}:`);
+  if (!newPass) return;
+  if (newPass.length < 6) { alert('At least 6 characters'); return; }
+  try {
+    const res = await fetch(`${SERVER}/api/admin/users/${encodeURIComponent(email)}/reset-password`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newPassword: newPass }),
+    }).then(r => r.json());
+    if (res.ok) { flashMsg(`✅ Password de ${name} actualizada`, 'success', 'msg-users'); }
+    else alert(res.msg || 'Error');
+  } catch { alert('Error de conexión'); }
+}
+
+async function deleteUser(email, name) {
+  if (!confirm(`¿Delete al usuario ${name}? Esta acción no se puede deshacer.`)) return;
+  try {
+    const res = await fetch(`${SERVER}/api/admin/users/${encodeURIComponent(email)}`, {
+      method: 'DELETE',
+    }).then(r => r.json());
+    if (res.ok) { flashMsg(`🗑 User ${name} deleted`, 'success', 'msg-users'); loadUsers(); }
+    else alert(res.msg || 'Error');
+  } catch { alert('Error de conexión'); }
+}
 
 // ── STARTUP ───────────────────────────────────────────────────────────────────
-loadData();
-loadUsers();
+document.addEventListener('DOMContentLoaded', () => {
+  loadData();
+  loadUsers();
+  loadEvents();
+});

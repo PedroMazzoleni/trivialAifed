@@ -12,12 +12,50 @@ const EVENT_ROUNDS  = parseInt(params.get('rounds') || '6');
 const LETTERS    = ['A','B','C','D'];
 const TIME_LIMIT = 20;
 
+// ── SECURITY: lock player name — cannot be changed via URL ──────────────────
+(function enforceAuth() {
+  const sessionName   = Session.playerName();
+  const isGuest       = Session.playerRole() === 'guest';
+  const displayName   = sessionStorage.getItem('event_display_name'); // set by confirmJoin
+
+  if (!sessionName) {
+    // Not logged in at all — go to login
+    sessionStorage.setItem('redirect_after_login', 'trivial-eventos.html');
+    goTo('trivial-login.html');
+    return;
+  }
+
+  if (isGuest) {
+    // Guest: the name locked is whatever they chose in the modal
+    if (!displayName || displayName === 'Invitado' || displayName === 'Guest') {
+      // No valid name chosen — back to events to pick one
+      goTo('trivial-eventos.html');
+      return;
+    }
+    // If URL was tampered, silently correct to the locked name
+    if (MY_NAME !== displayName) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('player', displayName);
+      window.location.replace(url.toString());
+    }
+  } else {
+    // Registered user: lock to session name
+    if (MY_NAME && sessionName.toLowerCase() !== MY_NAME.toLowerCase()) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('player', sessionName);
+      window.location.replace(url.toString());
+    }
+  }
+})();
+
 let socket, myPlayer, isHost = false, roomState = null;
 let timerInterval = null;
 let sbCountdown   = null;
 let spinAngle     = 0;
 let isSpinning    = false;
+let _forceStop    = false; // set to true to kill any running animation
 let iAnswered     = false;
+let _shuffledOpts = null; // fixed option order for current round
 
 const categories = [
   { id:'sports',  name:'Sports',    color:'#18c25a', emoji:'⚽' },
@@ -25,16 +63,10 @@ const categories = [
   { id:'culture', name:'Culture',   color:'#f5a623', emoji:'🎭' },
   { id:'history', name:'History',   color:'#e84545', emoji:'📜' },
   { id:'eu',      name:'EU',        color:'#a259ff', emoji:'🇪🇺' },
-  { id:'kenya',   name:'Kenya',     color:'#cc2200', emoji:'🦒' },
   { id:'mixed',   name:'Mixed',     color:'#9b59b6', emoji:'🎲' },
-  { id:'doble',   name:'x2 Pts',    color:'#FFD700', emoji:'⚡', special:true },
-  { id:'robo',    name:'Steal',     color:'#ff4dff', emoji:'💸', special:true },
-  { id:'bomba',   name:'Bomb',      color:'#ff6600', emoji:'💣', special:true },
-  { id:'skip',    name:'SKIP',      color:'#00e5ff', emoji:'⏭️', special:true },
-  { id:'suerte',  name:'Lucky',     color:'#00ff88', emoji:'🍀', special:true },
 ];
 
-// Dynamic wheel categories — updated from room state so Kenya sub-cats etc. work
+// Dynamic wheel categories — updated from room state
 let wheelCats = [...categories];
 
 const CAT_BACKGROUNDS = {
@@ -76,9 +108,20 @@ function connectSocket() {
     });
   });
 
-  socket.on('event:joined', ({ isHost: host, player }) => {
+  socket.on('event:joined', ({ isHost: host, player, totalPlayers, players }) => {
     isHost   = host;
     myPlayer = player;
+    showScreen('lobby');
+    el('ev-players-count').textContent = totalPlayers || 1;
+    // Render player list if players data included
+    if (players && players.length) {
+      el('ev-player-list').innerHTML = players.map(p => `
+        <div class="ev-player-row">
+          <div class="ev-player-dot" style="background:${p.color || '#3B9EFF'}"></div>
+          <span class="ev-player-name">${p.name}</span>
+          ${p.name === MY_NAME ? '<span class="player-you">You</span>' : ''}
+        </div>`).join('');
+    }
     renderLobbyControls();
   });
 
@@ -88,17 +131,78 @@ function connectSocket() {
   });
 
   socket.on('event:doSpin', ({ catId, diff, extra }) => {
+    isSpinning = false; // reset por si quedó bloqueado
     doSpin(catId, diff, extra);
+  });
+
+  socket.on('event:backToLobby', () => {
+    // Admin finalizó — matar animación en curso y mostrar ranking
+    _forceStop    = true;  // kill any running rAF loop immediately
+    clearInterval(timerInterval);
+    clearInterval(sbCountdown);
+    isSpinning    = false;
+    iAnswered     = false;
+    roomState     = null;
+    spinAngle     = 0;
+    _shuffledOpts = null;
+
+    // Show ranking screen immediately with a loading state
+    showScreen('global-ranking');
+    const grHeader = el('gr-my-result');
+    if (grHeader) {
+      grHeader.className = 'gr-my-result outside';
+      grHeader.innerHTML = `<div style="font-size:36px;margin-bottom:12px">&#127937;</div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;color:#e8eaf6;text-transform:uppercase;letter-spacing:2px">Partida finalizada</div><div style="font-size:13px;color:#8892b0;margin-top:8px">Calculando ranking...</div>`;
+    }
+    const list = el('gr-top10-list');
+    if (list) list.innerHTML = '';
+    // event:globalRanking will arrive shortly and fill the screen
   });
 
   socket.on('connect_error', () => {
     el('ev-title-display').textContent = 'Connection error. Please refresh.';
   });
+
+  // ── Groups ────────────────────────────────────────────────────────────────
+  socket.on('event:groupAssigned', ({ groupKey, groupNumber, totalGroups, players }) => {
+    addChatMsg('', `⚡ You have been assigned to Group ${groupNumber} of ${totalGroups} (${players.length} players)`, true);
+  });
+
+  socket.on('event:lobbyUpdate', ({ players, totalPlayers }) => {
+    // Always update lobby — whether roomState exists or not
+    el('ev-players-count').textContent = totalPlayers;
+    el('ev-player-list').innerHTML = players.length
+      ? players.map(p => `
+        <div class="ev-player-row">
+          <div class="ev-player-dot" style="background:${p.color || '#3B9EFF'}"></div>
+          <span class="ev-player-name">${p.name}</span>
+          ${p.name === MY_NAME ? '<span class="player-you">You</span>' : ''}
+        </div>`).join('')
+      : '<div style="padding:16px;color:var(--muted);font-size:13px;text-align:center">Waiting for players...</div>';
+  });
+
+  // ── Comodines privados ───────────────────────────────────────────────────
+  socket.on('event:privateWildcard', () => { /* wildcards disabled */ });
+  socket.on('event:wildcardResult', ({ message }) => {
+    showWildcardResult(message);
+  });
+
+  // ── Ranking global ────────────────────────────────────────────────────────
+  socket.on('event:globalRanking', ({ ranking }) => {
+    showGlobalRanking(ranking);
+  });
+
+  // ── Chat listeners ────────────────────────────────────────────────────────
+  socket.on('chat:message', ({ playerName, message }) => {
+    addChatMsg(playerName, message, false);
+  });
+  socket.on('chat:system', ({ message }) => {
+    addChatMsg('', message, true);
+  });
 }
 
 // ── STATE MACHINE ─────────────────────────────────────────────────────────────
 function handleUpdate(room) {
-  // Sync wheel categories from server so event-specific sectors (kenya sub-cats etc.) work
+  // Sync wheel categories from server
   if (room.categories && room.categories.length) wheelCats = room.categories;
 
   // Update round progress bar
@@ -108,7 +212,7 @@ function handleUpdate(room) {
   switch (room.state) {
     case 'waiting': showScreen('lobby'); renderLobby(room); break;
     case 'spinning': showScreen('spin');  renderSpin(room);  break;
-    case 'question': showScreen('question'); renderQuestion(room); break;
+    case 'question': iAnswered = false; showScreen('question'); renderQuestion(room); break;
     case 'answer':   showScreen('scoreboard'); renderScoreboard(room); break;
     case 'finished': showScreen('results');    renderResults(room);   break;
   }
@@ -132,13 +236,13 @@ function renderLobby(room) {
 }
 
 function renderLobbyControls() {
-  if (isHost) {
-    el('btn-ev-start').style.display  = 'block';
-    el('ev-guest-wait').style.display = 'none';
-  } else {
-    el('btn-ev-start').style.display  = 'none';
-    el('ev-guest-wait').style.display = 'block';
-  }
+  // Start button removed — admin controls game start from admin panel
+  el('btn-ev-start').style.display  = 'none';
+  el('ev-guest-wait').style.display = 'block';
+  el('ev-guest-wait').innerHTML = `
+    <div class="dots"><span></span><span></span><span></span></div>
+    Waiting for the admin to start the event...
+  `;
 }
 
 function startEventGame() {
@@ -156,7 +260,8 @@ function renderSpin(room) {
 function doSpin(catId, diff, extra) {
   if (isSpinning) return;
   isSpinning = true;
-  iAnswered  = false;
+  iAnswered     = false;
+  _shuffledOpts = null;
 
   const cat    = wheelCats.find(c => c.id === catId);
   if (!cat) { isSpinning = false; return; }
@@ -186,8 +291,8 @@ function doSpin(catId, diff, extra) {
     const sec   = Math.floor(mod / slice) % n;
     if (sec !== lastSector) { lastSector = sec; }
     drawWheel(wheelCats, spinAngle);
-    if (t < 1) { requestAnimationFrame(frame); return; }
-    isSpinning = false;
+    if (t < 1 && !_forceStop) { requestAnimationFrame(frame); return; }
+    isSpinning = false; _forceStop = false;
     drawWheel(wheelCats, spinAngle, catId);
     _bounceReveal(catId, cat);
   }
@@ -204,7 +309,7 @@ function _bounceReveal(catId, cat) {
     const t   = Math.min((now - bounceStart) / BOUNCE_DUR, 1);
     const osc = Math.sin(t * Math.PI) * BOUNCE_ANGLE * (1 - t * 0.6);
     drawWheel(wheelCats, baseAngle - osc, catId);
-    if (t < 1) { requestAnimationFrame(bounceFrame); return; }
+    if (t < 1 && !_forceStop) { requestAnimationFrame(bounceFrame); return; }
     drawWheel(wheelCats, baseAngle, catId);
     // Show reveal
     const reveal = el('cat-reveal');
@@ -225,7 +330,10 @@ function renderQuestion(room) {
 
   // Background
   const bgEl = el('screen-question');
-  const bg   = CAT_BACKGROUNDS[room.currentCategory] || 'images/bg-ia.png';
+  // Use question's custom image URL if set, otherwise fall back to category image
+  const bg = (room.currentQuestion && room.currentQuestion.image_url)
+    ? room.currentQuestion.image_url
+    : (CAT_BACKGROUNDS[room.currentCategory] || 'images/bg-ia.png');
   bgEl.style.backgroundImage    = `url('${bg}')`;
   bgEl.style.backgroundSize     = 'cover';
   bgEl.style.backgroundPosition = 'center';
@@ -237,13 +345,20 @@ function renderQuestion(room) {
   const me = room.players.find(p => p.name === MY_NAME);
   el('my-score-hud').textContent = `${me ? me.score : 0} pts`;
 
+  // Si ya respondí, solo actualizar los dots — no tocar botones ni feedback
+  if (iAnswered) {
+    renderAnsweredDots(room);
+    return;
+  }
+
   // Options
   const alreadyAnswered = room.allAnswers && room.allAnswers.find(a => a.playerName === MY_NAME);
   const grid = el('q-options');
   grid.innerHTML = '';
 
   if (q) {
-    const shuffled = [...q.opts].sort(() => Math.random() - 0.5);
+    if (!_shuffledOpts) _shuffledOpts = [...q.opts].sort(() => Math.random() - 0.5);
+    const shuffled = _shuffledOpts;
     shuffled.forEach((opt, i) => {
       const btn = document.createElement('button');
       btn.className = 'opt-btn';
@@ -354,9 +469,9 @@ function renderScoreboard(room) {
   const maxScore = sorted[0] ? sorted[0].score : 1;
 
   // Round info
-  el('sb-round').textContent = `Round ${room.currentRound - 1} of ${room.totalRounds}`;
-  const remaining = room.totalRounds - (room.currentRound - 1);
-  el('sb-sub').textContent   = remaining > 0 ? `${remaining} round${remaining !== 1 ? 's' : ''} remaining` : 'Last round complete';
+  el('sb-round').textContent = `Round ${room.currentRound} of ${room.totalRounds}`;
+  const remaining = room.totalRounds - room.currentRound;
+  el('sb-sub').textContent   = remaining > 0 ? `${remaining} round${remaining !== 1 ? 's' : ''} remaining` : 'Last round';
 
   // Banner: show correct answer
   const banner = el('sb-banner');
@@ -383,21 +498,20 @@ function renderScoreboard(room) {
       </div>`;
   }).join('');
 
-  // Host gets manual advance button
-  if (isHost) {
-    el('sb-btn-next').style.display = 'block';
-  }
+  // Admin controls next round — no button for players
+  el('sb-btn-next').style.display = 'none';
 
-  // Countdown
+  // Simple countdown display — server controls actual timing
   let t = 5;
   el('sb-fill').style.width      = '100%';
   el('sb-fill').style.transition = 'none';
   el('sb-countdown-text').textContent = `Next in ${t}s...`;
 
+  clearInterval(sbCountdown);
   sbCountdown = setInterval(() => {
     t--;
     el('sb-fill').style.transition = 'width 1s linear';
-    el('sb-fill').style.width      = `${(t/5)*100}%`;
+    el('sb-fill').style.width      = `${Math.max(0, (t / 5)) * 100}%`;
     el('sb-countdown-text').textContent = t > 0 ? `Next in ${t}s...` : 'Loading...';
     if (t <= 0) clearInterval(sbCountdown);
   }, 1000);
@@ -485,28 +599,17 @@ function drawWheel(cats, angle, highlightId = null) {
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    const mid    = s + slice/2;
-    const emojiR = r * 0.70;
-    const nameR  = r * 0.42;
-    const emojiSz = Math.max(11, Math.min(18, Math.floor(r * slice / 2.4)));
-    const nameSz  = Math.max(7,  Math.min(11, Math.floor(r * slice / 4)));
+    const mid     = s + slice/2;
+    const nameR   = r * 0.62;
+    const nameSz  = Math.max(8, Math.min(13, Math.floor(r * slice / 3.2)));
+    const shortName = cat.name.length > 8 ? cat.name.slice(0,8) : cat.name;
 
-    ctx.save();
-    ctx.translate(cx + Math.cos(mid)*emojiR, cy + Math.sin(mid)*emojiR);
-    ctx.rotate(mid + Math.PI/2);
-    ctx.font = `${emojiSz}px serif`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#fff';
-    ctx.fillText(cat.emoji || '', 0, 0);
-    ctx.restore();
-
-    const shortName = cat.name.length > 6 ? cat.name.slice(0,6) : cat.name;
     ctx.save();
     ctx.translate(cx + Math.cos(mid)*nameR, cy + Math.sin(mid)*nameR);
     ctx.rotate(mid + Math.PI/2);
     ctx.font = `bold ${nameSz}px 'Barlow Condensed', sans-serif`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
     ctx.fillText(shortName.toUpperCase(), 0, 0);
     ctx.restore();
   });
@@ -546,3 +649,174 @@ function hexToRgba(hex, alpha) {
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
 function goToEvents() { goTo('trivial-eventos.html'); }
 function goHome()     { goTo('trivial-modos.html'); }
+
+function rejoinAfterFinish() {
+  isSpinning = false; iAnswered = false; roomState = null; spinAngle = 0; _shuffledOpts = null;
+  socket.emit('event:join', { eventId: EVENT_ID, playerName: MY_NAME, eventData: { title: EVENT_TITLE, rounds: EVENT_ROUNDS } });
+  showScreen('lobby');
+}
+
+// ── COMODINES PRIVADOS ────────────────────────────────────────────────────────
+let _wcTimeout = null;
+
+function showPrivateWildcard(wildcard, message) {
+  clearTimeout(_wcTimeout);
+  const colors = { doble:'#FFD700', robo:'#ff4dff', bomba:'#ff6600', skip:'#00e5ff', suerte:'#00ff88' };
+  const color  = colors[wildcard] || '#fff';
+
+  let toast = document.getElementById('wc-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'wc-toast';
+    toast.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:999;padding:14px 22px;border-radius:10px;font-weight:800;font-size:15px;letter-spacing:1px;text-align:center;max-width:320px;box-shadow:0 4px 24px rgba(0,0,0,0.5);transition:opacity .3s;pointer-events:none';
+    document.body.appendChild(toast);
+  }
+
+  toast.style.background = color + '22';
+  toast.style.border     = `2px solid ${color}`;
+  toast.style.color      = color;
+  toast.textContent      = message;
+  toast.style.opacity    = '1';
+
+  _wcTimeout = setTimeout(() => { toast.style.opacity = '0'; }, 5000);
+}
+
+function showWildcardResult(message) {
+  let result = document.getElementById('wc-result');
+  if (!result) {
+    result = document.createElement('div');
+    result.id = 'wc-result';
+    result.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:999;padding:10px 20px;border-radius:8px;background:rgba(0,0,0,0.8);border:1px solid rgba(255,255,255,0.2);font-weight:700;font-size:14px;color:#e8eaf6;text-align:center;max-width:300px;pointer-events:none;transition:opacity .3s';
+    document.body.appendChild(result);
+  }
+  result.textContent  = message;
+  result.style.opacity = '1';
+  setTimeout(() => { result.style.opacity = '0'; }, 4000);
+}
+
+// ── GLOBAL RANKING ────────────────────────────────────────────────────────────
+function showGlobalRanking(ranking) {
+  clearInterval(timerInterval);
+  clearInterval(sbCountdown);
+  showScreen('global-ranking');
+
+  const myEntry = ranking.find(p => p.name === MY_NAME);
+  const myPos   = myEntry ? myEntry.position : ranking.length;
+  const myScore = myEntry ? myEntry.score : 0;
+  const top10   = ranking.slice(0, 10);
+
+  // Cabecera personal
+  const grHeader = el('gr-my-result');
+  if (grHeader) {
+    if (myPos <= 10) {
+      const medals = ['🥇','🥈','🥉'];
+      grHeader.innerHTML = `
+        <div class="gr-my-pos top">${medals[myPos-1] || '#' + myPos}</div>
+        <div class="gr-my-name">${MY_NAME}</div>
+        <div class="gr-my-score">${myScore} pts</div>`;
+      grHeader.className = 'gr-my-result top10';
+    } else {
+      grHeader.innerHTML = `
+        <div class="gr-my-text">Has acabado en el puesto <strong>#${myPos}</strong> con <strong>${myScore} puntos</strong></div>`;
+      grHeader.className = 'gr-my-result outside';
+    }
+  }
+
+  // Top 10
+  const list = el('gr-top10-list');
+  if (list) {
+    const medals = ['🥇','🥈','🥉'];
+    list.innerHTML = top10.map((p, i) => {
+      const isMe   = p.name === MY_NAME;
+      const medal  = medals[i] || '';
+      // Detectar empates
+      const tied   = top10.filter(x => x.score === p.score).length > 1;
+      return `
+        <div class="gr-row ${isMe ? 'is-me' : ''} ${tied ? 'tied' : ''}">
+          <div class="gr-pos">${medal || p.position}</div>
+          <div class="gr-name">${p.name} ${isMe ? '<span class="player-you">Tú</span>' : ''}</div>
+          ${tied ? '<div class="gr-tied">EMPATE</div>' : ''}
+          <div class="gr-score">${p.score} pts</div>
+        </div>`;
+    }).join('');
+  }
+}
+
+// ── AUDIO ─────────────────────────────────────────────────────────────────────
+const EventAudio = (() => {
+  let ctx = null;
+  function getCtx() {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+  function tone(freq, type, vol, dur, delay = 0) {
+    try {
+      const c = getCtx();
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.connect(gain); gain.connect(c.destination);
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, c.currentTime + delay);
+      gain.gain.setValueAtTime(0, c.currentTime + delay);
+      gain.gain.linearRampToValueAtTime(vol, c.currentTime + delay + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + delay + dur);
+      osc.start(c.currentTime + delay);
+      osc.stop(c.currentTime + delay + dur + 0.05);
+    } catch(e) {}
+  }
+  return {
+    chatMsg() { tone(880, 'sine', 0.08, 0.06, 0); tone(1100, 'sine', 0.06, 0.08, 0.05); },
+  };
+})();
+
+// ── CHAT ──────────────────────────────────────────────────────────────────────
+let _chatOpen = false;
+let _unread   = 0;
+
+function toggleChat() {
+  _chatOpen = !_chatOpen;
+  document.getElementById('chat-panel').classList.toggle('collapsed', !_chatOpen);
+  if (_chatOpen) {
+    _unread = 0;
+    const badge = document.getElementById('chat-unread');
+    if (badge) badge.style.display = 'none';
+    const msgs = document.getElementById('chat-messages');
+    if (msgs) msgs.scrollTop = msgs.scrollHeight;
+  }
+}
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg   = (input.value || '').trim();
+  if (!msg || !socket) return;
+  socket.emit('chat:send', { message: msg, playerName: MY_NAME });
+  input.value = '';
+}
+
+function addChatMsg(playerName, message, isSystem = false) {
+  const msgs = document.getElementById('chat-messages');
+  if (!msgs) return;
+  const isMe = playerName === MY_NAME;
+  const div  = document.createElement('div');
+
+  if (isSystem) {
+    div.className = 'chat-msg system';
+    div.innerHTML = `<span class="chat-msg-text">${message}</span>`;
+  } else {
+    div.className = `chat-msg${isMe ? ' is-me' : ''}`;
+    div.innerHTML = `
+      <span class="chat-msg-name${isMe ? ' me' : ''}">${isMe ? 'You' : playerName}</span>
+      <span class="chat-msg-text">${message}</span>`;
+  }
+
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  if (!isSystem) EventAudio.chatMsg();
+  if (!_chatOpen && !isSystem) {
+    _unread++;
+    const badge = document.getElementById('chat-unread');
+    if (badge) { badge.textContent = _unread; badge.style.display = 'inline-flex'; }
+  }
+}

@@ -8,7 +8,7 @@ export default function IntroPage() {
 
   useEffect(() => {
     const t1 = setTimeout(() => setOut(true), 3000)
-    const t2 = setTimeout(() => navigate('/login'), 3500)
+    const t2 = setTimeout(() => { window.location.href = '/trivial-login.html' }, 3500)
     return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [navigate])
 

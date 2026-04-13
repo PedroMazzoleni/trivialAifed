@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Globe, Bot, Trophy, BarChart3, ArrowRight, ChevronLeft, User } from 'lucide-react'
 import Navbar from '../components/Navbar'
@@ -13,7 +13,7 @@ export default function ModosPage() {
   const isAdmin = Session.isAdmin()
   const bgRef   = useRef(null)
 
-  // Seguimiento del cursor para iluminar los puntos del fondo
+  // Track cursor to illuminate background dots
   useEffect(() => {
     function handleMove(e) {
       bgRef.current?.style.setProperty('--mx', e.clientX + 'px')
@@ -25,7 +25,7 @@ export default function ModosPage() {
 
   useEffect(() => {
     const name = Session.playerName()
-    if (name && name !== 'Invitado') {
+    if (name && name !== 'Guest') {
       setPlayerName(name)
       apiGet(`/api/wins/${encodeURIComponent(name)}`)
         .then(d => { if (d.wins > 0) { setWins(d.wins); setShowWins(true) } })
@@ -56,7 +56,7 @@ export default function ModosPage() {
 
       <Link className="btn-back" to="/login">
         <ChevronLeft size={14} />
-        Volver
+        Back
       </Link>
 
       <div className="page">
@@ -76,7 +76,7 @@ export default function ModosPage() {
               </span>
               {showWins && (
                 <div className="wins-badge-modos">
-                  <Trophy size={12} /> {wins} victorias
+                  <Trophy size={12} /> {wins} wins
                 </div>
               )}
             </div>
@@ -91,13 +91,13 @@ export default function ModosPage() {
               <Globe size={22} />
             </div>
             <div>
-              <div className="mode-title">Jugar online</div>
-              <div className="mode-desc">Compite en tiempo real contra otros jugadores. Crea una sala o únete con un código.</div>
+              <div className="mode-title">Play online</div>
+              <div className="mode-desc">Compete in real time against other players. Create a room or join with a code.</div>
             </div>
             <div className="mode-tags">
-              <span className="tag">Hasta 6 jugadores</span>
-              <span className="tag">Tiempo real</span>
-              <span className="tag">Multijugador</span>
+              <span className="tag">Up to 6 players</span>
+              <span className="tag">Real time</span>
+              <span className="tag">Multiplayer</span>
             </div>
             <div className="mode-arrow"><ArrowRight size={18} /></div>
           </div>
@@ -108,13 +108,13 @@ export default function ModosPage() {
               <Bot size={22} />
             </div>
             <div>
-              <div className="mode-title">Jugar vs IA</div>
-              <div className="mode-desc">Entrena y pon a prueba tus conocimientos contra la inteligencia artificial.</div>
+              <div className="mode-title">Play vs AI</div>
+              <div className="mode-desc">Train and test your knowledge against artificial intelligence.</div>
             </div>
             <div className="mode-tags">
-              <span className="tag">1 jugador</span>
-              <span className="tag">3 dificultades</span>
-              <span className="tag">Sin espera</span>
+              <span className="tag">1 player</span>
+              <span className="tag">3 difficulty levels</span>
+              <span className="tag">No waiting</span>
             </div>
             <div className="mode-arrow"><ArrowRight size={18} /></div>
           </div>
@@ -126,8 +126,8 @@ export default function ModosPage() {
                 <Trophy size={20} />
               </div>
               <div>
-                <div className="mode-title" style={{ fontSize: 16 }}>Ranking Global</div>
-                <div className="mode-desc"  style={{ fontSize: 12 }}>Los mejores jugadores de todas las partidas</div>
+                <div className="mode-title" style={{ fontSize: 16 }}>Global Ranking</div>
+                <div className="mode-desc"  style={{ fontSize: 12 }}>The best players across all games</div>
               </div>
               <div className="mode-arrow" style={{ position: 'relative', bottom: 'auto', right: 'auto', opacity: 1, transform: 'none', marginLeft: 'auto' }}>
                 <ArrowRight size={18} />
@@ -143,8 +143,8 @@ export default function ModosPage() {
                   <BarChart3 size={20} />
                 </div>
                 <div>
-                  <div className="mode-title" style={{ fontSize: 16 }}>Panel de administración</div>
-                  <div className="mode-desc"  style={{ fontSize: 12 }}>Gestiona categorías, preguntas y dificultades</div>
+                  <div className="mode-title" style={{ fontSize: 16 }}>Admin panel</div>
+                  <div className="mode-desc"  style={{ fontSize: 12 }}>Manage categories, questions and difficulty levels</div>
                 </div>
                 <div className="mode-arrow" style={{ position: 'relative', bottom: 'auto', right: 'auto', opacity: 1, transform: 'none', marginLeft: 'auto' }}>
                   <ArrowRight size={18} />

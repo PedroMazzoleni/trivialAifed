@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Globe, Lock, Copy, Check, ChevronLeft, Trophy } from 'lucide-react'
 import { io } from 'socket.io-client'
@@ -44,14 +44,14 @@ export default function LobbyPage() {
   const [copied,        setCopied]        = useState(false)
 
   // ── Socket ──
-  const [statusText,    setStatusText]    = useState('Conectando...')
+  const [statusText,    setStatusText]    = useState('Connecting...')
   const [statusOnline,  setStatusOnline]  = useState(false)
 
   // ── Init ──────────────────────────────────────────────────────
   useEffect(() => {
     const name = Session.playerName()
     if (name) setPlayerName(name)
-    if (name && name !== 'Invitado') {
+    if (name && name !== 'Guest') {
       apiGet(`/api/wins/${encodeURIComponent(name)}`)
         .then(d => { if (d.wins > 0) { setWins(d.wins); setShowWins(true) } })
         .catch(() => {})
@@ -65,12 +65,12 @@ export default function LobbyPage() {
     socketRef.current = socket
 
     socket.on('connect', () => {
-      setStatusText('Conectado al servidor')
+      setStatusText('Connected to server')
       setStatusOnline(true)
       socket.emit('rooms:list')
     })
-    socket.on('disconnect',    () => { setStatusText('Reconectando...');            setStatusOnline(false) })
-    socket.on('connect_error', () => { setStatusText('Sin conexión al servidor');   setStatusOnline(false) })
+    socket.on('disconnect',    () => { setStatusText('Reconnecting...');            setStatusOnline(false) })
+    socket.on('connect_error', () => { setStatusText('No connection to server');   setStatusOnline(false) })
     socket.on('rooms:list',    (list) => setRooms(list || []))
 
     socket.on('room:created', ({ code, player, isPrivate }) => {
@@ -115,27 +115,27 @@ export default function LobbyPage() {
 
   // ── Acciones ──────────────────────────────────────────────────
   function createRoom() {
-    if (!playerName.trim()) return setMsg({ text: 'Introduce tu nombre', type: 'error' })
+    if (!playerName.trim()) return setMsg({ text: 'Enter your name', type: 'error' })
     const socket = socketRef.current
-    if (!socket?.connected) return setMsg({ text: 'Conectando al servidor...', type: 'error' })
+    if (!socket?.connected) return setMsg({ text: 'Connecting to server...', type: 'error' })
     setMsg(null); setCreateLoading(true)
     socket.emit('room:create', { playerName: playerName.trim(), tenantId: 'default', isPrivate: createTab === 'private' })
   }
 
   function joinRoomByCard(code) {
-    if (!playerName.trim()) return setMsg({ text: 'Introduce tu nombre primero', type: 'error' })
+    if (!playerName.trim()) return setMsg({ text: 'Enter your name first', type: 'error' })
     const socket = socketRef.current
-    if (!socket?.connected) return setMsg({ text: 'Conectando al servidor...', type: 'error' })
+    if (!socket?.connected) return setMsg({ text: 'Connecting to server...', type: 'error' })
     setMsg(null); setCreateLoading(true)
     socket.emit('room:join', { code, playerName: playerName.trim(), tenantId: 'default' })
   }
 
   function joinByCode() {
     const code = joinCode.trim().toUpperCase()
-    if (!playerName.trim())        return setMsg({ text: 'Introduce tu nombre', type: 'error' })
-    if (!code || code.length < 4)  return setMsg({ text: 'Introduce el código de sala', type: 'error' })
+    if (!playerName.trim())        return setMsg({ text: 'Enter your name', type: 'error' })
+    if (!code || code.length < 4)  return setMsg({ text: 'Enter the room code', type: 'error' })
     const socket = socketRef.current
-    if (!socket?.connected) return setMsg({ text: 'Conectando al servidor...', type: 'error' })
+    if (!socket?.connected) return setMsg({ text: 'Connecting to server...', type: 'error' })
     setMsg(null); setJoinLoading(true)
     socket.emit('room:join', { code, playerName: playerName.trim(), tenantId: 'default' })
   }
@@ -169,7 +169,7 @@ export default function LobbyPage() {
 
       <Link className="btn-back" to="/modos">
         <ChevronLeft size={14} />
-        Volver
+        Back
       </Link>
 
       <div className="page">
@@ -183,11 +183,11 @@ export default function LobbyPage() {
                 <img src="/images/logo.png" alt="Logo" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />
                 <span className="brand" style={{ marginBottom: 0 }}>Trivial Travel</span>
               </div>
-              <h1>Jugar Online</h1>
-              <p>Únete a una sala o crea una nueva · 6 jugadores por partida</p>
+              <h1>Play Online</h1>
+              <p>Join a room or create a new one · 6 players per game</p>
               {showWins && (
                 <div id="wins-badge" style={{ display: 'inline-block', marginTop: 8 }}>
-                  <Trophy size={13} /> <span>{wins}</span> partidas ganadas
+                  <Trophy size={13} /> <span>{wins}</span> wins
                 </div>
               )}
             </div>
@@ -199,16 +199,16 @@ export default function LobbyPage() {
                 onClick={() => setCreateTab('public')}
               >
                 <span className="create-tab-icon"><Globe size={20} /></span>
-                <span className="create-tab-title">Pública</span>
-                <span className="create-tab-note">Visible para todos</span>
+                <span className="create-tab-title">Public</span>
+                <span className="create-tab-note">Visible to everyone</span>
               </button>
               <button
                 className={`create-tab${createTab === 'private' ? ' active' : ''}`}
                 onClick={() => setCreateTab('private')}
               >
                 <span className="create-tab-icon"><Lock size={20} /></span>
-                <span className="create-tab-title">Privada</span>
-                <span className="create-tab-note">Solo por código</span>
+                <span className="create-tab-title">Private</span>
+                <span className="create-tab-note">Code only</span>
               </button>
             </div>
 
@@ -219,7 +219,7 @@ export default function LobbyPage() {
               </div>
               <div className="card">
                 <div className="card-body" style={{ padding: '12px 14px' }}>
-                  <input type="text" placeholder="¿Cómo te llaman?" maxLength={20}
+                  <input type="text" placeholder="What's your name?" maxLength={20}
                     value={playerName} onChange={e => setPlayerName(e.target.value)}
                     style={{ marginBottom: 0 }} />
                 </div>
@@ -229,14 +229,14 @@ export default function LobbyPage() {
             {/* Browser de salas */}
             <div className="rooms-section">
               <div className="rooms-header">
-                <span className="rooms-title">Salas disponibles</span>
-                <span className="rooms-live"><span className="live-dot" />En directo</span>
+                <span className="rooms-title">Available rooms</span>
+                <span className="rooms-live"><span className="live-dot" />Live</span>
               </div>
               <div id="rooms-list">
                 {rooms.length === 0 ? (
                   <div className="rooms-empty">
-                    <span>No hay salas abiertas</span>
-                    <small>Crea una nueva para empezar</small>
+                    <span>No open rooms</span>
+                    <small>Create one to get started</small>
                   </div>
                 ) : rooms.map(r => {
                   const pct  = (r.players / 6) * 100
@@ -245,14 +245,14 @@ export default function LobbyPage() {
                     <div key={r.code} className={`room-card${full ? ' room-full' : ''}`}>
                       <div className="room-card-info">
                         <span className="room-card-code">{r.code}</span>
-                        <span className="room-card-count">{r.players}/6 jugadores</span>
+                        <span className="room-card-count">{r.players}/6 players</span>
                         <div className="room-card-bar">
                           <div className="room-card-fill" style={{ width: `${pct}%` }} />
                         </div>
                       </div>
                       {full
-                        ? <span className="room-card-label-full">Llena</span>
-                        : <button className="btn-join-card" onClick={() => joinRoomByCard(r.code)}>Unirse →</button>
+                        ? <span className="room-card-label-full">Full</span>
+                        : <button className="btn-join-card" onClick={() => joinRoomByCard(r.code)}>Join →</button>
                       }
                     </div>
                   )
@@ -269,14 +269,14 @@ export default function LobbyPage() {
               style={{ marginBottom: 10 }}
             >
               <span className="btn-label">
-                {createTab === 'private' ? '+ Crear sala privada' : '+ Crear sala pública'}
+                {createTab === 'private' ? '+ Create private room' : '+ Create public room'}
               </span>
               <div className="spinner" />
             </button>
 
             {/* Unirse con código */}
             <button className="btn-code-toggle" onClick={() => setCodePanelOpen(o => !o)}>
-              Tengo un código de sala
+              I have a room code
             </button>
             <div className={`code-panel${codePanelOpen ? ' open' : ''}`}>
               <div>
@@ -305,15 +305,15 @@ export default function LobbyPage() {
           <div className="screen active" id="screen-room">
 
             <div className="room-header">
-              <span className="room-code-label">Código de sala</span>
+              <span className="room-code-label">Room code</span>
               <div className="room-code">{roomCode}</div>
               {roomIsPrivate && (
                 <div className="room-private-badge">
-                  <Lock size={11} /> Sala privada
+                  <Lock size={11} /> Private room
                 </div>
               )}
               <button className="copy-btn" onClick={copyCode} style={{ marginTop: 8 }}>
-                {copied ? <><Check size={12} /> Copiado</> : <><Copy size={12} /> Copiar código</>}
+                {copied ? <><Check size={12} /> Copied</> : <><Copy size={12} /> Copy code</>}
               </button>
             </div>
 
@@ -321,13 +321,13 @@ export default function LobbyPage() {
               <div className="status-dot" style={{ background: statusOnline ? 'var(--blue)' : '#e84545' }} />
               <span className="status-text">{statusText}</span>
               <span className="status-connected" style={{ color: statusOnline ? 'var(--blue)' : '#e84545' }}>
-                {statusOnline ? 'EN LÍNEA' : 'DESCONECTADO'}
+                {statusOnline ? 'ONLINE' : 'OFFLINE'}
               </span>
             </div>
 
             <div className="players-section">
               <div className="players-header">
-                <span className="players-title">Jugadores en la sala</span>
+                <span className="players-title">Players in room</span>
                 <span className="players-count">{roomData?.players?.length ?? 1} / 6</span>
               </div>
               <div className="players-list">
@@ -338,15 +338,15 @@ export default function LobbyPage() {
                     <div key={p.id} className="player-row">
                       <div className="player-dot" style={{ background: p.color || playerColor(i) }} />
                       <span className="player-name">{p.name}</span>
-                      {isMe       && <span className="player-you">Tú</span>}
-                      {isRoomHost && <span className="player-host">Anfitrión</span>}
+                      {isMe       && <span className="player-you">You</span>}
+                      {isRoomHost && <span className="player-host">Host</span>}
                     </div>
                   )
                 })}
                 {(roomData?.players?.length ?? 0) < 6 && (
                   <div className="waiting-row">
                     <div className="dots"><span /><span /><span /></div>
-                    Esperando jugadores ({roomData?.players?.length ?? 1}/6)...
+                    Waiting for players ({roomData?.players?.length ?? 1}/6)...
                   </div>
                 )}
               </div>
@@ -356,7 +356,7 @@ export default function LobbyPage() {
             {isHost && (
               <div className="host-controls visible">
                 <div className="round-selector">
-                  <span className="round-label">Número de rondas</span>
+                  <span className="round-label">Number of rounds</span>
                   <div className="round-btns">
                     {[4, 6, 8, 10].map(n => (
                       <button
@@ -368,7 +368,7 @@ export default function LobbyPage() {
                   </div>
                 </div>
                 <button className="btn-start ready" onClick={startGame}>
-                  Empezar partida
+                  Start game
                 </button>
               </div>
             )}
@@ -376,19 +376,19 @@ export default function LobbyPage() {
             {!isHost && (
               <div className="waiting-host visible">
                 <div className="dots" style={{ marginBottom: 8 }}><span /><span /><span /></div>
-                Esperando a que el anfitrión empiece la partida...
+                Waiting for the host to start...
               </div>
             )}
 
-            <button className="btn-leave" onClick={leaveRoom}>Abandonar sala</button>
+            <button className="btn-leave" onClick={leaveRoom}>Leave room</button>
 
             {/* Cuenta atrás */}
             {countdown !== null && countdown > 0 && (
               <div className="countdown-overlay visible">
                 <div className="countdown-box">
-                  <div className="countdown-title">¡Sala completa!</div>
+                  <div className="countdown-title">Room full!</div>
                   <div className="countdown-num">{countdown}</div>
-                  <div className="countdown-sub">Comenzando partida...</div>
+                  <div className="countdown-sub">Starting game...</div>
                 </div>
               </div>
             )}

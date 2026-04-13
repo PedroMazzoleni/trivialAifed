@@ -35,7 +35,7 @@ function initNavbar() {
         <div class="navbar-avatar">${name.charAt(0).toUpperCase()}</div>
         <span>${name}</span>
       </div>
-      <button class="navbar-btn navbar-btn-ghost" onclick="logout()">Salir</button>
+      <button class="navbar-btn navbar-btn-ghost" onclick="logout()">Log out</button>
     `;
     if (role === 'admin') {
       const ddAdmin     = document.getElementById('dd-admin');
@@ -51,12 +51,12 @@ function initNavbar() {
         <div class="navbar-avatar" style="background:#aaa">?</div>
         <span>Invitado</span>
       </div>
-      <a class="navbar-btn navbar-btn-primary" href="trivial-login.html">Registrarse</a>
+      <a class="navbar-btn navbar-btn-primary" href="trivial-login.html">Sign up</a>
     `;
   } else {
     right.innerHTML = `
-      <a class="navbar-btn navbar-btn-ghost" href="trivial-login.html">Iniciar sesión</a>
-      <a class="navbar-btn navbar-btn-primary" href="trivial-login.html">Registrarse</a>
+      <a class="navbar-btn navbar-btn-ghost" href="trivial-login.html">Log in</a>
+      <a class="navbar-btn navbar-btn-primary" href="trivial-login.html">Sign up</a>
     `;
   }
 

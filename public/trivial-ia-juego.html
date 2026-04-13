@@ -1,16 +1,14 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trivial — Juego vs IA</title>
+<title>Trivial — vs AI</title>
 <link rel="icon" type="image/png" href="images/logo.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/shared.css">
-<link rel="stylesheet" href="css/pages/ia-juego.css">
-<link rel="stylesheet" href="css/shared.css">
 <link rel="stylesheet" href="css/navbar.css">
-<link rel="stylesheet" href="css/pages/login.css">
+<link rel="stylesheet" href="css/pages/ia-juego.css">
 </head>
 <body>
 
@@ -21,13 +19,13 @@
     <div class="topbar-left">
       <button class="btn-exit" onclick="exitGame()">
         <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-        Salir
+        Exit
       </button>
-      <span class="topbar-level" id="topbar-level">Fácil</span>
+      <span class="topbar-level" id="topbar-level">Easy</span>
     </div>
     <div class="topbar-right">
       <div class="score-display">
-        <span class="score-label">Puntos</span>
+        <span class="score-label">Points</span>
         <span class="score-val" id="score-display">0</span>
       </div>
     </div>
@@ -39,8 +37,8 @@
 
   <div class="game-inner">
     <div class="q-meta">
-      <span class="q-counter" id="q-counter">Pregunta 1 / 10</span>
-      <span class="q-category" id="q-category">Geografía</span>
+      <span class="q-counter" id="q-counter">Question 1 / 10</span>
+      <span class="q-category" id="q-category">Geography</span>
     </div>
 
     <div class="timer-wrap">
@@ -50,17 +48,17 @@
       <span class="timer-num" id="timer-num">20</span>
     </div>
 
-    <div class="question-text" id="question-text">Cargando pregunta...</div>
+    <div class="question-text" id="question-text">Loading question...</div>
 
     <div class="options" id="options"></div>
 
     <div class="feedback" id="feedback">
       <div>
-        <span class="feedback-title" id="feedback-title">Correcto</span>
+        <span class="feedback-title" id="feedback-title">Correct</span>
         <span id="feedback-detail"></span>
       </div>
       <button class="btn-next" id="btn-next" onclick="nextQuestion()">
-        Siguiente →
+        Next →
       </button>
     </div>
   </div>
@@ -72,38 +70,38 @@
   <div class="results-inner">
 
     <div class="result-header">
-      <span class="result-title">Partida terminada</span>
+      <span class="result-title">Game over</span>
       <div class="result-score-big">
         <span id="res-score">0</span><span>/10</span>
       </div>
-      <div class="result-msg" id="res-msg">Buen intento</div>
+      <div class="result-msg" id="res-msg">Good try</div>
     </div>
 
     <div class="stats-row">
       <div class="stat-box">
         <span class="stat-box-num" id="res-correct">0</span>
-        <span class="stat-box-label">Correctas</span>
+        <span class="stat-box-label">Correct</span>
       </div>
       <div class="stat-box">
         <span class="stat-box-num" id="res-wrong">0</span>
-        <span class="stat-box-label">Erróneas</span>
+        <span class="stat-box-label">Wrong</span>
       </div>
       <div class="stat-box">
         <span class="stat-box-num" id="res-time">0s</span>
-        <span class="stat-box-label">Tiempo medio</span>
+        <span class="stat-box-label">Avg. time</span>
       </div>
     </div>
 
     <div class="ia-row">
-      <span class="ia-label">Puntuación IA</span>
+      <span class="ia-label">AI Score</span>
       <span class="ia-score" id="ia-score-display">—</span>
       <span class="ia-verdict" id="ia-verdict">—</span>
     </div>
 
     <div class="result-btns">
-      <button class="btn btn-primary" onclick="restartGame()">Jugar de nuevo</button>
-      <button class="btn btn-ghost"   onclick="goToLevels()">Cambiar nivel</button>
-      <button class="btn btn-ghost"   onclick="goHome()">Volver al inicio</button>
+      <button class="btn btn-primary" onclick="restartGame()">Play again</button>
+      <button class="btn btn-ghost"   onclick="goToLevels()">Change level</button>
+      <button class="btn btn-ghost"   onclick="goHome()">Home</button>
     </div>
 
   </div>
@@ -111,5 +109,42 @@
 
 <script src="js/utils.js"></script>
 <script src="js/pages/ia-juego.js"></script>
+
+<!-- ── FOOTER ── -->
+<footer style="
+  width:100%;
+  background:#070b16;
+  border-top:1px solid #1e2d50;
+  padding:28px 32px;
+  margin-top:auto;
+  font-family:'Barlow',sans-serif;
+  color:#6b7a99;
+  font-size:11px;
+  line-height:1.7;
+  box-sizing:border-box;
+">
+  <div style="max-width:860px;margin:0 auto">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <img src="images/eu-logo.png" alt="EU" style="height:28px;opacity:0.7">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#3B9EFF;opacity:0.8">Erasmus+ · Metaversing4Youth</span>
+    </div>
+    <p style="margin-bottom:8px">
+      The product developed here as part of the Erasmus+ project <strong style="color:#8892b0">"Metaversing4Youth ERASMUS-YOUTH-2026-CSC-OG-SGA-101313865"</strong> was developed with the support of the European Commission and reflects exclusively the opinion of the author. The European Commission is not responsible for the content of the documents.
+    </p>
+    <p style="margin-bottom:8px">
+      The publication obtains the <strong style="color:#8892b0">Creative Commons Licence CC BY-NC-SA</strong>. This license allows you to distribute, remix, improve and build on the work, but only non-commercially. When using the work as well as extracts from this must: (1) be mentioned the source and a link to the license must be given and possible changes have to be mentioned — the copyrights remain with the authors of the documents; (2) the work may not be used for commercial purposes; (3) if you recompose, convert or build upon the work, your contributions must be published under the same license as the original.
+    </p>
+    <p>
+      Funded by the European Union. Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Education and Culture Executive Agency (EACEA). Neither the European Union nor EACEA can be held responsible for them.
+    </p>
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid #1a2440;display:flex;align-items:center;gap:8px">
+      <img src="images/eu-logo.png" alt="Co-funded by the EU" style="height:20px;opacity:0.5">
+      <span style="font-size:10px;color:#4a5568;letter-spacing:0.5px">Co-funded by the European Union</span>
+      <span style="margin-left:auto;font-size:10px;color:#4a5568">
+        <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" style="color:#3B9EFF;opacity:0.7;text-decoration:none">CC BY-NC-SA 4.0</a>
+      </span>
+    </div>
+  </div>
+</footer>
 </body>
 </html>

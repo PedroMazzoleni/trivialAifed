@@ -85,7 +85,7 @@
    function hide(id) { const e = el(id); if (e) e.style.display = 'none'; }
    function toggle(id, force) { const e = el(id); if (e) e.classList.toggle('show', force); }
    
-   /* ── COLORES DE JUGADORES ─────────────────────────────── */
+   /* ── COLORES DE PLAYERS ─────────────────────────────── */
    const PLAYER_COLORS = ['#2d7dd2','#e84545','#f5a623','#18c25a','#a259ff','#ff6b6b','#3B9EFF','#f5c842'];
    
    function playerColor(index) {
