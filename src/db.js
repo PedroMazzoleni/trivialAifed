@@ -11,7 +11,7 @@ async function initDB() {
     if (url) {
       db = await mysql.createPool({
         uri: url,
-        ssl: { rejectUnauthorized: false },
+        ssl: { rejectUnauthorized: false, minVersion: 'TLSv1.2' },
         waitForConnections: true,
         connectionLimit: 5,
       });
