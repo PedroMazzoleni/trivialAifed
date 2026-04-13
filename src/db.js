@@ -14,33 +14,9 @@ async function initDB() {
   }
 
   try {
-    if (url) {
-      db = await mysql.createPool({
-        uri: url,
-        ssl: { rejectUnauthorized: false, minVersion: 'TLSv1.2' },
-        waitForConnections: true,
-        connectionLimit: 5,
-      });
-    } else {
-      db = await mysql.createPool({
-        host:     process.env.MYSQL_HOST     || process.env.MYSQLHOST,
-        port:     parseInt(process.env.MYSQL_PORT || process.env.MYSQLPORT || 3306),
-        user:     process.env.MYSQL_USER     || process.env.MYSQLUSER     || 'root',
-        password: process.env.MYSQL_PASSWORD || process.env.MYSQL_ROOT_PASSWORD,
-        database: process.env.MYSQL_DATABASE || process.env.MYSQLDATABASE || 'railway',
-        ssl: { rejectUnauthorized: false },
-        waitForConnections: true,
-        connectionLimit: 5,
-      });
-    }
-
     db = new Pool({
-      host:     ipv4,
-      port:     parseInt(parsed.port) || 5432,
-      user:     decodeURIComponent(parsed.username),
-      password: decodeURIComponent(parsed.password),
-      database: parsed.pathname.replace('/', ''),
-      ssl:      { rejectUnauthorized: false },
+      connectionString: url,
+      ssl: { rejectUnauthorized: false },
     });
 
     await db.query('SELECT 1');
