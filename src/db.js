@@ -8,15 +8,26 @@ async function initDB() {
               process.env.MYSQL_URL     ||
               process.env.DATABASE_PRIVATE_URL;
 
-  if (!url) {
-    console.warn('⚠️  No DATABASE_URL found — running without database');
+  const hasIndividual = process.env.DB_HOST && process.env.DB_USER && process.env.DB_NAME;
+
+  if (!url && !hasIndividual) {
+    console.warn('⚠️  No database config found — running without database');
     return;
   }
 
   try {
+    const poolConfig = url
+      ? { uri: url, ssl: { rejectUnauthorized: false } }
+      : {
+          host:     process.env.DB_HOST,
+          user:     process.env.DB_USER,
+          password: process.env.DB_PASS,
+          database: process.env.DB_NAME,
+          port:     process.env.DB_PORT || 3306,
+        };
+
     db = mysql.createPool({
-      uri: url,
-      ssl: { rejectUnauthorized: false },
+      ...poolConfig,
       waitForConnections: true,
       connectionLimit:    10,
     });
